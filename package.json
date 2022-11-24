@@ -12,7 +12,7 @@
     "format": "prettier --write \"{src,__tests__}/**/*.ts\"",
     "lint": "eslint ./src --ext .ts",
     "prepublishOnly": "yarn build",
-    "gen": "prisma generate",
+    "gen": "prisma generate && node copy-schema-then-replace.js && prisma generate --schema prisma-mirror/schema.prisma ",
     "prepare": "yarn gen",
     "prebuild": "yarn clean && yarn format && yarn lint && echo Using TypeScript && tsc --version",
     "build": "tsc --project tsconfig.build.json --pretty",

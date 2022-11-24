@@ -1,5 +1,6 @@
 import "reflect-metadata";
 
+import { PrismaClient as mirrorClient } from "@prisma-mirror/prisma/client";
 import { PrismaClient } from "@prisma/client";
 import * as graphql from "@generated/type-graphql";
 import { buildSchema } from "type-graphql";
@@ -18,7 +19,7 @@ import {
   CustomTokenFieldsResolver,
 } from "../resolvers/customFieldResolvers";
 
-const prisma = new PrismaClient();
+const prisma = process.env.HEROKU_POSTGRESQL_CHARCOAL_URL ? new mirrorClient() : new PrismaClient();
 
 const PORT = process.env.PORT || 4000;
 

@@ -1,0 +1,349 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider             = "postgresql"
+  url                  = env("HEROKU_POSTGRESQL_CHARCOAL_URL")
+  referentialIntegrity = "prisma"
+}
+
+generator client { 
+  output          = "../node_modules/@prisma-mirror/prisma/client"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity", "interactiveTransactions"]
+}
+
+generator typegraphql {
+  provider        = "typegraphql-prisma"
+  simpleResolvers = true
+}
+
+// data model
+
+model Chain {
+  id   Int    @id
+  name String
+
+  transactions Transaction[]
+  accounts     Account[]
+  mangroves    Mangrove[]
+  tokens       Token[]
+}
+
+model Transaction {
+  id          String   @id @db.VarChar(255)
+  chainId     Int      @default(80001)
+  txHash      String   @db.VarChar(80)
+  from        String   @db.VarChar(80)
+  blockNumber Int
+  blockHash   String   @db.VarChar(80)
+  time        DateTime @db.Timestamp
+
+  chain Chain @relation(fields: [chainId], references: [id])
+
+  mangroveVersions      MangroveVersion[]
+  takerApprovalVersions TakerApprovalVersion[]
+  makerBalanceVersions  MakerBalanceVersion[]
+  offerListVersions     OfferListVersion[]
+  offerVersions         OfferVersion[]
+  orders                Order[]
+  orderSummaries        OrderSummary[]
+}
+
+model Token {
+  id       String @id @db.VarChar(255)
+  chainId  Int
+  address  String @default("") @db.VarChar(80)
+  symbol   String
+  name     String
+  decimals Int
+
+  chain                   Chain       @relation(fields: [chainId], references: [id])
+  offerListsWhereInbound  OfferList[] @relation("OfferListsByInboundToken")
+  offerListsWhereOutbound OfferList[] @relation("OfferListsByOutboundToken")
+}
+
+model Mangrove {
+  id      String @id @db.VarChar(255)
+  chainId Int    @default(-1)
+  address String @default("") @db.VarChar(80)
+
+  chain          Chain           @relation(fields: [chainId], references: [id])
+  offerLists     OfferList[]
+  offers         Offer[]
+  orders         Order[]
+  makerBalances  MakerBalance[]
+  takerApprovals TakerApproval[]
+
+  // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
+  // Instead, we create new versions which makes undo easy.
+  currentVersionId String            @db.VarChar(255)
+  mangroveVersions MangroveVersion[]
+}
+
+model MangroveVersion {
+  id         String   @id @db.VarChar(255)
+  mangroveId String   @db.VarChar(255)
+  txId       String?  @db.VarChar(255)
+  governance String?
+  monitor    String?
+  vault      String?
+  useOracle  Boolean?
+  notify     Boolean?
+  gasmax     Int?
+  gasprice   Int?
+  dead       Boolean?
+
+  tx Transaction? @relation(fields: [txId], references: [id])
+
+  // The following fields are bookkeeping to support undo of events.
+  versionNumber Int
+  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
+
+  mangrove Mangrove @relation(fields: [mangroveId], references: [id])
+}
+
+model Account {
+  id      String @id @db.VarChar(255)
+  chainId Int    @default(80001)
+  address String @db.VarChar(80)
+
+  chain Chain @relation(fields: [chainId], references: [id])
+
+  ownedTakerApprovals   TakerApproval[] @relation("OwnerApprovals")
+  spenderTakerApprovals TakerApproval[] @relation("SpenderApprovals")
+  offers                Offer[]
+  orders                Order[]
+  makerBalances         MakerBalance[]
+  takerOrderSummaries   OrderSummary[]
+
+  strat Strat? // An account may be a strat contract
+}
+
+model Strat {
+  id String @id @db.VarChar(255)
+
+  account Account @relation(fields: [id], references: [id])
+
+  stratOrderSummaries OrderSummary[]
+}
+
+model TakerApproval {
+  id          String @id @db.VarChar(255)
+  mangroveId  String @db.VarChar(255)
+  offerListId String @db.VarChar(255)
+  ownerId     String @db.VarChar(255)
+  spenderId   String @db.VarChar(255)
+
+  mangrove  Mangrove  @relation(fields: [mangroveId], references: [id])
+  offerList OfferList @relation(fields: [offerListId], references: [id])
+  owner     Account   @relation("OwnerApprovals", fields: [ownerId], references: [id])
+  spender   Account   @relation("SpenderApprovals", fields: [spenderId], references: [id])
+
+  // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
+  // Instead, we create new versions which makes undo easy.
+  currentVersionId      String                 @db.VarChar(255)
+  takerApprovalVersions TakerApprovalVersion[]
+}
+
+model TakerApprovalVersion {
+  id              String  @id @db.VarChar(255)
+  takerApprovalId String  @db.VarChar(255)
+  txId            String  @db.VarChar(255)
+  parentOrderId   String? @db.VarChar(255)
+  value           String  @db.VarChar(80)
+
+  tx          Transaction @relation(fields: [txId], references: [id])
+  parentOrder Order?      @relation(fields: [parentOrderId], references: [id])
+
+  // The following fields are bookkeeping to support undo of events.
+  versionNumber Int
+  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
+
+  takerApproval TakerApproval @relation(fields: [takerApprovalId], references: [id])
+}
+
+model MakerBalance {
+  id         String @id @db.VarChar(255)
+  mangroveId String @db.VarChar(100)
+  makerId    String @db.VarChar(255)
+
+  mangrove Mangrove @relation(fields: [mangroveId], references: [id])
+  maker    Account  @relation(fields: [makerId], references: [id])
+
+  // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
+  // Instead, we create new versions which makes undo easy.
+  currentVersionId     String                @db.VarChar(255)
+  makerBalanceVersions MakerBalanceVersion[]
+}
+
+model MakerBalanceVersion {
+  id             String @id @db.VarChar(255)
+  makerBalanceId String @db.VarChar(255)
+  txId           String @db.VarChar(255)
+  balance        String @db.VarChar(80)
+
+  tx Transaction @relation(fields: [txId], references: [id])
+
+  // The following fields are bookkeeping to support undo of events.
+  versionNumber Int
+  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
+
+  makerBalance MakerBalance @relation(fields: [makerBalanceId], references: [id])
+}
+
+model OfferList {
+  id              String @id @db.VarChar(255)
+  mangroveId      String @db.VarChar(255)
+  inboundTokenId  String @db.VarChar(255)
+  outboundTokenId String @db.VarChar(255)
+
+  mangrove       Mangrove        @relation(fields: [mangroveId], references: [id])
+  inboundToken   Token           @relation(name: "OfferListsByInboundToken", fields: [inboundTokenId], references: [id])
+  outboundToken  Token           @relation(name: "OfferListsByOutboundToken", fields: [outboundTokenId], references: [id])
+  offers         Offer[]
+  takerApprovals TakerApproval[]
+  orders         Order[]
+  orderSummaries OrderSummary[]
+
+  // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
+  // Instead, we create new versions which makes undo easy.
+  currentVersionId  String             @db.VarChar(255)
+  offerListVersions OfferListVersion[]
+}
+
+model OfferListVersion {
+  id          String   @id @db.VarChar(255)
+  offerListId String   @db.VarChar(255)
+  txId        String   @db.VarChar(255)
+  active      Boolean?
+  fee         String?  @db.VarChar(80)
+  gasbase     Int?
+  density     String?  @db.VarChar(80)
+
+  tx Transaction @relation(fields: [txId], references: [id])
+
+  // The following fields are bookkeeping to support undo of events.
+  versionNumber Int
+  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
+
+  offerList OfferList @relation(fields: [offerListId], references: [id])
+}
+
+model Offer {
+  id               String  @id @db.VarChar(255)
+  mangroveId       String  @db.VarChar(255)
+  offerListId      String  @db.VarChar(255)
+  makerId          String  @db.VarChar(255)
+  // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
+  // Instead, we create new versions or mark the offer as deleted, which makes undo easy.
+  currentVersionId String  @db.VarChar(255)
+  deleted          Boolean @default(false) // The offer has been deleted
+
+  mangrove       Mangrove       @relation(fields: [mangroveId], references: [id])
+  offerList      OfferList      @relation(fields: [offerListId], references: [id])
+  maker          Account        @relation(fields: [makerId], references: [id])
+  orderSummaries OrderSummary[]
+  offerVersions  OfferVersion[]
+}
+
+model OfferVersion {
+  id             String  @id @db.VarChar(255)
+  offerId        String  @db.VarChar(255)
+  txId           String  @db.VarChar(255)
+  parentOrderId  String? @db.VarChar(255)
+  prevOfferId    String? @db.VarChar(255)
+  wants          String  @db.VarChar(80)
+  wantsNumber    Float
+  gives          String  @db.VarChar(80)
+  givesNumber    Float
+  takerPaysPrice Float?
+  makerPaysPrice Float?
+  gasprice       Int
+  gasreq         Int
+  live           Boolean
+  deprovisioned  Boolean
+
+  tx          Transaction @relation(fields: [txId], references: [id])
+  parentOrder Order?      @relation(fields: [parentOrderId], references: [id])
+
+  // The following fields are bookkeeping to support undo of events.
+  versionNumber Int
+  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
+
+  offer Offer @relation(fields: [offerId], references: [id])
+}
+
+model Order {
+  id              String  @id @db.VarChar(255)
+  txId            String  @db.VarChar(255)
+  parentOrderId   String? @db.VarChar(255)
+  mangroveId      String  @db.VarChar(255)
+  offerListId     String  @db.VarChar(255)
+  takerId         String  @db.VarChar(255)
+  takerGot        String
+  takerGotNumber  Float
+  takerGave       String
+  takerGaveNumber Float
+  takerPaidPrice  Float?
+  makerPaidPrice  Float?
+  penalty         String
+
+  tx          Transaction @relation(fields: [txId], references: [id])
+  parentOrder Order?      @relation("ParentOrders", fields: [parentOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  takenOffers                TakenOffer[]
+  mangrove                   Mangrove               @relation(fields: [mangroveId], references: [id])
+  offerList                  OfferList              @relation(fields: [offerListId], references: [id])
+  taker                      Account                @relation(fields: [takerId], references: [id])
+  childOrders                Order[]                @relation("ParentOrders")
+  childTakerApprovalVersions TakerApprovalVersion[]
+  childOfferVersions         OfferVersion[]
+}
+
+model TakenOffer {
+  id               String  @id @db.VarChar(255)
+  orderId          String  @db.VarChar(255)
+  takerWants       String  @db.VarChar(80)
+  takerWantsNumber Float
+  takerGives       String  @db.VarChar(80)
+  takerGivesNumber Float
+  takerPaysPrice   Float?
+  makerPaysPrice   Float?
+  posthookFailed   Boolean
+  failReason       String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// strats
+
+model OrderSummary {
+  id              String  @id @db.VarChar(255)
+  txId            String  @db.VarChar(255)
+  mangroveId      String  @db.VarChar(255)
+  stratId         String  @db.VarChar(255)
+  offerListId     String  @db.VarChar(255)
+  takerId         String  @db.VarChar(255)
+  selling         Boolean
+  takerGot        String
+  takerGotNumber  Float
+  takerGave       String
+  takerGaveNumber Float
+  price           Float
+  penalty         String
+  penaltyNumber   Float
+  restingOrderId  String  @db.VarChar(255)
+
+  tx           Transaction @relation(fields: [txId], references: [id])
+  strat        Strat       @relation(fields: [stratId], references: [id])
+  offerList    OfferList   @relation(fields: [offerListId], references: [id])
+  taker        Account     @relation(fields: [takerId], references: [id])
+  restingOrder Offer       @relation(fields: [restingOrderId], references: [id])
+}
+
+// store consumed streams state
+model Streams {
+  id    String @id @db.VarChar(255)
+  state String @db.VarChar(255)
+}

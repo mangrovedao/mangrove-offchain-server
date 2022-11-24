@@ -434,7 +434,9 @@ async function findOutboundTokenFromOrderSummaryOrFail(
     .offerList()
     .outboundToken();
   if (!outboundToken)
-    throw Error(`Cannot find outbound token from orderSummary '${orderSummary.id}'`);
+    throw Error(
+      `Cannot find outbound token from orderSummary '${orderSummary.id}'`
+    );
   return outboundToken;
 }
 
@@ -449,6 +451,8 @@ async function findInboundTokenFromOrderSummaryOrFail(
     .offerList()
     .inboundToken();
   if (!inboundToken)
-    throw Error(`Cannot find inbound token from orderSummary '${orderSummary.id}'`);
+    throw Error(
+      `Cannot find inbound token from orderSummary '${orderSummary.id}'`
+    );
   return inboundToken;
 }
