@@ -19,6 +19,9 @@ generator typegraphql {
 
 // data model
 
+// Chains are created when?
+
+
 model Chain {
   id   Int    @id
   name String
@@ -29,16 +32,20 @@ model Chain {
   tokens       Token[]
 }
 
+// A transaction is create in all handlers, since every event is happing in a transcation.
+
 model Transaction {
   id          String   @id @db.VarChar(255)
   chainId     Int      @default(80001)
   txHash      String   @db.VarChar(80)
-  from        String   @db.VarChar(80)
+  from        String   @db.VarChar(80) // msg.sender, the one who started the tx
   blockNumber Int
   blockHash   String   @db.VarChar(80)
   time        DateTime @db.Timestamp
 
   chain Chain @relation(fields: [chainId], references: [id])
+
+// A transaction can hold multiple events, therefore everyting is arrays
 
   mangroveVersions      MangroveVersion[]
   takerApprovalVersions TakerApprovalVersion[]
@@ -49,6 +56,8 @@ model Transaction {
   orderSummaries        OrderSummary[]
 }
 
+// Tokens are created, when this event NewFungibleTokenStreamEvent, is found by proxima
+
 model Token {
   id       String @id @db.VarChar(255)
   chainId  Int
@@ -58,10 +67,11 @@ model Token {
   decimals Int
 
   chain                   Chain       @relation(fields: [chainId], references: [id])
-  offerListsWhereInbound  OfferList[] @relation("OfferListsByInboundToken")
-  offerListsWhereOutbound OfferList[] @relation("OfferListsByOutboundToken")
+  offerListsWhereInbound  OfferList[] @relation("OfferListsByInboundToken") // Offerlists where the token is the inbound 
+  offerListsWhereOutbound OfferList[] @relation("OfferListsByOutboundToken") // Offerlists where the token is the outbound 
 }
 
+// Is create when the event NewMgv is emitted. Proxima transforms this event to "MangroveCreated" 
 model Mangrove {
   id      String @id @db.VarChar(255)
   chainId Int    @default(-1)
@@ -80,6 +90,18 @@ model Mangrove {
   mangroveVersions MangroveVersion[]
 }
 
+// Is created when one of these events is emitted:
+// NewMgv - When a new Mangrove instance is deployed
+// SetGovernance - When the governance is updated
+// SetMonitor - When the monitor is update
+// SetVault 
+// SetUseOracle 
+// SetNotify
+// SetGasmax 
+// SetGasprice
+// Kill - When the Mangrove instance is killed (dead)
+
+// Proxima converts all these events into "MangroveParamsEvents"
 model MangroveVersion {
   id         String   @id @db.VarChar(255)
   mangroveId String   @db.VarChar(255)
@@ -102,6 +124,8 @@ model MangroveVersion {
   mangrove Mangrove @relation(fields: [mangroveId], references: [id])
 }
 
+// Is created when: every time an account is referenced, we check if it exists and create it if not
+
 model Account {
   id      String @id @db.VarChar(255)
   chainId Int    @default(80001)
@@ -119,6 +143,8 @@ model Account {
   strat Strat? // An account may be a strat contract
 }
 
+// What is strat??
+
 model Strat {
   id String @id @db.VarChar(255)
 
@@ -126,6 +152,8 @@ model Strat {
 
   stratOrderSummaries OrderSummary[]
 }
+
+// This is created when the event "Approval" is emitted by Mangrove. Proxima renames it to TakerApprovalUpdated
 
 model TakerApproval {
   id          String @id @db.VarChar(255)
@@ -145,6 +173,8 @@ model TakerApproval {
   takerApprovalVersions TakerApprovalVersion[]
 }
 
+// The actual approval value for a taker approval is stored here. Since the approval value can be updated, we use versions, to keep track of the value changes
+
 model TakerApprovalVersion {
   id              String  @id @db.VarChar(255)
   takerApprovalId String  @db.VarChar(255)
@@ -162,6 +192,8 @@ model TakerApprovalVersion {
   takerApproval TakerApproval @relation(fields: [takerApprovalId], references: [id])
 }
 
+// This event is created the first time a Debit and Credit is emitted by Mangrove. Proxima groups these 2 event into MakerBalanceUpdated
+
 model MakerBalance {
   id         String @id @db.VarChar(255)
   mangroveId String @db.VarChar(100)
@@ -175,6 +207,8 @@ model MakerBalance {
   currentVersionId     String                @db.VarChar(255)
   makerBalanceVersions MakerBalanceVersion[]
 }
+
+// We want to keep track of changes to the Maker Balance, because for this we create a new version everytime a maker balance is updated.
 
 model MakerBalanceVersion {
   id             String @id @db.VarChar(255)
@@ -190,6 +224,14 @@ model MakerBalanceVersion {
 
   makerBalance MakerBalance @relation(fields: [makerBalanceId], references: [id])
 }
+
+// This is create when any of these events are emitted by Mangrove
+// SetActive
+// SetFee
+// SetGasbase
+// SetDensity
+// Proxima groups these into one event named OfferListParamsUpdated
+// Why not call Market or Semibook?
 
 model OfferList {
   id              String @id @db.VarChar(255)
@@ -211,6 +253,8 @@ model OfferList {
   offerListVersions OfferListVersion[]
 }
 
+// To keep track of the settings of the OfferList (Market/Semibook), we save a new version of it when an event change its settings 
+
 model OfferListVersion {
   id          String   @id @db.VarChar(255)
   offerListId String   @db.VarChar(255)
@@ -229,6 +273,8 @@ model OfferListVersion {
   offerList OfferList @relation(fields: [offerListId], references: [id])
 }
 
+// This is created when the Event OfferWrite is emitted by Mangrove. Proxima renames this to OfferWritten
+
 model Offer {
   id               String  @id @db.VarChar(255)
   mangroveId       String  @db.VarChar(255)
@@ -245,6 +291,9 @@ model Offer {
   orderSummaries OrderSummary[]
   offerVersions  OfferVersion[]
 }
+
+// Both OfferWrite (Proxima name: OfferWritten) and OfferRetract (Proxima name: OfferRetracted) will update this.
+// We can update an offer, because of this we keep track of the changes with Versions
 
 model OfferVersion {
   id             String  @id @db.VarChar(255)
@@ -273,6 +322,8 @@ model OfferVersion {
   offer Offer @relation(fields: [offerId], references: [id])
 }
 
+// Proxima catches OrderStart and OrderComplete, and groups them as "OrderCompleted"
+
 model Order {
   id              String  @id @db.VarChar(255)
   txId            String  @db.VarChar(255)
@@ -280,13 +331,13 @@ model Order {
   mangroveId      String  @db.VarChar(255)
   offerListId     String  @db.VarChar(255)
   takerId         String  @db.VarChar(255)
-  takerGot        String
-  takerGotNumber  Float
+  takerGot        String  // Why not VarChar(255)??
+  takerGotNumber  Float // Same as takerGot but as a Float
   takerGave       String
-  takerGaveNumber Float
+  takerGaveNumber Float // Same as takerGot but as a Float
   takerPaidPrice  Float?
   makerPaidPrice  Float?
-  penalty         String
+  penalty         String // Why no PentalyNumber?? as with Got and Gave
 
   tx          Transaction @relation(fields: [txId], references: [id])
   parentOrder Order?      @relation("ParentOrders", fields: [parentOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -299,6 +350,8 @@ model Order {
   childTakerApprovalVersions TakerApprovalVersion[]
   childOfferVersions         OfferVersion[]
 }
+
+// This is create when Proxima emits the OrderCompleted event. An order can take many offers and there by create many "TakenOffer"'s
 
 model TakenOffer {
   id               String  @id @db.VarChar(255)
@@ -317,6 +370,12 @@ model TakenOffer {
 
 // strats
 
+// This does not seem to be catched by Proxima yet. 
+// It should be the event "OrderSummary" emitted by MangroveOrder.
+// The OrderSummary event itself, does not contain the resting order Id, This is emitted by another event "NewOwnedOffer"
+// Proxima will have to listen to both these events in order to fill this with correct data. 
+// If the order was fully filled, then it would not post a resting order, and there would be no ID. 
+
 model OrderSummary {
   id              String  @id @db.VarChar(255)
   txId            String  @db.VarChar(255)
@@ -324,7 +383,7 @@ model OrderSummary {
   stratId         String  @db.VarChar(255)
   offerListId     String  @db.VarChar(255)
   takerId         String  @db.VarChar(255)
-  selling         Boolean
+  selling         Boolean // Why do we need this? 
   takerGot        String
   takerGotNumber  Float
   takerGave       String
@@ -332,7 +391,7 @@ model OrderSummary {
   price           Float
   penalty         String
   penaltyNumber   Float
-  restingOrderId  String  @db.VarChar(255)
+  restingOrderId  String  @db.VarChar(255) // Maybe this should be optional? e.g., for a FoK order, there would be no resting order.
 
   tx           Transaction @relation(fields: [txId], references: [id])
   strat        Strat       @relation(fields: [stratId], references: [id])
@@ -342,6 +401,9 @@ model OrderSummary {
 }
 
 // store consumed streams state
+
+// Is this a Proxima specific thing?
+
 model Streams {
   id    String @id @db.VarChar(255)
   state String @db.VarChar(255)
