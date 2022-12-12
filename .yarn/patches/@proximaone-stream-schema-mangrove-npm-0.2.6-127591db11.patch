@@ -1,0 +1,50 @@
+diff --git a/dist/core.d.ts b/dist/core.d.ts
+index 99d90b608a127085daffc30d6a60cebdef805995..85224c1df185c08943030e3e578f2eb6ea049e32 100644
+--- a/dist/core.d.ts
++++ b/dist/core.d.ts
+@@ -31,13 +31,16 @@ export interface Order {
+     taker: TakerId;
+     takerGot: Amount;
+     takerGave: Amount;
+-    penalty: Amount;
++    takerWants: Amount;
++    takerGives: Amount;
++    feePaid: Amount;
++    bounty: Amount;
+     takenOffers: TakenOffer[];
+ }
+ export interface TakenOffer {
+     id: OfferId;
+-    takerWants: Amount;
+-    takerGives: Amount;
++    takerGot: Amount;
++    takerGave: Amount;
+     failReason?: OfferFailReason;
+     posthookFailed?: boolean;
+     posthookData?: string;
+diff --git a/dist/strategyEvents.d.ts b/dist/strategyEvents.d.ts
+index 514cbc4807aea91aca924df9d6a261fe77d51df5..2435cc7d67331b55538266b5bacfbf1a4dfe976a 100644
+--- a/dist/strategyEvents.d.ts
++++ b/dist/strategyEvents.d.ts
+@@ -50,11 +50,19 @@ export interface OrderSummary {
+     mangroveId: core.MangroveId;
+     base: Address;
+     quote: Address;
++    orderId: core.OrderId;
++    fillWants: boolean;
++    fillOrKill: boolean;
++    restingOrder: boolean;
+     taker: TakerId;
+     selling: boolean;
++    takerWants: Amount;
++    takerGives: Amount;
+     takerGot: Amount;
+     takerGave: Amount;
+-    penalty: Amount;
++    bounty: Amount;
++    fee: Amount;
++    expiryDate: Timestamp.date;
+     restingOrderId: OfferId;
+ }
+ //# sourceMappingURL=strategyEvents.d.ts.map
+\ No newline at end of file
