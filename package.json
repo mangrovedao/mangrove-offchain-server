@@ -15,7 +15,7 @@
     "gen": "prisma generate",
     "prepare": "yarn gen",
     "prebuild": "yarn clean && yarn format && yarn lint && echo Using TypeScript && tsc --version",
-    "build": "tsc --project tsconfig.build.json --pretty",
+    "build": "yarn gen && tsc --project tsconfig.build.json --pretty",
     "test": "jest --passWithNoTests",
     "coverage": "jest --coverage",
     "start:server": "ts-node -r tsconfig-paths/register src/cmd/server.ts",
