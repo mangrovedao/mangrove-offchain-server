@@ -158,19 +158,17 @@ export class DbOperations {
       const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion(
         mangroveOrder
       );
-      if (mangroveOrderVersion) {
-        mangroveOrderVersion.cancelled = true;
-        this.addMangroveOrderVersion(
-          new MangroveOrderId({ mangroveOrder: mangroveOrder }),
-          mangroveOrder,
-          mangroveOrderVersion
-        );
-      }
+      mangroveOrderVersion.cancelled = true;
+      this.addMangroveOrderVersion(
+        new MangroveOrderId({ mangroveOrder: mangroveOrder }),
+        mangroveOrder,
+        mangroveOrderVersion
+      );
     }
   }
 
   public async getCurrentMangroveOrderVersion(mangroveOrder: MangroveOrder) {
-    return await this.tx.mangroveOrderVersion.findUnique({
+    const version = await this.tx.mangroveOrderVersion.findUnique({
       where: {
         id: new MangroveOrderVersionId({
           mangroveOrder: mangroveOrder,
@@ -178,6 +176,12 @@ export class DbOperations {
         }).value,
       },
     });
+    if (!version) {
+      throw Error(
+        `Could not find mangroveOrderVersion, from mangroveOrder: ${mangroveOrder}`
+      );
+    }
+    return version;
   }
 
   public async getVersionedOffer(offerVersionId: string) {
@@ -333,6 +337,40 @@ export class DbOperations {
           newVersion
         );
       }
+    }
+  }
+
+  async updateMangroveOrderWithExpiry(
+    chainId: ChainId,
+    params: {
+      mangroveId: string;
+      offerId: number;
+      expiry: Timestamp["date"];
+      outboundToken: string;
+      inboundToken: string;
+    }
+  ) {
+    const offer = new OfferId(
+      new MangroveId(chainId, params.mangroveId),
+      {
+        inboundToken: params.inboundToken,
+        outboundToken: params.outboundToken,
+      },
+      params.offerId
+    );
+    const mangroveOrders = await this.tx.mangroveOrder.findMany({
+      where: { mangroveId: params.mangroveId, restingOrderId: offer.value },
+    });
+    for (const mangroveOrder of mangroveOrders) {
+      const newVersion = await this.getCurrentMangroveOrderVersion(
+        mangroveOrder
+      );
+      newVersion.expiryDate = params.expiry;
+      this.addMangroveOrderVersion(
+        new MangroveOrderId({ mangroveOrder: mangroveOrder }),
+        mangroveOrder,
+        newVersion
+      );
     }
   }
 

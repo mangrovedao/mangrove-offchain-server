@@ -421,7 +421,7 @@ model MangroveOrderVersion {
   price           Float 
   // penalty         String // TODO: Add when available
   // penaltyNumber   Float
-  expiryDate      DateTime
+  expiryDate      DateTime @db.Timestamp
 
   mangroveOrder MangroveOrder @relation(fields: [mangroveOrderId], references: [id], onDelete: Cascade)
 
