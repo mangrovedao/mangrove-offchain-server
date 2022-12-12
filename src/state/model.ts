@@ -1,3 +1,5 @@
+import { MangroveOrder } from "@prisma/client";
+
 export class Id<T extends string | number> {
   public constructor(public readonly value: T) {}
 }
@@ -176,16 +178,41 @@ export interface OfferListKey {
   outboundToken: string;
 }
 
-export class OrderSummaryId extends Id<string> {
+export class MangroveOrderId extends Id<string> {
   public constructor(
-    public readonly mangroveId: MangroveId,
-    public readonly offerListKey: OfferListKey,
-    public readonly orderSummaryId: string
+    public readonly params:
+      | {
+          mangroveId: MangroveId;
+          offerListKey: OfferListKey;
+          mangroveOrderId: string;
+        }
+      | { mangroveOrder: MangroveOrder }
   ) {
     super(
-      `${mangroveId.value}-${offerListKeyShortStr(
-        offerListKey
-      )}-${orderSummaryId}`
+      "mangroveId" in params
+        ? `${params.mangroveId.value}-${offerListKeyShortStr(
+            params.offerListKey
+          )}-${params.mangroveOrderId}`
+        : params.mangroveOrder.id
+    );
+  }
+}
+
+export class MangroveOrderVersionId extends Id<string> {
+  public constructor(
+    public readonly params: (
+      | {
+          mangroveOrderId: MangroveOrderId;
+        }
+      | { mangroveOrder: MangroveOrder }
+    ) & {
+      versionNumber: number;
+    }
+  ) {
+    super(
+      "mangroveOrderId" in params
+        ? `${params.mangroveOrderId.value}-${params.versionNumber}`
+        : params.mangroveOrder.id
     );
   }
 }

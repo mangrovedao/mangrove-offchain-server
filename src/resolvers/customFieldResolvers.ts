@@ -9,7 +9,8 @@ import {
   OfferListVersion,
   OfferVersion,
   Order,
-  OrderSummary,
+  MangroveOrder,
+  MangroveOrderVersion,
   TakenOffer,
   TakerApproval,
   TakerApprovalVersion,
@@ -222,95 +223,137 @@ export class CustomOrderFieldsResolver {
 @Resolver((of) => TakenOffer)
 export class CustomTakenOfferFieldsResolver {
   @FieldResolver((type) => Number, { nullable: true })
-  async takerWantsInUsd(
-    @Root() takenOffer: TakenOffer,
-    @Ctx() ctx: Context
-  ): Promise<number | undefined> {
-    return amountFieldToUsd(
-      takenOffer,
-      takenOffer.takerWantsNumber,
-      findOutboundTokenFromTakenOfferOrFail,
-      ctx
-    );
-  }
-
-  @FieldResolver((type) => Number, { nullable: true })
-  async takerGivesInUsd(
-    @Root() takenOffer: TakenOffer,
-    @Ctx() ctx: Context
-  ): Promise<number | undefined> {
-    return amountFieldToUsd(
-      takenOffer,
-      takenOffer.takerGivesNumber,
-      findInboundTokenFromTakenOfferOrFail,
-      ctx
-    );
-  }
-
-  @FieldResolver((type) => Number, { nullable: true })
-  async takerPaysPriceInUsd(
-    @Root() takenOffer: TakenOffer,
-    @Ctx() ctx: Context
-  ): Promise<number | undefined> {
-    return amountFieldToUsd(
-      takenOffer,
-      takenOffer.takerPaysPrice,
-      findInboundTokenFromTakenOfferOrFail,
-      ctx
-    );
-  }
-
-  @FieldResolver((type) => Number, { nullable: true })
-  async makerPaysPriceInUsd(
-    @Root() takenOffer: TakenOffer,
-    @Ctx() ctx: Context
-  ): Promise<number | undefined> {
-    return amountFieldToUsd(
-      takenOffer,
-      takenOffer.makerPaysPrice,
-      findOutboundTokenFromTakenOfferOrFail,
-      ctx
-    );
-  }
-}
-
-@Resolver((of) => OrderSummary)
-export class CustomOrderSummaryFieldsResolver {
-  @FieldResolver((type) => Number, { nullable: true })
   async takerGotInUsd(
-    @Root() order: OrderSummary,
+    @Root() takenOffer: TakenOffer,
     @Ctx() ctx: Context
   ): Promise<number | undefined> {
     return amountFieldToUsd(
-      order,
-      order.takerGotNumber,
-      findOutboundTokenFromOrderSummaryOrFail,
+      takenOffer,
+      takenOffer.takerGotNumber,
+      findOutboundTokenFromTakenOfferOrFail,
       ctx
     );
   }
 
   @FieldResolver((type) => Number, { nullable: true })
   async takerGaveInUsd(
-    @Root() order: OrderSummary,
+    @Root() takenOffer: TakenOffer,
     @Ctx() ctx: Context
   ): Promise<number | undefined> {
     return amountFieldToUsd(
-      order,
-      order.takerGaveNumber,
-      findInboundTokenFromOrderSummaryOrFail,
+      takenOffer,
+      takenOffer.takerGaveNumber,
+      findInboundTokenFromTakenOfferOrFail,
       ctx
     );
   }
 
   @FieldResolver((type) => Number, { nullable: true })
-  async priceInUsd(
-    @Root() order: OrderSummary,
+  async takerPaidPriceInUsd(
+    @Root() takenOffer: TakenOffer,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      takenOffer,
+      takenOffer.takerPaidPrice,
+      findInboundTokenFromTakenOfferOrFail,
+      ctx
+    );
+  }
+
+  @FieldResolver((type) => Number, { nullable: true })
+  async makerPaidPriceInUsd(
+    @Root() takenOffer: TakenOffer,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      takenOffer,
+      takenOffer.makerPaidPrice,
+      findOutboundTokenFromTakenOfferOrFail,
+      ctx
+    );
+  }
+}
+
+@Resolver((of) => MangroveOrder)
+export class CustomMangroveOrderFieldsResolver {
+  @FieldResolver((type) => Number, { nullable: true })
+  async takerWantsInUsd(
+    @Root() order: MangroveOrder,
     @Ctx() ctx: Context
   ): Promise<number | undefined> {
     return amountFieldToUsd(
       order,
+      order.takerWantsNumber,
+      findOutboundTokenFromMangroveOrderOrFail,
+      ctx
+    );
+  }
+
+  @FieldResolver((type) => Number, { nullable: true })
+  async takerGivesInUsd(
+    @Root() order: MangroveOrder,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      order,
+      order.takerGivesNumber,
+      findInboundTokenFromMangroveOrderOrFail,
+      ctx
+    );
+  }
+}
+
+@Resolver((of) => MangroveOrderVersion)
+export class CustomMangroveOrderVersionFieldsResolver {
+  @FieldResolver((type) => Number, { nullable: true })
+  async takerGotInUsd(
+    @Root() order: MangroveOrderVersion,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      await findMangroveOrderFromMangroveOrderVersion(order, ctx.prisma),
+      order.takerGotNumber,
+      findOutboundTokenFromMangroveOrderOrFail,
+      ctx
+    );
+  }
+
+  @FieldResolver((type) => Number, { nullable: true })
+  async takerGaveInUsd(
+    @Root() order: MangroveOrderVersion,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      await findMangroveOrderFromMangroveOrderVersion(order, ctx.prisma),
+      order.takerGaveNumber,
+      findInboundTokenFromMangroveOrderOrFail,
+      ctx
+    );
+  }
+
+  @FieldResolver((type) => Number, { nullable: true })
+  async priceInclFeeInUsd(
+    @Root() order: MangroveOrderVersion,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      await findMangroveOrderFromMangroveOrderVersion(order, ctx.prisma),
       order.price,
-      findInboundTokenFromOrderSummaryOrFail,
+      findInboundTokenFromMangroveOrderOrFail,
+      ctx
+    );
+  }
+
+  @FieldResolver((type) => Number, { nullable: true })
+  async totalFeeInUsd(
+    @Root() order: MangroveOrderVersion,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      await findMangroveOrderFromMangroveOrderVersion(order, ctx.prisma),
+      order.totalFeeNumber,
+      findInboundTokenFromMangroveOrderOrFail,
       ctx
     );
   }
@@ -327,6 +370,21 @@ async function amountFieldToUsd<Entity>(
   const tokenPriceInUsd = await fetchTokenPriceInUsd(token);
   if (!tokenPriceInUsd) return undefined;
   return amount * tokenPriceInUsd;
+}
+
+async function findMangroveOrderFromMangroveOrderVersion(
+  mangroveOrderVersion: MangroveOrderVersion,
+  prisma: PrismaClient
+): Promise<MangroveOrder> {
+  const mangroveOrder = await prisma.mangroveOrder.findUnique({
+    where: { id: mangroveOrderVersion.mangroveOrderId },
+  });
+  if (!mangroveOrder) {
+    throw Error(
+      `Cannot find MangroveOrder from the MangroveOrder id '${mangroveOrderVersion.mangroveOrderId}`
+    );
+  }
+  return mangroveOrder;
 }
 
 async function findOutboundTokenFromOfferVersionOrFail(
@@ -423,36 +481,36 @@ async function findInboundTokenFromTakenOfferOrFail(
   return inboundToken;
 }
 
-async function findOutboundTokenFromOrderSummaryOrFail(
-  orderSummary: OrderSummary,
+async function findOutboundTokenFromMangroveOrderOrFail(
+  mangroveOrder: MangroveOrder,
   prisma: PrismaClient
 ): Promise<Token> {
-  const outboundToken = await prisma.orderSummary
+  const outboundToken = await prisma.mangroveOrder
     .findUnique({
-      where: { id: orderSummary.id },
+      where: { id: mangroveOrder.id },
     })
     .offerList()
     .outboundToken();
   if (!outboundToken)
     throw Error(
-      `Cannot find outbound token from orderSummary '${orderSummary.id}'`
+      `Cannot find outbound token from mangroveOrder '${mangroveOrder.id}'`
     );
   return outboundToken;
 }
 
-async function findInboundTokenFromOrderSummaryOrFail(
-  orderSummary: OrderSummary,
+async function findInboundTokenFromMangroveOrderOrFail(
+  mangroveOrder: MangroveOrder,
   prisma: PrismaClient
 ): Promise<Token> {
-  const inboundToken = await prisma.orderSummary
+  const inboundToken = await prisma.mangroveOrder
     .findUnique({
-      where: { id: orderSummary.id },
+      where: { id: mangroveOrder.id },
     })
     .offerList()
     .inboundToken();
   if (!inboundToken)
     throw Error(
-      `Cannot find inbound token from orderSummary '${orderSummary.id}'`
+      `Cannot find inbound token from mangroveOrder '${mangroveOrder.id}'`
     );
   return inboundToken;
 }

@@ -23,12 +23,11 @@ export class TokenEventHandler extends PrismaStreamEventHandler<NewToken> {
     const commands: Promise<any>[] = [];
     // ensure all chains exist
     for (const [chainName, chainId] of Object.entries(chains)) {
-      // FIXME: There's a bug that will cause this to occasionally fail, see https://github.com/prisma/prisma/issues/11191
-      // tx.chain.upsert({
-      //   where: { id: chainId },
-      //   create: { id: chainId, name: chainName },
-      //   update: { id: chainId, name: chainName },
-      // })
+      tx.chain.upsert({
+        where: { id: chainId },
+        create: { id: chainId, name: chainName },
+        update: { id: chainId, name: chainName },
+      });
       commands.push(
         tx.chain.findUnique({ where: { id: chainId } }).then((chain) => {
           if (chain === null) {

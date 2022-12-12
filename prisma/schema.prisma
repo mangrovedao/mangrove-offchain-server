@@ -19,6 +19,7 @@ generator typegraphql {
 
 // data model
 
+// Very few chains, it should not be hard to query
 model Chain {
   id   Int    @id
   name String
@@ -29,11 +30,13 @@ model Chain {
   tokens       Token[]
 }
 
+//Many transactions, we have id has private key and it is there for indexed. Not sure if we need other fields indexed.
+
 model Transaction {
   id          String   @id @db.VarChar(255)
   chainId     Int      @default(80001)
   txHash      String   @db.VarChar(80)
-  from        String   @db.VarChar(80)
+  from        String   @db.VarChar(80) // index?
   blockNumber Int
   blockHash   String   @db.VarChar(80)
   time        DateTime @db.Timestamp
@@ -46,8 +49,10 @@ model Transaction {
   offerListVersions     OfferListVersion[]
   offerVersions         OfferVersion[]
   orders                Order[]
-  orderSummaries        OrderSummary[]
+  MangroveOrder         MangroveOrder[]
 }
+
+// probably have few tokens, so no extra index needed
 
 model Token {
   id            String  @id @db.VarChar(255)
@@ -61,6 +66,8 @@ model Token {
   offerListsWhereInbound  OfferList[] @relation("OfferListsByInboundToken")
   offerListsWhereOutbound OfferList[] @relation("OfferListsByOutboundToken")
 }
+
+// Few mangrove instances, no extra index needed
 
 model Mangrove {
   id      String @id @db.VarChar(255)
@@ -79,6 +86,8 @@ model Mangrove {
   currentVersionId String            @db.VarChar(255)
   mangroveVersions MangroveVersion[]
 }
+
+// Few mangrove instances, no extra index needed
 
 model MangroveVersion {
   id         String   @id @db.VarChar(255)
@@ -102,10 +111,12 @@ model MangroveVersion {
   mangrove Mangrove @relation(fields: [mangroveId], references: [id])
 }
 
+// could potentially have many accounts, maybe extra indexes are needed.
+
 model Account {
   id      String @id @db.VarChar(255)
   chainId Int    @default(80001)
-  address String @db.VarChar(80)
+  address String @db.VarChar(80) //index? 
 
   chain Chain @relation(fields: [chainId], references: [id])
 
@@ -114,25 +125,29 @@ model Account {
   offers                Offer[]
   orders                Order[]
   makerBalances         MakerBalance[]
-  takerOrderSummaries   OrderSummary[]
 
-  strat Strat? // An account may be a strat contract
+  strat         Strat? // An account may be a strat contract
+  MangroveOrder MangroveOrder[]
 }
+
+// Problably few strats, no extra indexes needed.
 
 model Strat {
   id String @id @db.VarChar(255)
 
   account Account @relation(fields: [id], references: [id])
 
-  stratOrderSummaries OrderSummary[]
+  MangroveOrder MangroveOrder[]
 }
+
+// could potentially have many approvals, extra indexes might be needed.
 
 model TakerApproval {
   id          String @id @db.VarChar(255)
   mangroveId  String @db.VarChar(255)
   offerListId String @db.VarChar(255)
-  ownerId     String @db.VarChar(255)
-  spenderId   String @db.VarChar(255)
+  ownerId     String @db.VarChar(255) // index?
+  spenderId   String @db.VarChar(255) // index?
 
   mangrove  Mangrove  @relation(fields: [mangroveId], references: [id])
   offerList OfferList @relation(fields: [offerListId], references: [id])
@@ -145,10 +160,12 @@ model TakerApproval {
   takerApprovalVersions TakerApprovalVersion[]
 }
 
+// could potentially have many approvals, extra indexes might be needed.
+
 model TakerApprovalVersion {
   id              String  @id @db.VarChar(255)
-  takerApprovalId String  @db.VarChar(255)
-  txId            String  @db.VarChar(255)
+  takerApprovalId String  @db.VarChar(255) // index?
+  txId            String  @db.VarChar(255) // index?
   parentOrderId   String? @db.VarChar(255)
   value           String  @db.VarChar(80)
 
@@ -161,6 +178,8 @@ model TakerApprovalVersion {
 
   takerApproval TakerApproval @relation(fields: [takerApprovalId], references: [id])
 }
+
+// could potentially have many makers, but extra indexes probably not needed
 
 model MakerBalance {
   id         String @id @db.VarChar(255)
@@ -176,10 +195,12 @@ model MakerBalance {
   makerBalanceVersions MakerBalanceVersion[]
 }
 
+// Many makers with many versions, could need extra indexes.
+
 model MakerBalanceVersion {
   id             String @id @db.VarChar(255)
-  makerBalanceId String @db.VarChar(255)
-  txId           String @db.VarChar(255)
+  makerBalanceId String @db.VarChar(255) // index?
+  txId           String @db.VarChar(255) // index?
   balance        String @db.VarChar(80)
 
   tx Transaction @relation(fields: [txId], references: [id])
@@ -190,6 +211,8 @@ model MakerBalanceVersion {
 
   makerBalance MakerBalance @relation(fields: [makerBalanceId], references: [id])
 }
+
+// probably very few offerlists, no extra indexes needed
 
 model OfferList {
   id              String @id @db.VarChar(255)
@@ -203,13 +226,15 @@ model OfferList {
   offers         Offer[]
   takerApprovals TakerApproval[]
   orders         Order[]
-  orderSummaries OrderSummary[]
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
   currentVersionId  String             @db.VarChar(255)
   offerListVersions OfferListVersion[]
+  MangroveOrder     MangroveOrder[]
 }
+
+// few offerlist, will have some versions, but not enough for it to need extra indexes
 
 model OfferListVersion {
   id          String   @id @db.VarChar(255)
@@ -229,29 +254,33 @@ model OfferListVersion {
   offerList OfferList @relation(fields: [offerListId], references: [id])
 }
 
+// Could potentially have many offers, maybe extra indexes are needed.
+
 model Offer {
   id               String  @id @db.VarChar(255)
   mangroveId       String  @db.VarChar(255)
   offerListId      String  @db.VarChar(255)
-  makerId          String  @db.VarChar(255)
+  makerId          String  @db.VarChar(255) // index?
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions or mark the offer as deleted, which makes undo easy.
   currentVersionId String  @db.VarChar(255)
   deleted          Boolean @default(false) // The offer has been deleted
 
-  mangrove       Mangrove       @relation(fields: [mangroveId], references: [id])
-  offerList      OfferList      @relation(fields: [offerListId], references: [id])
-  maker          Account        @relation(fields: [makerId], references: [id])
-  orderSummaries OrderSummary[]
-  offerVersions  OfferVersion[]
+  mangrove      Mangrove        @relation(fields: [mangroveId], references: [id])
+  offerList     OfferList       @relation(fields: [offerListId], references: [id])
+  maker         Account         @relation(fields: [makerId], references: [id])
+  offerVersions OfferVersion[]
+  MangroveOrder MangroveOrder[]
 }
+
+// Many offers, each having many version, we probably need indexes here.
 
 model OfferVersion {
   id             String  @id @db.VarChar(255)
-  offerId        String  @db.VarChar(255)
+  offerId        String  @db.VarChar(255) // index?
   txId           String  @db.VarChar(255)
-  parentOrderId  String? @db.VarChar(255)
-  prevOfferId    String? @db.VarChar(255)
+  parentOrderId  String? @db.VarChar(255) // index?
+  prevOfferId    String? @db.VarChar(255) // what is this?
   wants          String  @db.VarChar(80)
   wantsNumber    Float
   gives          String  @db.VarChar(80)
@@ -270,23 +299,33 @@ model OfferVersion {
   versionNumber Int
   prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
 
-  offer Offer @relation(fields: [offerId], references: [id])
+  offer      Offer        @relation(fields: [offerId], references: [id])
+  TakenOffer TakenOffer[]
 }
 
+// could have many orders. probably needs extra indexes.
+
 model Order {
-  id              String  @id @db.VarChar(255)
-  txId            String  @db.VarChar(255)
-  parentOrderId   String? @db.VarChar(255)
-  mangroveId      String  @db.VarChar(255)
-  offerListId     String  @db.VarChar(255)
-  takerId         String  @db.VarChar(255)
-  takerGot        String
-  takerGotNumber  Float
-  takerGave       String
-  takerGaveNumber Float
-  takerPaidPrice  Float?
-  makerPaidPrice  Float?
-  penalty         String
+  id               String  @id @db.VarChar(255)
+  txId             String  @db.VarChar(255) // index?
+  parentOrderId    String? @db.VarChar(255)
+  mangroveId       String  @db.VarChar(255)
+  offerListId      String  @db.VarChar(255) // maybe index?
+  takerId          String  @db.VarChar(255) // index?
+  takerWants       String
+  takerWantsNumber Float
+  takerGives       String
+  takerGivesNumber Float
+  takerGot         String
+  takerGotNumber   Float
+  takerGave        String
+  takerGaveNumber  Float
+  takerPaidPrice   Float?
+  makerPaidPrice   Float?
+  totalFee         String
+  totalFeeNumber   Float
+  bounty           String
+  bountyNumber     Float
 
   tx          Transaction @relation(fields: [txId], references: [id])
   parentOrder Order?      @relation("ParentOrders", fields: [parentOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -298,47 +337,98 @@ model Order {
   childOrders                Order[]                @relation("ParentOrders")
   childTakerApprovalVersions TakerApprovalVersion[]
   childOfferVersions         OfferVersion[]
+  MangroveOrder              MangroveOrder[]
 }
+
+// With many offers and offer versions, we could have many takenOffers, this probably needs indexes
+// Why no reference to the actuall offer( and its version), that was taken?
 
 model TakenOffer {
   id               String  @id @db.VarChar(255)
-  orderId          String  @db.VarChar(255)
-  takerWants       String  @db.VarChar(80)
-  takerWantsNumber Float
-  takerGives       String  @db.VarChar(80)
-  takerGivesNumber Float
-  takerPaysPrice   Float?
-  makerPaysPrice   Float?
+  orderId          String  @db.VarChar(255) // index?
+  offerVersionId   String  @db.VarChar(255)
+  takerGot         String  @db.VarChar(80)
+  takerGotNumber   Float
+  takerGave        String
+  takerGaveNumber  Float
+  takerPaidPrice   Float?
+  makerPaidPrice   Float?
   posthookFailed   Boolean
+  posthookData     String?
   failReason       String?
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  offerVersion OfferVersion @relation(fields: [offerVersionId], references: [id], onDelete: Cascade)
 }
 
 // strats
 
-model OrderSummary {
-  id              String  @id @db.VarChar(255)
-  txId            String  @db.VarChar(255)
-  mangroveId      String  @db.VarChar(255)
-  stratId         String  @db.VarChar(255)
-  offerListId     String  @db.VarChar(255)
-  takerId         String  @db.VarChar(255)
-  selling         Boolean
-  takerGot        String
-  takerGotNumber  Float
-  takerGave       String
-  takerGaveNumber Float
-  price           Float
-  penalty         String
-  penaltyNumber   Float
-  restingOrderId  String  @db.VarChar(255)
+// potentially many, maybe add index
+// Should we not be able to find what orders were created? and what offers were taken?
+// We are only able to get the restingOrder.
+// - Is this doable by looking up the txId? and finding the orders and offers that way?
+//  - - If so, then maybe we need indexes on txId for other tables.
 
-  tx           Transaction @relation(fields: [txId], references: [id])
-  strat        Strat       @relation(fields: [stratId], references: [id])
-  offerList    OfferList   @relation(fields: [offerListId], references: [id])
-  taker        Account     @relation(fields: [takerId], references: [id])
-  restingOrder Offer       @relation(fields: [restingOrderId], references: [id])
+// Clean up and ref orderId
+
+// This should be MangroveOrder and MangroveOrderVersion, with all the parameteres for MangroveOrder
+
+model MangroveOrder {
+  id               String  @id @db.VarChar(255)
+  txId             String  @db.VarChar(255) 
+  mangroveId       String  @db.VarChar(255) 
+  stratId          String  @db.VarChar(255)
+  offerListId      String  @db.VarChar(255) 
+  takerId          String  @db.VarChar(255) 
+  orderId          String  @db.VarChar(255)
+  restingOrderId   String  @db.VarChar(255) // maybe index?
+  restingOrder     Boolean
+  fillOrKill       Boolean
+  fillWants        Boolean
+  takerWants       String
+  takerWantsNumber Float
+  takerGives       String
+  takerGivesNumber Float
+  bounty          String
+  bountyNumber    Float
+
+    // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
+  // Instead, we create new versions which makes undo easy.
+  currentVersionId  String             @db.VarChar(255)
+
+  tx                   Transaction            @relation(fields: [txId], references: [id])
+  strat                Strat                  @relation(fields: [stratId], references: [id])
+  offerList            OfferList              @relation(fields: [offerListId], references: [id])
+  taker                Account                @relation(fields: [takerId], references: [id])
+  order                Order                  @relation(fields: [orderId], references: [id])
+  offer                Offer                  @relation(fields: [restingOrderId], references: [id])
+  MangroveOrderVersion MangroveOrderVersion[]
+}
+
+model MangroveOrderVersion {
+  id              String   @id @db.VarChar(255)
+  mangroveOrderId String   @db.VarChar(255)
+  totalFee        String
+  totalFeeNumber  Float
+  filled          Boolean
+  cancelled       Boolean
+  failed          Boolean
+  failedReason    String?
+  takerGot        String 
+  takerGotNumber  Float
+  takerGave       String 
+  takerGaveNumber Float 
+  price           Float 
+  // penalty         String // TODO: Add when available
+  // penaltyNumber   Float
+  expiryDate      DateTime
+
+  mangroveOrder MangroveOrder @relation(fields: [mangroveOrderId], references: [id], onDelete: Cascade)
+
+  // The following fields are bookkeeping to support undo of events.
+  versionNumber Int
+  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
+
 }
 
 // store consumed streams offsets
