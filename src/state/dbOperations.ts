@@ -327,8 +327,6 @@ export class DbOperations {
           newVersion.takerGaveNumber,
           newVersion.takerGotNumber
         );
-        newVersion.penalty = ""; // FIXME: cannot get penalty for specific offer
-        newVersion.penaltyNumber = 0; // FIXME: same
         this.addMangroveOrderVersion(
           new MangroveOrderId({ mangroveOrder: mangroveOrder }),
           mangroveOrder,
