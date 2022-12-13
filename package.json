@@ -16,17 +16,17 @@
     "prepare": "yarn gen",
     "prebuild": "yarn clean && yarn format && yarn lint && echo Using TypeScript && tsc --version",
     "build": "yarn gen && tsc --project tsconfig.build.json --pretty",
-    "coverage": "jest --coverage",
     "start:server": "ts-node -r tsconfig-paths/register src/cmd/server.ts",
     "start:consumer": "ts-node -r tsconfig-paths/register src/cmd/consumer.ts",
     "dev": "ts-node -r tsconfig-paths/register src/cmd/dev.ts",
     "start:dist:server": "node dist/cmd/server.js",
     "start:dist:consumer": "node dist/cmd/consumer.js",
     "watch": "yarn build -- --watch",
-    "watch:test": "jest --watch",
     "docker:env": "docker-compose -f deploy/docker-compose.env.yml up",
+    "docker:up": "docker-compose -f deploy/docker-compose.env.yml up -d",
+    "docker:down": "docker-compose -f deploy/docker-compose.env.yml down",
     "test": "yarn run test:unit && yarn run test:integration",
-    "test:integration": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/integration-tests.json --exit",
+    "test:integration": " yarn docker:up && cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/integration-tests.json --exit && yarn docker:down",
     "test:unit": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/unit-tests.json --exit",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/coverage-tests.json --exit "
   },
@@ -65,25 +65,20 @@
   "devDependencies": {
     "@types/async-retry": "^1.4.3",
     "@types/commander": "^2.12.2",
-    "@types/jest": "^27.4.0",
     "@types/lodash": "^4.14.178",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.4",
     "@typescript-eslint/eslint-plugin": "^5.8.1",
     "@typescript-eslint/parser": "^5.8.1",
     "eslint": "^8.6.0",
-    "jest": "^27.4.5",
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
-    "ts-jest": "^27.1.2",
     "ts-node": "^10.4.0",
     "tsconfig-paths": "^3.12.0",
     "typescript": "^4.9.3"
   },
   "engines": {
     "node": ">=16.0.0"
-  },
-  "jest": {
-    "preset": "<rootDir>/"
   },
   "packageManager": "yarn@3.3.0"
 }
