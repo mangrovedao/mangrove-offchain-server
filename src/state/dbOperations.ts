@@ -137,18 +137,18 @@ export class DbOperations {
   }
 
   public async markOfferAsDeleted(id: OfferId) {
-    await this.tx.offer.update({
-      where: { id: id.value },
-      data: { deleted: true },
-    });
+    const offer = await this.getOffer(id);
+    if( !offer ){
+      throw Error(`Could not find offer for offerId: ${id}`)
+    }
+    const newVersion = await this.tx.offerVersion.findUnique({where: { id: offer?.currentVersionId}})
+    if( !newVersion ){
+      throw Error(`Could not find current offer version of offerId: ${id}`)
+    }
+    newVersion.deleted= true;
+    this.addVersionedOffer( id, offer, newVersion);
   }
 
-  public async markOfferAsUndeleted(id: OfferId) {
-    await this.tx.offer.update({
-      where: { id: id.value },
-      data: { deleted: false },
-    });
-  }
 
   public async markMangroveOrderVersionAsCancelled(id: OfferId) {
     const mangroveOrders = await this.tx.mangroveOrder.findMany({

@@ -264,7 +264,7 @@ model Offer {
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions or mark the offer as deleted, which makes undo easy.
   currentVersionId String  @db.VarChar(255)
-  deleted          Boolean @default(false) // The offer has been deleted
+  
 
   mangrove      Mangrove        @relation(fields: [mangroveId], references: [id])
   offerList     OfferList       @relation(fields: [offerListId], references: [id])
@@ -281,6 +281,7 @@ model OfferVersion {
   txId           String  @db.VarChar(255)
   parentOrderId  String? @db.VarChar(255) // index?
   prevOfferId    String? @db.VarChar(255) // what is this?
+  deleted        Boolean @default(false) // The offer has been deleted
   wants          String  @db.VarChar(80)
   wantsNumber    Float
   gives          String  @db.VarChar(80)
@@ -411,7 +412,7 @@ model MangroveOrderVersion {
   totalFee        String
   totalFeeNumber  Float
   filled          Boolean
-  cancelled       Boolean
+  cancelled       Boolean  @default(false)
   failed          Boolean
   failedReason    String?
   takerGot        String 
