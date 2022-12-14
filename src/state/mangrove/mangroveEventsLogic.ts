@@ -30,7 +30,7 @@ export class MangroveEventsLogic {
           return;
         }
     
-        await db.createMangrove(mangroveId, chainId, e.address, transaction!);
+        await db.createMangrove(mangroveId, chainId, e.address, transaction!.id);
       }
 
       async handleMangroveParamsUpdated(
@@ -50,7 +50,7 @@ export class MangroveEventsLogic {
           (model) => {
             _.merge(model, params);
           },
-          transaction
+          transaction!.id
         );
       }
 
