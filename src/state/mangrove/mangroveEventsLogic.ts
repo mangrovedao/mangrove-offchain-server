@@ -98,7 +98,7 @@ export class MangroveEventsLogic {
     
         const amount = new BigNumber(amountChange);
     
-        await db.addVersionedMakerBalance(id, transaction!, (model) => {
+        await db.addVersionedMakerBalance(id, transaction!.id, (model) => {
           model.balance = new BigNumber(model.balance).plus(amount).toFixed();
         });
       }

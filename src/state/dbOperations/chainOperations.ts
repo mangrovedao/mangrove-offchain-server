@@ -14,9 +14,6 @@ export class ChainOperations extends DbOperations {
         return new ChainId(mangrove.chainId);
       }
     
-    
-    
-    
       public async ensureChain(id: ChainId, name: string): Promise<prisma.Chain> {
         let chain = await this.tx.chain.findUnique({
           where: { id: id.chainlistId },

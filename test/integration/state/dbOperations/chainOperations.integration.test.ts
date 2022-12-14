@@ -29,7 +29,7 @@ describe("Chain Operations Integration test suite", () => {
               });
             count = await prisma.mangrove.count();
             assert.strictEqual( count, 1, "One mangrove should have been created");
-            assert.rejects( chainOperations.getChainId( mangroveId ));
+            await assert.rejects( chainOperations.getChainId( mangroveId ));
         })
 
         it("mangrove!=null", async () => {
