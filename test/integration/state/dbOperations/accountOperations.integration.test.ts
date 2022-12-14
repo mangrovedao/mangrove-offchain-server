@@ -30,16 +30,13 @@ describe("Account Operations Integration test suite", () => {
             assert.strictEqual( account.id, accountId.value );
             assert.strictEqual( account.chainId, accountId.chainId.value );
             assert.strictEqual( account.address, accountId.address );
-
-            
-
         })
     })
 
     afterEach( async () => {
         await prisma.account.deleteMany();
     });
-    
+
     after( () => {
         prisma.$disconnect();
     })

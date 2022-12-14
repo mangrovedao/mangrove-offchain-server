@@ -1,5 +1,5 @@
 import * as prisma from "@prisma/client";
-import { ChainId, MangroveId } from "state/model";
+import { ChainId, MangroveId } from "../../../src/state/model";
 import { DbOperations } from "./dbOperations";
 
 export class ChainOperations extends DbOperations {
