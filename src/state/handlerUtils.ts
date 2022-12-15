@@ -38,3 +38,19 @@ export function addNumberStrings(
     .plus(getBigNumber({ value: params.value2, decimals: params.decimals }))
     .toFixed();
 }
+
+export function subtractNumberStrings(
+  params: { value1: string; value2: string } & (
+    | { token: { decimals: number } }
+    | { decimals: number }
+  )
+) {
+  if ("token" in params) {
+    return getBigNumber({ value: params.value1, token: params.token })
+      .minus(getBigNumber({ value: params.value2, token: params.token }))
+      .toFixed();
+  }
+  return getBigNumber({ value: params.value1, decimals: params.decimals })
+    .minus(getBigNumber({ value: params.value2, decimals: params.decimals }))
+    .toFixed();
+}

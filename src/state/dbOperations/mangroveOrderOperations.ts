@@ -2,66 +2,68 @@ import * as prisma from "@prisma/client";
 import * as _ from "lodash";
 
 import {
-    MangroveOrder,
-    TakenOffer
+  MangroveOrder,
+  TakenOffer
 } from "@prisma/client";
 import { Timestamp } from "@proximaone/stream-client-js";
 import BigNumber from "bignumber.js";
 import {
-    addNumberStrings, getNumber,
-    getPrice
+  addNumberStrings, getNumber,
+  getPrice,
+  subtractNumberStrings
 } from "../handlerUtils";
 import {
-    ChainId, MangroveId, MangroveOrderId,
-    MangroveOrderVersionId, OfferId
+  ChainId, MangroveId, MangroveOrderId,
+  MangroveOrderVersionId, OfferId
 } from "../model";
 import { DbOperations, PrismaTx, toUpsert } from "./dbOperations";
 import { OfferListOperations } from "./offerListOperations";
 
 export class MangroveOrderOperations extends DbOperations {
 
-    private offerListOperations:OfferListOperations;
-    public constructor(protected readonly tx: PrismaTx) {
-        super(tx);
-        this.offerListOperations = new OfferListOperations(tx);
+  private offerListOperations: OfferListOperations;
+  public constructor(public readonly tx: PrismaTx) {
+    super(tx);
+    this.offerListOperations = new OfferListOperations(tx);
 
+  }
+
+  public async addMangroveOrderVersionFromOfferId(id: OfferId, updateFunc: (model: prisma.MangroveOrderVersion) => void) {
+    const mangroveOrders = await this.tx.mangroveOrder.findMany({
+      where: { restingOrderId: id.value },
+    });
+    for (const mangroveOrder of mangroveOrders) {
+      const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion({
+        mangroveOrder
+    });
+      updateFunc(mangroveOrderVersion)
+      await this.addMangroveOrderVersion(
+        new MangroveOrderId({ mangroveOrder: mangroveOrder }),
+        mangroveOrder,
+        mangroveOrderVersion
+      );
     }
+  }
 
-    public async markMangroveOrderVersionAsCancelled(id: OfferId) {
-        const mangroveOrders = await this.tx.mangroveOrder.findMany({
-          where: { restingOrderId: id.value },
-        });
-        for (const mangroveOrder of mangroveOrders) {
-          const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion(
-            mangroveOrder
-          );
-          mangroveOrderVersion.cancelled = true;
-          this.addMangroveOrderVersion(
-            new MangroveOrderId({ mangroveOrder: mangroveOrder }),
-            mangroveOrder,
-            mangroveOrderVersion
-          );
-        }
-      }
-    
-      public async getCurrentMangroveOrderVersion(mangroveOrder: MangroveOrder) {
-        const version = await this.tx.mangroveOrderVersion.findUnique({
-          where: {
-            id: new MangroveOrderVersionId({
-              mangroveOrder: mangroveOrder,
-              versionNumber: Number(mangroveOrder.currentVersionId),
-            }).value,
-          },
-        });
-        if (!version) {
-          throw Error(
-            `Could not find mangroveOrderVersion, from mangroveOrder: ${mangroveOrder}`
-          );
-        }
-        return version;
-      }
+  public async getCurrentMangroveOrderVersion(params: { mangroveOrder: MangroveOrder } |{ mangroveOrderId: MangroveOrderId }) {
+    const mangroveOrder = await this.tx.mangroveOrder.findUnique({ where: { id: "mangroveOrder" in params ? params.mangroveOrder.id : params.mangroveOrderId.value}})
+    if(!mangroveOrder){
+      throw Error(`Could not find mangroveOrder from: ${params}`);
+    }
+    const version = await this.tx.mangroveOrderVersion.findUnique({
+      where: {
+        id: mangroveOrder.currentVersionId,
+      },
+    });
+    if (!version) {
+      throw Error(
+        `Could not find mangroveOrderVersion, from mangroveOrder: ${mangroveOrder}`
+      );
+    }
+    return version;
+  }
 
-        // Add a new OfferVersion to a (possibly new) Offer
+  // Add a new OfferVersion to a (possibly new) Offer
   public async addMangroveOrderVersion(
     id: MangroveOrderId,
     mangroveOrder: Omit<prisma.MangroveOrder, "currentVersionId">,
@@ -70,14 +72,22 @@ export class MangroveOrderOperations extends DbOperations {
       "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId"
     >
   ) {
-    const oldVersionId = (
+    if (mangroveOrder.id != id.value) {
+      throw new Error(`MangroveOrder.id (${mangroveOrder}) and Id (${id}) must be the same id `)
+    }
+
+    const oldMangroveOrder = (
       await this.tx.mangroveOrder.findUnique({ where: { id: id.value } })
-    )?.currentVersionId;
+    );
+
+    if (!oldMangroveOrder) {
+      throw new Error(`The MangroveOrder does not exist ${id}`)
+    }
 
     let oldVersion: prisma.MangroveOrderVersion | null = null;
-    if (oldVersionId !== undefined) {
+    if (oldMangroveOrder.currentVersionId !== undefined) {
       oldVersion = await this.tx.mangroveOrderVersion.findUnique({
-        where: { id: oldVersionId },
+        where: { id: oldMangroveOrder.currentVersionId },
       });
       if (oldVersion === null) {
         throw new Error(
@@ -106,7 +116,7 @@ export class MangroveOrderOperations extends DbOperations {
         id: newVersionId.value,
         mangroveOrderId: mangroveOrder.id,
         versionNumber: newVersionNumber,
-        prevVersionId: oldVersionId,
+        prevVersionId: oldMangroveOrder.currentVersionId,
       }),
     });
   }
@@ -116,7 +126,7 @@ export class MangroveOrderOperations extends DbOperations {
       where: { restingOrderId: id.value },
     });
     for (const mangroveOrder of mangroveOrders) {
-      this.deleteLatestVersionOfMangroveOrder(
+      await this.deleteLatestVersionOfMangroveOrder(
         new MangroveOrderId({ mangroveOrder: mangroveOrder })
       );
     }
@@ -146,100 +156,54 @@ export class MangroveOrderOperations extends DbOperations {
     }
   }
 
+
+  
   public async updateMangroveOrderFromTakenOffer(
-    o: Omit<TakenOffer, "orderId" | "offerVersionId">,
+    takenOffer: Omit<TakenOffer, "orderId" | "offerVersionId">,
     offerId: OfferId
   ) {
     const mangroveOrders = await this.tx.mangroveOrder.findMany({
       where: { restingOrderId: offerId.value },
     });
     for (const mangroveOrder of mangroveOrders) {
-      const newVersion = await this.getCurrentMangroveOrderVersion(
+      const newVersion = await this.getCurrentMangroveOrderVersion({
         mangroveOrder
-      );
-      if (newVersion) {
-        const tokens = await this.offerListOperations.getInboundOutboundTokensFromOfferList(
-          mangroveOrder.offerListId
-        );
-        const feeBefore = newVersion.totalFee;
-        const feeForThisOffer = await this.offerListOperations.feeForThisOffer(
-          mangroveOrder.offerListId,
-          o.takerGot
-        );
-        const newTotalFee = addNumberStrings({
-          value1: feeBefore,
-          value2: feeForThisOffer.toFixed(),
-          token: tokens.outboundToken,
-        });
-        newVersion.totalFee = newTotalFee;
-        newVersion.totalFeeNumber = new BigNumber(newTotalFee).toNumber();
-        newVersion.failed = o.posthookFailed || o.posthookData != null;
-        newVersion.failedReason = o.failReason ? o.failReason : o.posthookData;
-        newVersion.takerGave = addNumberStrings({
-          value1: newVersion.takerGave,
-          value2: o.takerGave,
-          token: tokens.inboundToken,
-        });
-        newVersion.takerGaveNumber = getNumber({
-          value: newVersion.takerGave,
-          token: tokens.inboundToken,
-        });
-        newVersion.takerGot = addNumberStrings({
-          value1: newVersion.takerGot,
-          value2: o.takerGot,
-          token: tokens.outboundToken,
-        });
-        newVersion.takerGotNumber = getNumber({
-          value: newVersion.takerGot,
-          token: tokens.inboundToken,
-        });
-        newVersion.filled = mangroveOrder.fillWants
-          ? addNumberStrings({
-              value1: newVersion.takerGot,
-              value2: feeBefore,
-              token: tokens.outboundToken,
-            }) == mangroveOrder.takerWants
-          : newVersion.takerGave == mangroveOrder.takerGives;
-        newVersion.price = getPrice(
-          newVersion.takerGaveNumber,
-          newVersion.takerGotNumber
-        );
-        this.addMangroveOrderVersion(
-          new MangroveOrderId({ mangroveOrder: mangroveOrder }),
-          mangroveOrder,
-          newVersion
-        );
-      }
-    }
-  }
-
-  async updateMangroveOrderWithExpiry(
-    chainId: ChainId,
-    params: {
-      mangroveId: string;
-      offerId: number;
-      expiry: Timestamp["date"];
-      outboundToken: string;
-      inboundToken: string;
-    }
-  ) {
-    const offer = new OfferId(
-      new MangroveId(chainId, params.mangroveId),
-      {
-        inboundToken: params.inboundToken,
-        outboundToken: params.outboundToken,
-      },
-      params.offerId
-    );
-    const mangroveOrders = await this.tx.mangroveOrder.findMany({
-      where: { mangroveId: params.mangroveId, restingOrderId: offer.value },
     });
-    for (const mangroveOrder of mangroveOrders) {
-      const newVersion = await this.getCurrentMangroveOrderVersion(
-        mangroveOrder
+      if (!newVersion) {
+        continue;
+      }
+      const tokens = await this.offerListOperations.getInboundOutboundTokensFromOfferList(
+        mangroveOrder.offerListId
       );
-      newVersion.expiryDate = params.expiry;
-      this.addMangroveOrderVersion(
+      const { newTotalFee, feeForThisOffer } = await this.getFees(newVersion, mangroveOrder, takenOffer, tokens);
+      newVersion.totalFee = newTotalFee;
+      newVersion.totalFeeNumber = new BigNumber(newTotalFee).toNumber();
+      newVersion.failed = this.getFailed(takenOffer);
+      newVersion.failedReason = this.getFailedReason(takenOffer);
+      newVersion.takerGave = addNumberStrings({
+        value1: newVersion.takerGave,
+        value2: takenOffer.takerGave,
+        token: tokens.inboundToken,
+      });
+      newVersion.takerGaveNumber = getNumber({
+        value: newVersion.takerGave,
+        token: tokens.inboundToken,
+      });
+      newVersion.takerGot = addNumberStrings({
+        value1: newVersion.takerGot,
+        value2: subtractNumberStrings( { value1: takenOffer.takerGot, value2: feeForThisOffer, token: tokens.outboundToken } ),
+        token: tokens.outboundToken,
+      });
+      newVersion.takerGotNumber = getNumber({
+        value: newVersion.takerGot,
+        token: tokens.inboundToken,
+      });
+      newVersion.filled = this.getFilled(mangroveOrder, newVersion.takerGot, newVersion.takerGave, newTotalFee, tokens.outboundToken);
+      newVersion.price = getPrice(
+        newVersion.takerGaveNumber,
+        newVersion.takerGotNumber
+      );
+      await this.addMangroveOrderVersion(
         new MangroveOrderId({ mangroveOrder: mangroveOrder }),
         mangroveOrder,
         newVersion
@@ -247,23 +211,56 @@ export class MangroveOrderOperations extends DbOperations {
     }
   }
 
-    // strats
+  // strats
 
-    public async createMangroveOrder(
-        mangroveOrder: prisma.MangroveOrder
-      ): Promise<prisma.MangroveOrder> {
-        return await this.tx.mangroveOrder.create({ data: mangroveOrder });
-      }
-    
-      public async deleteMangroveOrder(id: MangroveOrderId) {
-        this.tx.mangroveOrder.delete({ where: { id: id.value } });
-      }
-    
-      public async createMangroveOrderVersion(
-        mangroveOrderVersion: prisma.MangroveOrderVersion
-      ): Promise<prisma.MangroveOrderVersion> {
-        return await this.tx.mangroveOrderVersion.create({
-          data: mangroveOrderVersion,
-        });
-      }
+  public async createMangroveOrder(
+    mangroveOrder: prisma.MangroveOrder
+  ): Promise<prisma.MangroveOrder> {
+    return await this.tx.mangroveOrder.create({ data: mangroveOrder });
+  }
+
+  public async deleteMangroveOrder(id: MangroveOrderId) {
+    await this.tx.mangroveOrder.delete({ where: { id: id.value } });
+  }
+
+  public async createMangroveOrderVersion(
+    mangroveOrderVersion: prisma.MangroveOrderVersion
+  ): Promise<prisma.MangroveOrderVersion> {
+    return await this.tx.mangroveOrderVersion.create({
+      data: mangroveOrderVersion,
+    });
+  }
+
+  async getFees(newVersion: prisma.MangroveOrderVersion, mangroveOrder: prisma.MangroveOrder, takenOffer: {takerGot:string}, tokens: { outboundToken: { decimals: number} }) {
+    const feeBefore = newVersion.totalFee;
+    const feeForThisOffer = await this.offerListOperations.feeForThisOffer(
+      mangroveOrder.offerListId,
+      takenOffer.takerGot
+    );
+    const newTotalFee = addNumberStrings({
+      value1: feeBefore,
+      value2: feeForThisOffer.toFixed(),
+      token: tokens.outboundToken,
+    });
+    return { newTotalFee, feeBefore, feeForThisOffer: feeForThisOffer.toFixed() };
+  }
+
+    //FIXME: add unit tests
+  getFailedReason(o: Omit<prisma.TakenOffer, "orderId" | "offerVersionId">): string | null {
+    return o.failReason ? o.failReason : o.posthookData;
+  }
+
+  getFailed(o: Omit<prisma.TakenOffer, "orderId" | "offerVersionId">): boolean {
+    return o.posthookFailed || o.posthookData != null;
+  }
+
+  getFilled( mangroveOrder: MangroveOrder, takerGot: string, takerGave:string , feeBefore:string, token: { decimals: number}) {
+    return mangroveOrder.fillWants
+      ? addNumberStrings({
+        value1: takerGot,
+        value2: feeBefore,
+        token: token,
+      }) == mangroveOrder.takerWants
+      : takerGave == mangroveOrder.takerGives
+  }
 }

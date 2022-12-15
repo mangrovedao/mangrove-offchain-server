@@ -24,7 +24,7 @@ export class OfferEventsLogic {
           await db.mangroveOrderOperations.deleteLatestMangroveOrderVersionUsingOfferId(offerId);
           return;
         }
-        await db.mangroveOrderOperations.markMangroveOrderVersionAsCancelled(offerId);
+        await db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(offerId, (m) => m.cancelled=true);
         await db.offerOperations.markOfferAsDeleted(offerId);
       }
 

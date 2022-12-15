@@ -1,8 +1,8 @@
 import * as prisma from "@prisma/client";
 import BigNumber from "bignumber.js";
 import _ from "lodash";
-import { getBigNumber } from "state/handlerUtils";
-import { ChainId, OfferListId, OfferListVersionId, TokenId } from "state/model";
+import { getBigNumber } from "../../state/handlerUtils";
+import { ChainId, OfferListId, OfferListVersionId, TokenId } from "../../state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 
 export class OfferListOperations extends DbOperations{

@@ -2,7 +2,7 @@ import { Transaction } from ".prisma/client";
 import { PrismaClient } from "@prisma/client";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import { OrderSummary } from "@proximaone/stream-schema-mangrove/dist/strategyEvents";
-
+import { Timestamp } from "@proximaone/stream-client-js";
 import { AllDbOperations } from "state/dbOperations/allDbOperations";
 import { addNumberStrings, getNumber, getPrice } from "state/handlerUtils";
 import {
@@ -56,6 +56,26 @@ export class MangroveOrderEventsLogic {
           ? { totalFee: order.totalFee, totalFeeNumber: order.totalFeeNumber }
           : { totalFee: "0", totalFeeNumber: 0 };
       }
+
+  async handleSetExpiry(db: AllDbOperations, chainId: ChainId,
+    params: {
+      mangroveId: string;
+      offerId: number;
+      expiry: Timestamp["date"];
+      outboundToken: string;
+      inboundToken: string;
+    }){
+      const offerId = new OfferId(
+        new MangroveId(chainId, params.mangroveId),
+        {
+          inboundToken: params.inboundToken,
+          outboundToken: params.outboundToken,
+        },
+        params.offerId
+      );
+  
+      db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(offerId, (m) => m.expiryDate = params.expiry );
+    }
 
   async handleOrderSummary( db: AllDbOperations, chainId:ChainId, e:OrderSummary & { id:string, address:string}, event:any, txHash:string, undo: boolean, transaction:Transaction ){
     const offerList = {
