@@ -172,12 +172,9 @@ export class MangroveOrderOperations extends DbOperations {
       if (!newVersion) {
         continue;
       }
-      const tokens = await this.offerListOperations.getInboundOutboundTokensFromOfferList(
-        mangroveOrder.offerListId
+      const tokens = await this.offerListOperations.getOfferListTokens({
+        mangroveOrder }
       );
-      const { newTotalFee, feeForThisOffer } = await this.getFees(newVersion, mangroveOrder, takenOffer, tokens);
-      newVersion.totalFee = newTotalFee;
-      newVersion.totalFeeNumber = new BigNumber(newTotalFee).toNumber();
       newVersion.failed = this.getFailed(takenOffer);
       newVersion.failedReason = this.getFailedReason(takenOffer);
       newVersion.takerGave = addNumberStrings({
@@ -191,14 +188,14 @@ export class MangroveOrderOperations extends DbOperations {
       });
       newVersion.takerGot = addNumberStrings({
         value1: newVersion.takerGot,
-        value2: subtractNumberStrings( { value1: takenOffer.takerGot, value2: feeForThisOffer, token: tokens.outboundToken } ),
+        value2: takenOffer.takerGot,
         token: tokens.outboundToken,
       });
       newVersion.takerGotNumber = getNumber({
         value: newVersion.takerGot,
         token: tokens.inboundToken,
       });
-      newVersion.filled = this.getFilled(mangroveOrder, newVersion.takerGot, newVersion.takerGave, newTotalFee, tokens.outboundToken);
+      newVersion.filled = this.getFilled(mangroveOrder, newVersion.takerGot, newVersion.takerGave, mangroveOrder.totalFee, tokens.outboundToken);
       newVersion.price = getPrice(
         newVersion.takerGaveNumber,
         newVersion.takerGotNumber
@@ -229,20 +226,6 @@ export class MangroveOrderOperations extends DbOperations {
     return await this.tx.mangroveOrderVersion.create({
       data: mangroveOrderVersion,
     });
-  }
-
-  async getFees(newVersion: prisma.MangroveOrderVersion, mangroveOrder: prisma.MangroveOrder, takenOffer: {takerGot:string}, tokens: { outboundToken: { decimals: number} }) {
-    const feeBefore = newVersion.totalFee;
-    const feeForThisOffer = await this.offerListOperations.feeForThisOffer(
-      mangroveOrder.offerListId,
-      takenOffer.takerGot
-    );
-    const newTotalFee = addNumberStrings({
-      value1: feeBefore,
-      value2: feeForThisOffer.toFixed(),
-      token: tokens.outboundToken,
-    });
-    return { newTotalFee, feeBefore, feeForThisOffer: feeForThisOffer.toFixed() };
   }
 
     //FIXME: add unit tests

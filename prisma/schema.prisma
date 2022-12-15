@@ -392,6 +392,8 @@ model MangroveOrder {
   takerGivesNumber Float
   bounty          String
   bountyNumber    Float
+  totalFee        String
+  totalFeeNumber  Float
 
     // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
@@ -409,8 +411,6 @@ model MangroveOrder {
 model MangroveOrderVersion {
   id              String   @id @db.VarChar(255)
   mangroveOrderId String   @db.VarChar(255)
-  totalFee        String
-  totalFeeNumber  Float
   filled          Boolean
   cancelled       Boolean  @default(false)
   failed          Boolean

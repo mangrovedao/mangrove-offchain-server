@@ -106,6 +106,8 @@ describe("Mangrove Operations Integration test suite", () => {
                 takerWantsNumber: 100,
                 takerGives: "50",
                 takerGivesNumber: 50,
+                totalFee: "0.5",
+                totalFeeNumber: 0.5,
                 bounty: "1",
                 bountyNumber: 1,
                 currentVersionId: mangroveOrderVersionId.value
@@ -115,8 +117,6 @@ describe("Mangrove Operations Integration test suite", () => {
             data: {
                 id: mangroveOrderVersionId.value,
                 mangroveOrderId: mangroveOrderId.value,
-                totalFee: "0.5",
-                totalFeeNumber: 0.5,
                 filled: false,
                 cancelled: false,
                 failed: false,
@@ -283,8 +283,6 @@ describe("Mangrove Operations Integration test suite", () => {
             await mangroveOrderOperations.updateMangroveOrderFromTakenOffer(takenOffer, offerId);
             assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
             const newVersion = await mangroveOrderOperations.getCurrentMangroveOrderVersion({mangroveOrder});
-            assert.strictEqual( newVersion.totalFee, "1" );
-            assert.strictEqual( newVersion.totalFeeNumber, 1 );
             assert.strictEqual( newVersion.filled, true );
             assert.strictEqual( newVersion.cancelled, mangroveOrderVersion.cancelled );
             assert.strictEqual( newVersion.failed, true );
@@ -336,18 +334,6 @@ describe("Mangrove Operations Integration test suite", () => {
                 assert.fail()
             }
             assert.deepStrictEqual(newMangroveOrderVersion,mangroveOrderVersion);
-        })
-    })
-
-    describe("getFees", () => {
-        it("get fees", async () => {
-            const takenOffer = { takerGot: "100"};
-            const tokens = { outboundToken: { decimals: 0}}
-    
-            const { newTotalFee, feeBefore, feeForThisOffer} = await mangroveOrderOperations.getFees(mangroveOrderVersion, mangroveOrder, takenOffer, tokens);
-            assert.strictEqual(newTotalFee, "1.5");
-            assert.strictEqual(feeBefore, "0.5");
-            assert.strictEqual(feeForThisOffer, "1");
         })
     })
 

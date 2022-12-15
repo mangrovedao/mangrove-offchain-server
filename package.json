@@ -30,7 +30,9 @@
     "test:unit": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/unit-tests.json --exit",
     "debug:integration": " yarn docker:up && npx prisma migrate deploy && cross-env NODE_ENV=test nyc --reporter=lcov mocha --inspect --config test/mocha/config/integration-tests.json --exit && yarn docker:down",
     "debug:unit": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --inspect --config test/mocha/config/unit-tests.json --exit",
-    "test:coverage": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/coverage-tests.json --exit "
+    "test:coverage": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/coverage-tests.json --exit",
+    "prisma:reset": "prisma migrate reset -f",
+    "prisma:migrate": "prisma migrate dev --name ${0}"
   },
   "dependencies": {
     "@apollo/server": "^4.2.2",

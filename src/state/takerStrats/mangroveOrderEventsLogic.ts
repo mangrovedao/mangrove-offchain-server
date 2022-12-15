@@ -173,6 +173,8 @@ export class MangroveOrderEventsLogic {
       }),
       bounty: e.bounty,
       bountyNumber: getNumber({ value: e.bounty, decimals: 18 }),
+      totalFee: e.fee,
+      totalFeeNumber: getNumber({value: e.fee, token:outboundToken}),
       restingOrderId: restingOrderId.value,
       currentVersionId: mangroveOrderIds.currentVersionId,
     });
@@ -201,8 +203,6 @@ export class MangroveOrderEventsLogic {
     return await db.mangroveOrderOperations.createMangroveOrderVersion({
       id: mangroveOrderVersionId.value,
       mangroveOrderId: mangroveOrderId.value,
-      totalFee: e.fee,
-      totalFeeNumber: getNumber({ value: e.fee, token: outboundToken }),
       filled: e.fillWants
         ? e.takerWants ==
           addNumberStrings({

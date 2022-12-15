@@ -80,6 +80,8 @@ CREATE TABLE "MangroveOrder" (
     "takerGivesNumber" DOUBLE PRECISION NOT NULL,
     "bounty" TEXT NOT NULL,
     "bountyNumber" DOUBLE PRECISION NOT NULL,
+    "totalFee" TEXT NOT NULL,
+    "totalFeeNumber" DOUBLE PRECISION NOT NULL,
     "currentVersionId" VARCHAR(255) NOT NULL,
 
     CONSTRAINT "MangroveOrder_pkey" PRIMARY KEY ("id")
@@ -89,8 +91,6 @@ CREATE TABLE "MangroveOrder" (
 CREATE TABLE "MangroveOrderVersion" (
     "id" VARCHAR(255) NOT NULL,
     "mangroveOrderId" VARCHAR(255) NOT NULL,
-    "totalFee" TEXT NOT NULL,
-    "totalFeeNumber" DOUBLE PRECISION NOT NULL,
     "filled" BOOLEAN NOT NULL,
     "cancelled" BOOLEAN NOT NULL DEFAULT false,
     "failed" BOOLEAN NOT NULL,

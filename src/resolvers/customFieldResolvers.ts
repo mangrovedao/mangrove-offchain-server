@@ -302,6 +302,19 @@ export class CustomMangroveOrderFieldsResolver {
       ctx
     );
   }
+
+  @FieldResolver((type) => Number, { nullable: true })
+  async totalFeeInUsd(
+    @Root() order: MangroveOrder,
+    @Ctx() ctx: Context
+  ): Promise<number | undefined> {
+    return amountFieldToUsd(
+      order,
+      order.totalFeeNumber,
+      findOutboundTokenFromMangroveOrderOrFail,
+      ctx
+    );
+  }
 }
 
 @Resolver((of) => MangroveOrderVersion)
@@ -345,18 +358,7 @@ export class CustomMangroveOrderVersionFieldsResolver {
     );
   }
 
-  @FieldResolver((type) => Number, { nullable: true })
-  async totalFeeInUsd(
-    @Root() order: MangroveOrderVersion,
-    @Ctx() ctx: Context
-  ): Promise<number | undefined> {
-    return amountFieldToUsd(
-      await findMangroveOrderFromMangroveOrderVersion(order, ctx.prisma),
-      order.totalFeeNumber,
-      findInboundTokenFromMangroveOrderOrFail,
-      ctx
-    );
-  }
+
 }
 
 async function amountFieldToUsd<Entity>(
