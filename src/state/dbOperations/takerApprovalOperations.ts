@@ -1,11 +1,16 @@
-import { AccountId, OfferListId, OrderId, TakerApprovalId, TakerApprovalVersionId } from "state/model";
+import {
+  AccountId,
+  OfferListId,
+  OrderId,
+  TakerApprovalId,
+  TakerApprovalVersionId,
+} from "state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 import * as _ from "lodash";
 import * as prisma from "@prisma/client";
 
-
 export class TakerApprovalOperations extends DbOperations {
-      // Add a new TakerApprovalVersion to a (possibly new) TakerApproval
+  // Add a new TakerApprovalVersion to a (possibly new) TakerApproval
   public async addVersionedTakerApproval(
     id: TakerApprovalId,
     tx: prisma.Transaction,
@@ -25,7 +30,7 @@ export class TakerApprovalOperations extends DbOperations {
         mangroveId: id.mangroveId.value,
         ownerId: new AccountId(id.mangroveId.chainId, id.ownerAddress).value,
         spenderId: new AccountId(id.mangroveId.chainId, id.spenderAddress)
-            .value,
+          .value,
         offerListId: new OfferListId(id.mangroveId, id.offerListKey).value,
         currentVersionId: newVersionId.value,
       };

@@ -6,78 +6,96 @@ import { Timestamp } from "@proximaone/stream-client-js";
 import { AllDbOperations } from "state/dbOperations/allDbOperations";
 import { addNumberStrings, getNumber, getPrice } from "state/handlerUtils";
 import {
-    AccountId,
-    ChainId,
-    MangroveId, MangroveOrderId,
-    MangroveOrderVersionId, OfferId,
-    OfferListId, StratId,
-    TokenId
+  AccountId,
+  ChainId,
+  MangroveId,
+  MangroveOrderId,
+  MangroveOrderVersionId,
+  OfferId,
+  OfferListId,
+  StratId,
+  TokenId,
 } from "../model";
 
 type MangroveOrderIds = {
-    mangroveOrderId: string;
-    txId: string;
-    mangroveId: string;
-    stratId: string;
-    offerListId: string;
-    takerId: string;
-    orderId: string;
-    currentVersionId: string;
-  };
+  mangroveOrderId: string;
+  txId: string;
+  mangroveId: string;
+  stratId: string;
+  offerListId: string;
+  takerId: string;
+  orderId: string;
+  currentVersionId: string;
+};
 
 export class MangroveOrderEventsLogic {
+  async getOutboundInbound(
+    offerListId: OfferListId,
+    db: AllDbOperations,
+    txHash: string,
+    event: any
+  ) {
+    let outboundToken, inboundToken;
+    try {
+      const tokens = await db.offerListOperations.getOfferListTokens({
+        id: offerListId,
+      });
+      outboundToken = tokens.outboundToken;
+      inboundToken = tokens.inboundToken;
+    } catch (e) {
+      console.log(`failed to get offer list tokens - tx=${txHash}`, event);
+      throw e;
+    }
+    return { outboundToken, inboundToken };
+  }
 
-    async getOutboundInbound(
-        offerListId: OfferListId,
-        db: AllDbOperations,
-        txHash: string,
-        event: any
-      ) {
-        let outboundToken, inboundToken;
-        try {
-          const tokens = await db.offerListOperations.getOfferListTokens({id:offerListId});
-          outboundToken = tokens.outboundToken;
-          inboundToken = tokens.inboundToken;
-        } catch (e) {
-          console.log(`failed to get offer list tokens - tx=${txHash}`, event);
-          throw e;
-        }
-        return { outboundToken, inboundToken };
-      }
-    
-      async getTotalFee(
-        e: mangroveSchema.strategyEvents.OrderSummary,
-        prisma: PrismaClient
-      ): Promise<{ totalFee: string; totalFeeNumber: number }> {
-        const order = await prisma.order.findUnique({
-          where: { id: e.orderId },
-        });
-        return order
-          ? { totalFee: order.totalFee, totalFeeNumber: order.totalFeeNumber }
-          : { totalFee: "0", totalFeeNumber: 0 };
-      }
+  async getTotalFee(
+    e: mangroveSchema.strategyEvents.OrderSummary,
+    prisma: PrismaClient
+  ): Promise<{ totalFee: string; totalFeeNumber: number }> {
+    const order = await prisma.order.findUnique({
+      where: { id: e.orderId },
+    });
+    return order
+      ? { totalFee: order.totalFee, totalFeeNumber: order.totalFeeNumber }
+      : { totalFee: "0", totalFeeNumber: 0 };
+  }
 
-  async handleSetExpiry(db: AllDbOperations, chainId: ChainId,
+  async handleSetExpiry(
+    db: AllDbOperations,
+    chainId: ChainId,
     params: {
       mangroveId: string;
       offerId: number;
       expiry: Timestamp["date"];
       outboundToken: string;
       inboundToken: string;
-    }){
-      const offerId = new OfferId(
-        new MangroveId(chainId, params.mangroveId),
-        {
-          inboundToken: params.inboundToken,
-          outboundToken: params.outboundToken,
-        },
-        params.offerId
-      );
-  
-      db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(offerId, (m) => m.expiryDate = params.expiry );
     }
+  ) {
+    const offerId = new OfferId(
+      new MangroveId(chainId, params.mangroveId),
+      {
+        inboundToken: params.inboundToken,
+        outboundToken: params.outboundToken,
+      },
+      params.offerId
+    );
 
-  async handleOrderSummary( db: AllDbOperations, chainId:ChainId, e:OrderSummary & { id:string, address:string}, event:any, txHash:string, undo: boolean, transaction:Transaction ){
+    db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
+      offerId,
+      (m) => (m.expiryDate = params.expiry)
+    );
+  }
+
+  async handleOrderSummary(
+    db: AllDbOperations,
+    chainId: ChainId,
+    e: OrderSummary & { id: string; address: string },
+    event: any,
+    txHash: string,
+    undo: boolean,
+    transaction: Transaction
+  ) {
     const offerList = {
       outboundToken: e.fillWants ? e.base : e.quote,
       inboundToken: e.fillWants ? e.quote : e.base,
@@ -100,11 +118,7 @@ export class MangroveOrderEventsLogic {
       await db.mangroveOrderOperations.deleteMangroveOrder(mangroveOrderId);
       return;
     }
-    const restingOrderId = new OfferId(
-      mangroveId,
-      offerList,
-      e.restingOrderId
-    );
+    const restingOrderId = new OfferId(mangroveId, offerList, e.restingOrderId);
 
     const { outboundToken, inboundToken } = await this.getOutboundInbound(
       offerListId,
@@ -174,7 +188,7 @@ export class MangroveOrderEventsLogic {
       bounty: e.bounty,
       bountyNumber: getNumber({ value: e.bounty, decimals: 18 }),
       totalFee: e.fee,
-      totalFeeNumber: getNumber({value: e.fee, token:outboundToken}),
+      totalFeeNumber: getNumber({ value: e.fee, token: outboundToken }),
       restingOrderId: restingOrderId.value,
       currentVersionId: mangroveOrderIds.currentVersionId,
     });

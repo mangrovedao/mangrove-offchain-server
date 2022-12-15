@@ -4,29 +4,30 @@ import { DbOperations, toUpsert } from "./dbOperations";
 import * as _ from "lodash";
 
 export class OfferOperations extends DbOperations {
-    public async getOffer(id: OfferId): Promise<prisma.Offer | null> {
-        return await this.tx.offer.findUnique({ where: { id: id.value } });
-      }
-    
-      public async markOfferAsDeleted(id: OfferId) {
-        const offer = await this.getOffer(id);
-        if( !offer ){
-          throw Error(`Could not find offer for offerId: ${id}`)
-        }
-        const newVersion = await this.tx.offerVersion.findUnique({where: { id: offer?.currentVersionId}})
-        if( !newVersion ){
-          throw Error(`Could not find current offer version of offerId: ${id}`)
-        }
-        newVersion.deleted= true;
-        this.addVersionedOffer( id, offer, newVersion);
-      }
+  public async getOffer(id: OfferId): Promise<prisma.Offer | null> {
+    return await this.tx.offer.findUnique({ where: { id: id.value } });
+  }
 
+  public async markOfferAsDeleted(id: OfferId) {
+    const offer = await this.getOffer(id);
+    if (!offer) {
+      throw Error(`Could not find offer for offerId: ${id}`);
+    }
+    const newVersion = await this.tx.offerVersion.findUnique({
+      where: { id: offer?.currentVersionId },
+    });
+    if (!newVersion) {
+      throw Error(`Could not find current offer version of offerId: ${id}`);
+    }
+    newVersion.deleted = true;
+    this.addVersionedOffer(id, offer, newVersion);
+  }
 
-      public async getVersionedOffer(offerVersionId: string) {
-        return this.tx.offerVersion.findUnique({ where: { id: offerVersionId } });
-      }
+  public async getVersionedOffer(offerVersionId: string) {
+    return this.tx.offerVersion.findUnique({ where: { id: offerVersionId } });
+  }
 
-        // Add a new OfferVersion to a (possibly new) Offer
+  // Add a new OfferVersion to a (possibly new) Offer
   public async addVersionedOffer(
     id: OfferId,
     offer: Omit<prisma.Offer, "deleted" | "currentVersionId">,

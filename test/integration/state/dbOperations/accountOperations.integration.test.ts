@@ -6,39 +6,38 @@ import { after, before, describe, it } from "mocha";
 import { clearPostgres } from "../../../util/prismaUtils";
 
 describe("Account Operations Integration test suite", () => {
-    let prisma:PrismaClient;
-    before( () => {
-        prisma = new PrismaClient();
+  let prisma: PrismaClient;
+  before(() => {
+    prisma = new PrismaClient();
+  });
+
+  describe("ensureAccount", () => {
+    it("account==undefined", async () => {
+      const accountId = new AccountId(new ChainId(10), "abcd");
+      const accountOperations = new AccountOperations(prisma);
+
+      let count = await prisma.account.count();
+      assert.strictEqual(count, 0, "No accounts should have been created yet");
+      let account = await accountOperations.ensureAccount(accountId);
+      count = await prisma.account.count();
+      assert.strictEqual(count, 1, "One account should have been created");
+      assert.strictEqual(account.id, accountId.value);
+      assert.strictEqual(account.chainId, accountId.chainId.value);
+      assert.strictEqual(account.address, accountId.address);
+
+      account = await accountOperations.ensureAccount(accountId);
+      assert.strictEqual(count, 1, "Only one account should have been created");
+      assert.strictEqual(account.id, accountId.value);
+      assert.strictEqual(account.chainId, accountId.chainId.value);
+      assert.strictEqual(account.address, accountId.address);
     });
+  });
 
-    describe("ensureAccount", () => {
-        it("account==undefined", async () => {
-            const accountId = new AccountId(new ChainId( 10), "abcd");
-            const accountOperations = new AccountOperations(prisma);
+  afterEach(async () => {
+    await clearPostgres();
+  });
 
-            let count = await prisma.account.count();
-            assert.strictEqual( count, 0, "No accounts should have been created yet")
-            let account = await accountOperations.ensureAccount(accountId);
-            count = await prisma.account.count();
-            assert.strictEqual( count, 1, "One account should have been created");
-            assert.strictEqual( account.id, accountId.value );
-            assert.strictEqual( account.chainId, accountId.chainId.value );
-            assert.strictEqual( account.address, accountId.address );
-
-            account = await accountOperations.ensureAccount(accountId);
-            assert.strictEqual( count, 1, "Only one account should have been created");
-            assert.strictEqual( account.id, accountId.value );
-            assert.strictEqual( account.chainId, accountId.chainId.value );
-            assert.strictEqual( account.address, accountId.address );
-        })
-    })
-
-    afterEach( async () => {
-        await clearPostgres();
-    });
-
-    after( () => {
-        prisma.$disconnect();
-    })
-
+  after(() => {
+    prisma.$disconnect();
+  });
 });

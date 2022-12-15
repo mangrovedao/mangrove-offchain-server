@@ -16,7 +16,7 @@ export class MangroveOperations extends DbOperations {
     });
 
     if (mangrove) {
-      throw Error(`Mangrove already exists for id: ${id}`)
+      throw Error(`Mangrove already exists for id: ${id}`);
     }
     const newVersionId = new MangroveVersionId(id, 0);
     await this.tx.mangrove.create({
@@ -44,7 +44,6 @@ export class MangroveOperations extends DbOperations {
         dead: null,
       },
     });
-
   }
 
   // Add a new MangroveVersion to an existing Mangrove
@@ -112,5 +111,4 @@ export class MangroveOperations extends DbOperations {
       });
     }
   }
-
 }

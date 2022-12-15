@@ -357,8 +357,6 @@ export class CustomMangroveOrderVersionFieldsResolver {
       ctx
     );
   }
-
-
 }
 
 async function amountFieldToUsd<Entity>(

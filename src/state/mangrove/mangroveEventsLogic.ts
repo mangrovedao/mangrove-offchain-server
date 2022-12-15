@@ -8,101 +8,106 @@ import { AllDbOperations } from "state/dbOperations/allDbOperations";
 import { MakerBalanceOperations } from "state/dbOperations/makerBalanceOperations";
 import { MangroveOperations } from "state/dbOperations/mangroveOperations";
 import {
-    AccountId,
-    ChainId,
-    MakerBalanceId,
-    MangroveId, OfferListId, OrderId, TakerApprovalId,
-    TokenId
+  AccountId,
+  ChainId,
+  MakerBalanceId,
+  MangroveId,
+  OfferListId,
+  OrderId,
+  TakerApprovalId,
+  TokenId,
 } from "../model";
 
 export class MangroveEventsLogic {
+  async handleMangroveCreated(
+    undo: boolean,
+    mangroveId: MangroveId,
+    chainId: ChainId,
+    transaction: prisma.Transaction | undefined,
+    db: MangroveOperations,
+    e: mangroveSchema.events.MangroveCreated
+  ) {
+    if (undo) {
+      await db.deleteLatestMangroveVersion(mangroveId);
+      return;
+    }
 
-    async handleMangroveCreated(
-        undo: boolean,
-        mangroveId: MangroveId,
-        chainId: ChainId,
-        transaction: prisma.Transaction | undefined,
-        db: MangroveOperations,
-        e: mangroveSchema.events.MangroveCreated
-      ) {
-        if (undo) {
-          await db.deleteLatestMangroveVersion(mangroveId);
-          return;
-        }
-    
-        await db.createMangrove(mangroveId, chainId, e.address, transaction!.id);
+    await db.createMangrove(mangroveId, chainId, e.address, transaction!.id);
+  }
+
+  async handleMangroveParamsUpdated(
+    undo: boolean,
+    mangroveId: MangroveId,
+    params: MangroveParams,
+    transaction: prisma.Transaction | undefined,
+    db: MangroveOperations
+  ) {
+    if (undo) {
+      await db.deleteLatestMangroveVersion(mangroveId);
+      return;
+    }
+
+    await db.addVersionedMangrove(
+      mangroveId,
+      (model) => {
+        _.merge(model, params);
+      },
+      transaction!.id
+    );
+  }
+
+  async handleOfferListParamsUpdated(
+    chainId: ChainId,
+    offerList: mangroveSchema.core.OfferList,
+    mangroveId: MangroveId,
+    undo: boolean,
+    params: mangroveSchema.core.OfferListParams,
+    db: AllDbOperations,
+    transaction: prisma.Transaction | undefined
+  ) {
+    const inboundTokenId = new TokenId(chainId, offerList.inboundToken);
+    await db.tokenOperations.assertTokenExists(inboundTokenId);
+    const outboundTokenId = new TokenId(chainId, offerList.outboundToken);
+    await db.tokenOperations.assertTokenExists(outboundTokenId);
+    const id = new OfferListId(mangroveId, offerList);
+
+    if (undo) {
+      await db.offerListOperations.deleteLatestOfferListVersion(id);
+      return;
+    }
+
+    await db.offerListOperations.addVersionedOfferList(
+      id,
+      transaction!.id,
+      (model) => {
+        _.merge(model, params);
       }
+    );
+  }
 
-      async handleMangroveParamsUpdated(
-        undo: boolean,
-        mangroveId: MangroveId,
-        params: MangroveParams,
-        transaction: prisma.Transaction | undefined,
-        db: MangroveOperations
-      ) {
-        if (undo) {
-          await db.deleteLatestMangroveVersion(mangroveId);
-          return;
-        }
-    
-        await db.addVersionedMangrove(
-          mangroveId,
-          (model) => {
-            _.merge(model, params);
-          },
-          transaction!.id
-        );
-      }
+  async handleMakerBalanceUpdated(
+    mangroveId: MangroveId,
+    maker: string,
+    undo: boolean,
+    amountChange: string,
+    db: MakerBalanceOperations,
+    transaction: prisma.Transaction | undefined
+  ) {
+    const id = new MakerBalanceId(mangroveId, maker);
 
-      async handleOfferListParamsUpdated(
-        chainId: ChainId,
-        offerList: mangroveSchema.core.OfferList,
-        mangroveId: MangroveId,
-        undo: boolean,
-        params: mangroveSchema.core.OfferListParams,
-        db: AllDbOperations,
-        transaction: prisma.Transaction | undefined
-      ) {
-        const inboundTokenId = new TokenId(chainId, offerList.inboundToken);
-        await db.tokenOperations.assertTokenExists(inboundTokenId);
-        const outboundTokenId = new TokenId(chainId, offerList.outboundToken);
-        await db.tokenOperations.assertTokenExists(outboundTokenId);
-        const id = new OfferListId(mangroveId, offerList);
-    
-        if (undo) {
-          await db.offerListOperations.deleteLatestOfferListVersion(id);
-          return;
-        }
-    
-        await db.offerListOperations.addVersionedOfferList(id, transaction!.id, (model) => {
-          _.merge(model, params);
-        });
-      }
+    if (undo) {
+      await db.deleteLatestMakerBalanceVersion(id);
+      return;
+    }
 
-      async handleMakerBalanceUpdated(
-        mangroveId: MangroveId,
-        maker: string,
-        undo: boolean,
-        amountChange: string,
-        db: MakerBalanceOperations,
-        transaction: prisma.Transaction | undefined
-      ) {
-        const id = new MakerBalanceId(mangroveId, maker);
-    
-        if (undo) {
-          await db.deleteLatestMakerBalanceVersion(id);
-          return;
-        }
-    
-        // TODO: Add parentOrderId when sufficient information is available
-    
-        const amount = new BigNumber(amountChange);
-    
-        await db.addVersionedMakerBalance(id, transaction!.id, (model) => {
-          model.balance = new BigNumber(model.balance).plus(amount).toFixed();
-        });
-      }
+    // TODO: Add parentOrderId when sufficient information is available
 
+    const amount = new BigNumber(amountChange);
+
+    await db.addVersionedMakerBalance(id, transaction!.id, (model) => {
+      model.balance = new BigNumber(model.balance).plus(amount).toFixed();
+    });
+  }
 
   async handleTakerApprovalUpdated(
     mangroveId: MangroveId,
@@ -135,6 +140,4 @@ export class MangroveEventsLogic {
       parentOrderId
     );
   }
-
-
 }

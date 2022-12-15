@@ -1,42 +1,44 @@
 import * as prisma from "@prisma/client";
 import * as _ from "lodash";
 
-import {
-  MangroveOrder,
-  TakenOffer
-} from "@prisma/client";
+import { MangroveOrder, TakenOffer } from "@prisma/client";
 import { Timestamp } from "@proximaone/stream-client-js";
 import BigNumber from "bignumber.js";
 import {
-  addNumberStrings, getNumber,
+  addNumberStrings,
+  getNumber,
   getPrice,
-  subtractNumberStrings
+  subtractNumberStrings,
 } from "../handlerUtils";
 import {
-  ChainId, MangroveId, MangroveOrderId,
-  MangroveOrderVersionId, OfferId
+  ChainId,
+  MangroveId,
+  MangroveOrderId,
+  MangroveOrderVersionId,
+  OfferId,
 } from "../model";
 import { DbOperations, PrismaTx, toUpsert } from "./dbOperations";
 import { OfferListOperations } from "./offerListOperations";
 
 export class MangroveOrderOperations extends DbOperations {
-
   private offerListOperations: OfferListOperations;
   public constructor(public readonly tx: PrismaTx) {
     super(tx);
     this.offerListOperations = new OfferListOperations(tx);
-
   }
 
-  public async addMangroveOrderVersionFromOfferId(id: OfferId, updateFunc: (model: prisma.MangroveOrderVersion) => void) {
+  public async addMangroveOrderVersionFromOfferId(
+    id: OfferId,
+    updateFunc: (model: prisma.MangroveOrderVersion) => void
+  ) {
     const mangroveOrders = await this.tx.mangroveOrder.findMany({
       where: { restingOrderId: id.value },
     });
     for (const mangroveOrder of mangroveOrders) {
       const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion({
-        mangroveOrder
-    });
-      updateFunc(mangroveOrderVersion)
+        mangroveOrder,
+      });
+      updateFunc(mangroveOrderVersion);
       await this.addMangroveOrderVersion(
         new MangroveOrderId({ mangroveOrder: mangroveOrder }),
         mangroveOrder,
@@ -45,9 +47,20 @@ export class MangroveOrderOperations extends DbOperations {
     }
   }
 
-  public async getCurrentMangroveOrderVersion(params: { mangroveOrder: MangroveOrder } |{ mangroveOrderId: MangroveOrderId }) {
-    const mangroveOrder = await this.tx.mangroveOrder.findUnique({ where: { id: "mangroveOrder" in params ? params.mangroveOrder.id : params.mangroveOrderId.value}})
-    if(!mangroveOrder){
+  public async getCurrentMangroveOrderVersion(
+    params:
+      | { mangroveOrder: MangroveOrder }
+      | { mangroveOrderId: MangroveOrderId }
+  ) {
+    const mangroveOrder = await this.tx.mangroveOrder.findUnique({
+      where: {
+        id:
+          "mangroveOrder" in params
+            ? params.mangroveOrder.id
+            : params.mangroveOrderId.value,
+      },
+    });
+    if (!mangroveOrder) {
       throw Error(`Could not find mangroveOrder from: ${params}`);
     }
     const version = await this.tx.mangroveOrderVersion.findUnique({
@@ -73,15 +86,17 @@ export class MangroveOrderOperations extends DbOperations {
     >
   ) {
     if (mangroveOrder.id != id.value) {
-      throw new Error(`MangroveOrder.id (${mangroveOrder}) and Id (${id}) must be the same id `)
+      throw new Error(
+        `MangroveOrder.id (${mangroveOrder}) and Id (${id}) must be the same id `
+      );
     }
 
-    const oldMangroveOrder = (
-      await this.tx.mangroveOrder.findUnique({ where: { id: id.value } })
-    );
+    const oldMangroveOrder = await this.tx.mangroveOrder.findUnique({
+      where: { id: id.value },
+    });
 
     if (!oldMangroveOrder) {
-      throw new Error(`The MangroveOrder does not exist ${id}`)
+      throw new Error(`The MangroveOrder does not exist ${id}`);
     }
 
     let oldVersion: prisma.MangroveOrderVersion | null = null;
@@ -156,8 +171,6 @@ export class MangroveOrderOperations extends DbOperations {
     }
   }
 
-
-  
   public async updateMangroveOrderFromTakenOffer(
     takenOffer: Omit<TakenOffer, "orderId" | "offerVersionId">,
     offerId: OfferId
@@ -167,13 +180,13 @@ export class MangroveOrderOperations extends DbOperations {
     });
     for (const mangroveOrder of mangroveOrders) {
       const newVersion = await this.getCurrentMangroveOrderVersion({
-        mangroveOrder
-    });
+        mangroveOrder,
+      });
       if (!newVersion) {
         continue;
       }
       const tokens = await this.offerListOperations.getOfferListTokens({
-        mangroveOrder 
+        mangroveOrder,
       });
       newVersion.failed = this.getFailed(takenOffer);
       newVersion.failedReason = this.getFailedReason(takenOffer);
@@ -195,7 +208,13 @@ export class MangroveOrderOperations extends DbOperations {
         value: newVersion.takerGot,
         token: tokens.inboundToken,
       });
-      newVersion.filled = this.getFilled(mangroveOrder, newVersion.takerGot, newVersion.takerGave, mangroveOrder.totalFee, tokens.outboundToken);
+      newVersion.filled = this.getFilled(
+        mangroveOrder,
+        newVersion.takerGot,
+        newVersion.takerGave,
+        mangroveOrder.totalFee,
+        tokens.outboundToken
+      );
       newVersion.price = getPrice(
         newVersion.takerGaveNumber,
         newVersion.takerGotNumber
@@ -228,8 +247,10 @@ export class MangroveOrderOperations extends DbOperations {
     });
   }
 
-    //FIXME: add unit tests
-  getFailedReason(o: Omit<prisma.TakenOffer, "orderId" | "offerVersionId">): string | null {
+  //FIXME: add unit tests
+  getFailedReason(
+    o: Omit<prisma.TakenOffer, "orderId" | "offerVersionId">
+  ): string | null {
     return o.failReason ? o.failReason : o.posthookData;
   }
 
@@ -237,13 +258,19 @@ export class MangroveOrderOperations extends DbOperations {
     return o.posthookFailed || o.posthookData != null;
   }
 
-  getFilled( mangroveOrder: MangroveOrder, takerGot: string, takerGave:string , feeBefore:string, token: { decimals: number}) {
+  getFilled(
+    mangroveOrder: MangroveOrder,
+    takerGot: string,
+    takerGave: string,
+    feeBefore: string,
+    token: { decimals: number }
+  ) {
     return mangroveOrder.fillWants
       ? addNumberStrings({
-        value1: takerGot,
-        value2: feeBefore,
-        token: token,
-      }) == mangroveOrder.takerWants
-      : takerGave == mangroveOrder.takerGives
+          value1: takerGot,
+          value2: feeBefore,
+          token: token,
+        }) == mangroveOrder.takerWants
+      : takerGave == mangroveOrder.takerGives;
   }
 }

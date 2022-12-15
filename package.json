@@ -14,6 +14,7 @@
     "prepublishOnly": "yarn build",
     "gen": "prisma generate",
     "prepare": "yarn gen",
+    "precommit": "lint-staged",
     "prebuild": "yarn clean && yarn format && yarn lint && echo Using TypeScript && tsc --version",
     "build": "yarn gen && tsc --project tsconfig.build.json --pretty",
     "start:server": "ts-node -r tsconfig-paths/register src/cmd/server.ts",
@@ -33,6 +34,9 @@
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --config test/mocha/config/coverage-tests.json --exit",
     "prisma:reset": "prisma migrate reset -f",
     "prisma:migrate": "prisma migrate dev --name ${0}"
+  },
+  "lint-staged": {
+    "*.{js,ts,css,md,json,mjs}": "prettier --write"
   },
   "dependencies": {
     "@apollo/server": "^4.2.2",
@@ -54,6 +58,7 @@
     "graphql": "^16.6.0",
     "graphql-fields": "^2.0.3",
     "graphql-scalars": "^1.20.1",
+    "lint-staged": "^13.1.0",
     "lodash": "^4.17.21",
     "mocha": "^10.2.0",
     "mocha-multi-reporters": "^1.5.1",

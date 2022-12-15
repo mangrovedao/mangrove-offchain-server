@@ -22,10 +22,7 @@ import {
   TransactionId,
 } from "../model";
 import { Timestamp } from "@proximaone/stream-client-js";
-import {
-  MangroveOrder,
-  TakenOffer,
-} from "@prisma/client";
+import { MangroveOrder, TakenOffer } from "@prisma/client";
 import BigNumber from "bignumber.js";
 import {
   getBigNumber,
@@ -43,7 +40,9 @@ export type PrismaTx = Omit<
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$use"
 >;
 
-export function toUpsert<T extends { id: string | number }>(entity: T): Upsert<T> {
+export function toUpsert<T extends { id: string | number }>(
+  entity: T
+): Upsert<T> {
   return {
     where: { id: entity.id },
     create: entity,

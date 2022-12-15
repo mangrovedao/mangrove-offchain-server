@@ -1,41 +1,49 @@
 import * as prisma from "@prisma/client";
 import _ from "lodash";
-import { ChainId, OfferListId, OfferListVersionId, TokenId } from "../../state/model";
+import {
+  ChainId,
+  OfferListId,
+  OfferListVersionId,
+  TokenId,
+} from "../../state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 
-export class OfferListOperations extends DbOperations{
-  
-    public async getOfferListTokens( params: {
-      id: OfferListId
-    } |
-    {
-      mangroveOrder: { offerListId: string }
-    }
-      ): Promise<{ outboundToken: prisma.Token; inboundToken: prisma.Token }> {
-        const offerList = await this.tx.offerList.findUnique({
-          where: { id: "id" in params ? params.id.value : params.mangroveOrder.offerListId },
-          include: {
-            outboundToken: true,
-            inboundToken: true,
-          },
-        });
-        if (offerList === null) {
-          if("id" in params){
-            throw new Error(
-              `offer list ${params.id.value} doesn't exist - chainId=${params.id.mangroveId.chainId.value}, mangroveId=${params.id.mangroveId.value}, outboundToken=${params.id.offerListKey.outboundToken},  inboundToken=${params.id.offerListKey.inboundToken}`
-            );
-          } else {
-            throw new Error(
-              `offer list ${params.mangroveOrder.offerListId} doesn't exist `
-            );
-          }
+export class OfferListOperations extends DbOperations {
+  public async getOfferListTokens(
+    params:
+      | {
+          id: OfferListId;
         }
-        return {
-          outboundToken: offerList!.outboundToken,
-          inboundToken: offerList!.inboundToken,
-        };
+      | {
+          mangroveOrder: { offerListId: string };
+        }
+  ): Promise<{ outboundToken: prisma.Token; inboundToken: prisma.Token }> {
+    const offerList = await this.tx.offerList.findUnique({
+      where: {
+        id: "id" in params ? params.id.value : params.mangroveOrder.offerListId,
+      },
+      include: {
+        outboundToken: true,
+        inboundToken: true,
+      },
+    });
+    if (offerList === null) {
+      if ("id" in params) {
+        throw new Error(
+          `offer list ${params.id.value} doesn't exist - chainId=${params.id.mangroveId.chainId.value}, mangroveId=${params.id.mangroveId.value}, outboundToken=${params.id.offerListKey.outboundToken},  inboundToken=${params.id.offerListKey.inboundToken}`
+        );
+      } else {
+        throw new Error(
+          `offer list ${params.mangroveOrder.offerListId} doesn't exist `
+        );
       }
-        // Add a new OfferListVersion to a (possibly new) OfferList
+    }
+    return {
+      outboundToken: offerList!.outboundToken,
+      inboundToken: offerList!.inboundToken,
+    };
+  }
+  // Add a new OfferListVersion to a (possibly new) OfferList
   public async addVersionedOfferList(
     id: OfferListId,
     txId: string,

@@ -68,7 +68,7 @@ async function main() {
       graphql.AggregateOfferVersionResolver,
       graphql.AggregateOrderResolver,
       graphql.AggregateMangroveOrderResolver,
-      graphql.AggregateMangroveOrderVersionResolver,      
+      graphql.AggregateMangroveOrderVersionResolver,
       graphql.AggregateStratResolver,
       graphql.AggregateStreamsResolver,
       graphql.AggregateTakerApprovalResolver,

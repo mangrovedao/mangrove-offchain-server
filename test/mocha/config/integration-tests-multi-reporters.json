@@ -1,6 +1,6 @@
 {
-    "reporterEnabled": "spec, @espendk/json-file-reporter",
-    "espendkJsonFileReporterReporterOptions": {
-      "output": "integration-tests-report.json"
-    }
+  "reporterEnabled": "spec, @espendk/json-file-reporter",
+  "espendkJsonFileReporterReporterOptions": {
+    "output": "integration-tests-report.json"
+  }
 }
