@@ -74,7 +74,7 @@ export class MangroveEventsLogic {
           return;
         }
     
-        await db.offerListOperations.addVersionedOfferList(id, transaction!, (model) => {
+        await db.offerListOperations.addVersionedOfferList(id, transaction!.id, (model) => {
           _.merge(model, params);
         });
       }

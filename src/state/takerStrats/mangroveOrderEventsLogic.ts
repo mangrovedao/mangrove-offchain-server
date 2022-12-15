@@ -35,7 +35,7 @@ export class MangroveOrderEventsLogic {
       ) {
         let outboundToken, inboundToken;
         try {
-          const tokens = await db.offerListOperations.getOfferListTokens(offerListId);
+          const tokens = await db.offerListOperations.getOfferListTokens({id:offerListId});
           outboundToken = tokens.outboundToken;
           inboundToken = tokens.inboundToken;
         } catch (e) {

@@ -1,78 +1,44 @@
 import * as prisma from "@prisma/client";
-import BigNumber from "bignumber.js";
 import _ from "lodash";
-import { getBigNumber } from "../../state/handlerUtils";
 import { ChainId, OfferListId, OfferListVersionId, TokenId } from "../../state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 
 export class OfferListOperations extends DbOperations{
-    public async getOfferListTokens(
-        id: OfferListId
+  
+    public async getOfferListTokens( params: {
+      id: OfferListId
+    } |
+    {
+      mangroveOrder: { offerListId: string }
+    }
       ): Promise<{ outboundToken: prisma.Token; inboundToken: prisma.Token }> {
         const offerList = await this.tx.offerList.findUnique({
-          where: { id: id.value },
+          where: { id: "id" in params ? params.id.value : params.mangroveOrder.offerListId },
           include: {
             outboundToken: true,
             inboundToken: true,
           },
         });
         if (offerList === null) {
-          throw new Error(
-            `offer list ${id.value} doesn't exist - chainId=${id.mangroveId.chainId.chainlistId}, mangroveId=${id.mangroveId.value}, outboundToken=${id.offerListKey.outboundToken},  inboundToken=${id.offerListKey.inboundToken}`
-          );
+          if("id" in params){
+            throw new Error(
+              `offer list ${params.id.value} doesn't exist - chainId=${params.id.mangroveId.chainId.value}, mangroveId=${params.id.mangroveId.value}, outboundToken=${params.id.offerListKey.outboundToken},  inboundToken=${params.id.offerListKey.inboundToken}`
+            );
+          } else {
+            throw new Error(
+              `offer list ${params.mangroveOrder.offerListId} doesn't exist `
+            );
+          }
         }
         return {
           outboundToken: offerList!.outboundToken,
           inboundToken: offerList!.inboundToken,
         };
       }
-
-      async getInboundOutboundTokensFromOfferList(offerListId: string) {
-        const offerList = await this.tx.offerList.findUnique({
-          where: { id: offerListId },
-        });
-        const outboundToken = await this.tx.token.findUnique({
-          where: { id: offerList?.outboundTokenId },
-        });
-    
-        const inboundToken = await this.tx.token.findUnique({
-          where: { id: offerList?.inboundTokenId },
-        });
-        if (!outboundToken) {
-          throw Error(
-            `Could not find outbound token from offerListId: ${offerListId}`
-          );
-        }
-        if (!inboundToken) {
-          throw Error(
-            `Could not find inbound token from offerListId: ${offerListId}`
-          );
-        }
-        return { inboundToken, outboundToken };
-      }
-
-      async feeForThisOffer(offerListId: string, takerGot: string) {
-        const offerList = await this.tx.offerList.findUnique({
-          where: { id: offerListId },
-        });
-        const currentOfferList = await this.tx.offerListVersion.findUnique({
-          where: { id: offerList?.currentVersionId },
-        });
-        const outbound = await this.tx.token.findUnique({
-          where: { id: offerList?.outboundTokenId },
-        });
-        return currentOfferList && outbound
-          ? getBigNumber({
-              value: currentOfferList.fee ? currentOfferList.fee : "0",
-              decimals: 4, // FIXME: correct?
-            }).times(getBigNumber({ value: takerGot, token: outbound }))
-          : new BigNumber("0");
-      }
-
         // Add a new OfferListVersion to a (possibly new) OfferList
   public async addVersionedOfferList(
     id: OfferListId,
-    tx: prisma.Transaction,
+    txId: string,
     updateFunc: (model: prisma.OfferListVersion) => void
   ) {
     let offerList: prisma.OfferList | null = await this.tx.offerList.findUnique(
@@ -83,10 +49,7 @@ export class OfferListOperations extends DbOperations{
     let newVersion: prisma.OfferListVersion;
 
     if (offerList === null) {
-      const mangrove = await this.tx.mangrove.findUnique({
-        where: { id: id.mangroveId.value },
-      });
-      const chainId = new ChainId(mangrove!.chainId);
+      const chainId = id.mangroveId.chainId;
       const inboundTokenId = new TokenId(chainId, id.offerListKey.inboundToken);
       const outboundTokenId = new TokenId(
         chainId,
@@ -103,7 +66,7 @@ export class OfferListOperations extends DbOperations{
       newVersion = {
         id: newVersionId.value,
         offerListId: id.value,
-        txId: tx.id,
+        txId: txId,
         versionNumber: 0,
         prevVersionId: null,
         active: null,

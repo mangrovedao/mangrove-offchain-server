@@ -46,8 +46,9 @@ export class OrderEventLogic {
     
         const offerListId = new OfferListId(mangroveId, offerList);
     
-        const { outboundToken, inboundToken } = await db.offerListOperations.getOfferListTokens(
-          offerListId
+        const { outboundToken, inboundToken } = await db.offerListOperations.getOfferListTokens({
+          id:offerListId
+        }
         );
         const takerGotBigNumber = getBigNumber({
           value: order.takerGot,

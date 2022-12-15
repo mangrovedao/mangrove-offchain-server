@@ -56,8 +56,9 @@ export class OfferEventsLogic {
         const prevOfferId =
           offer.prev == 0 ? null : new OfferId(mangroveId, offerList, offer.prev);
     
-        const { outboundToken, inboundToken } = await db.offerListOperations.getOfferListTokens(
-          offerListId
+        const { outboundToken, inboundToken } = await db.offerListOperations.getOfferListTokens({
+          id:offerListId
+        }
         );
         const givesBigNumber = new BigNumber(offer.gives).shiftedBy(
           -outboundToken.decimals
