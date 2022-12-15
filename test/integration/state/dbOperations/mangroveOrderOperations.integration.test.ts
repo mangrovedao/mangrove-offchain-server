@@ -287,11 +287,11 @@ describe("Mangrove Operations Integration test suite", () => {
             assert.strictEqual( newVersion.cancelled, mangroveOrderVersion.cancelled );
             assert.strictEqual( newVersion.failed, true );
             assert.strictEqual( newVersion.failedReason, takenOffer.failReason );
-            assert.strictEqual( newVersion.takerGot, "99" );
-            assert.strictEqual( newVersion.takerGotNumber, 99 );
+            assert.strictEqual( newVersion.takerGot, "99.5" );
+            assert.strictEqual( newVersion.takerGotNumber, 99.5 );
             assert.strictEqual( newVersion.takerGave, "50" );
             assert.strictEqual( newVersion.takerGaveNumber, 50 );
-            assert.strictEqual( newVersion.price, mangroveOrderVersion.price );
+            assert.strictEqual( newVersion.price, 50/99.5);
             assert.deepStrictEqual( newVersion.expiryDate, mangroveOrderVersion.expiryDate );
             assert.strictEqual( newVersion.versionNumber, 1 )
             assert.strictEqual( newVersion.prevVersionId, mangroveOrderVersion.id );
