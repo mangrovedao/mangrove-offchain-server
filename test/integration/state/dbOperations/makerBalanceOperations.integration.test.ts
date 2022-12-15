@@ -4,7 +4,7 @@ import { assertType } from "graphql";
 import { after, before, describe, it } from "mocha";
 import { MakerBalanceOperations } from "../../../../src/state/dbOperations/makerBalanceOperations";
 import { AccountId, ChainId, MakerBalanceId, MakerBalanceVersionId, MangroveId } from "../../../../src/state/model";
-
+import { clearPostgres } from "../../../util/prismaUtils";
 
 describe("Maker Balance Operations Integration test suite", () => {
     let prisma: PrismaClient;
@@ -148,8 +148,7 @@ describe("Maker Balance Operations Integration test suite", () => {
 
 
     afterEach(async () => {
-        await prisma.makerBalance.deleteMany();
-        await prisma.makerBalanceVersion.deleteMany();
+        await clearPostgres();
     });
 
     after(() => {

@@ -3,7 +3,7 @@ import { AccountOperations } from "../../../../src/state/dbOperations/accountOpe
 import { AccountId, ChainId } from "../../../../src/state/model";
 import assert from "assert";
 import { after, before, describe, it } from "mocha";
-
+import { clearPostgres } from "../../../util/prismaUtils";
 
 describe("Account Operations Integration test suite", () => {
     let prisma:PrismaClient;
@@ -34,7 +34,7 @@ describe("Account Operations Integration test suite", () => {
     })
 
     afterEach( async () => {
-        await prisma.account.deleteMany();
+        await clearPostgres();
     });
 
     after( () => {

@@ -3,7 +3,7 @@ import assert from "assert";
 import { after, before, describe, it } from "mocha";
 import { MangroveOperations } from "../../../../src/state/dbOperations/mangroveOperations";
 import { ChainId, MangroveId, MangroveVersionId } from "../../../../src/state/model";
-
+import { clearPostgres } from "../../../util/prismaUtils";
 
 describe("Mangrove Operations Integration test suite", () => {
     let prisma: PrismaClient;
@@ -159,8 +159,7 @@ describe("Mangrove Operations Integration test suite", () => {
 
 
     afterEach(async () => {
-        await prisma.mangrove.deleteMany();
-        await prisma.mangroveVersion.deleteMany();
+        await clearPostgres();
     });
 
     after(() => {
