@@ -172,8 +172,8 @@ export class MangroveOrderOperations extends DbOperations {
       if (!newVersion) {
         continue;
       }
-      const tokens = await this.offerListOperations.getOfferListTokens({
-        mangroveOrder }
+      const tokens = await this.offerListOperations.getInboundOutboundTokensFromOfferList(
+        mangroveOrder.offerListId
       );
       newVersion.failed = this.getFailed(takenOffer);
       newVersion.failedReason = this.getFailedReason(takenOffer);
