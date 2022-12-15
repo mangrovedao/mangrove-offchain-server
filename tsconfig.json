@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "./",
+    "rootDir": "src/",
     "outDir": "./dist",
     "lib": [
       "ES2019",
@@ -21,12 +21,10 @@
     "downlevelIteration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    
   },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": [
     "node_modules"
   ]
