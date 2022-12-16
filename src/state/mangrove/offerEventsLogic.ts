@@ -60,7 +60,7 @@ export class OfferEventsLogic {
 
     const offerListId = new OfferListId(mangroveId, offerList);
 
-    const prevOfferId =
+    const prevOfferId = 
       offer.prev == 0 ? null : new OfferId(mangroveId, offerList, offer.prev);
 
     const { outboundToken, inboundToken } =

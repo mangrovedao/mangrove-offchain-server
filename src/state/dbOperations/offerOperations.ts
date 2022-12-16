@@ -1,9 +1,10 @@
 import * as prisma from "@prisma/client";
-import { OfferId, OfferVersionId } from "state/model";
+import { OfferId, OfferVersionId } from "../../state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 import * as _ from "lodash";
 
 export class OfferOperations extends DbOperations {
+
   public async getOffer(id: OfferId): Promise<prisma.Offer | null> {
     return await this.tx.offer.findUnique({ where: { id: id.value } });
   }
@@ -14,13 +15,13 @@ export class OfferOperations extends DbOperations {
       throw Error(`Could not find offer for offerId: ${id}`);
     }
     const newVersion = await this.tx.offerVersion.findUnique({
-      where: { id: offer?.currentVersionId },
+      where: { id: offer.currentVersionId },
     });
     if (!newVersion) {
       throw Error(`Could not find current offer version of offerId: ${id}`);
     }
     newVersion.deleted = true;
-    this.addVersionedOffer(id, offer, newVersion);
+    await this.addVersionedOffer(id, offer, newVersion);
   }
 
   public async getVersionedOffer(offerVersionId: string) {
@@ -30,7 +31,7 @@ export class OfferOperations extends DbOperations {
   // Add a new OfferVersion to a (possibly new) Offer
   public async addVersionedOffer(
     id: OfferId,
-    offer: Omit<prisma.Offer, "deleted" | "currentVersionId">,
+    offer: Omit<prisma.Offer, "currentVersionId">,
     version: Omit<
       prisma.OfferVersion,
       "id" | "offerId" | "versionNumber" | "prevVersionId"
@@ -56,7 +57,6 @@ export class OfferOperations extends DbOperations {
       toUpsert<prisma.Offer>(
         _.merge(offer, {
           currentVersionId: newVersionId.value,
-          deleted: false,
         })
       )
     );
@@ -78,11 +78,13 @@ export class OfferOperations extends DbOperations {
     const version = await this.tx.offerVersion.findUnique({
       where: { id: offer.currentVersionId },
     });
+    if (version === null) throw Error(`OfferVersion not found - id: ${id.value}, currentVersionId: ${offer.currentVersionId}`);
+
     await this.tx.offerVersion.delete({
       where: { id: offer.currentVersionId },
     });
 
-    if (version!.prevVersionId === null) {
+    if (version.prevVersionId === null) {
       await this.tx.offer.delete({ where: { id: id.value } });
     } else {
       offer.currentVersionId = version!.prevVersionId;

@@ -20,7 +20,7 @@ import {
 } from "../../../../src/state/model";
 import { clearPostgres } from "../../../util/prismaUtils";
 
-describe("Mangrove Operations Integration test suite", () => {
+describe("Mangrove Order Operations Integration test suite", () => {
   let prisma: PrismaClient;
   let mangroveOrderOperations: MangroveOrderOperations;
   before(() => {
