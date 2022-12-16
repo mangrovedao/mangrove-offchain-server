@@ -257,14 +257,13 @@ model OfferListVersion {
 // Could potentially have many offers, maybe extra indexes are needed.
 
 model Offer {
-  id               String  @id @db.VarChar(255)
-  mangroveId       String  @db.VarChar(255)
-  offerListId      String  @db.VarChar(255)
-  makerId          String  @db.VarChar(255) // index?
+  id               String @id @db.VarChar(255)
+  mangroveId       String @db.VarChar(255)
+  offerListId      String @db.VarChar(255)
+  makerId          String @db.VarChar(255) // index?
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions or mark the offer as deleted, which makes undo easy.
-  currentVersionId String  @db.VarChar(255)
-  
+  currentVersionId String @db.VarChar(255)
 
   mangrove      Mangrove        @relation(fields: [mangroveId], references: [id])
   offerList     OfferList       @relation(fields: [offerListId], references: [id])
@@ -345,18 +344,18 @@ model Order {
 // Why no reference to the actuall offer( and its version), that was taken?
 
 model TakenOffer {
-  id               String  @id @db.VarChar(255)
-  orderId          String  @db.VarChar(255) // index?
-  offerVersionId   String  @db.VarChar(255)
-  takerGot         String  @db.VarChar(80)
-  takerGotNumber   Float
-  takerGave        String
-  takerGaveNumber  Float
-  takerPaidPrice   Float?
-  makerPaidPrice   Float?
-  posthookFailed   Boolean
-  posthookData     String?
-  failReason       String?
+  id              String  @id @db.VarChar(255)
+  orderId         String  @db.VarChar(255) // index?
+  offerVersionId  String  @db.VarChar(255)
+  takerGot        String  @db.VarChar(80)
+  takerGotNumber  Float
+  takerGave       String
+  takerGaveNumber Float
+  takerPaidPrice  Float?
+  makerPaidPrice  Float?
+  posthookFailed  Boolean
+  posthookData    String?
+  failReason      String?
 
   order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   offerVersion OfferVersion @relation(fields: [offerVersionId], references: [id], onDelete: Cascade)
@@ -376,11 +375,11 @@ model TakenOffer {
 
 model MangroveOrder {
   id               String  @id @db.VarChar(255)
-  txId             String  @db.VarChar(255) 
-  mangroveId       String  @db.VarChar(255) 
+  txId             String  @db.VarChar(255)
+  mangroveId       String  @db.VarChar(255)
   stratId          String  @db.VarChar(255)
-  offerListId      String  @db.VarChar(255) 
-  takerId          String  @db.VarChar(255) 
+  offerListId      String  @db.VarChar(255)
+  takerId          String  @db.VarChar(255)
   orderId          String  @db.VarChar(255)
   restingOrderId   String  @db.VarChar(255) // maybe index?
   restingOrder     Boolean
@@ -390,14 +389,14 @@ model MangroveOrder {
   takerWantsNumber Float
   takerGives       String
   takerGivesNumber Float
-  bounty          String
-  bountyNumber    Float
-  totalFee        String
-  totalFeeNumber  Float
+  bounty           String
+  bountyNumber     Float
+  totalFee         String
+  totalFeeNumber   Float
 
-    // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
+  // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId  String             @db.VarChar(255)
+  currentVersionId String @db.VarChar(255)
 
   tx                   Transaction            @relation(fields: [txId], references: [id])
   strat                Strat                  @relation(fields: [stratId], references: [id])
@@ -415,11 +414,11 @@ model MangroveOrderVersion {
   cancelled       Boolean  @default(false)
   failed          Boolean
   failedReason    String?
-  takerGot        String 
+  takerGot        String
   takerGotNumber  Float
-  takerGave       String 
-  takerGaveNumber Float 
-  price           Float 
+  takerGave       String
+  takerGaveNumber Float
+  price           Float
   // penalty         String // TODO: Add when available
   // penaltyNumber   Float
   expiryDate      DateTime @db.Timestamp
@@ -429,7 +428,6 @@ model MangroveOrderVersion {
   // The following fields are bookkeeping to support undo of events.
   versionNumber Int
   prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
-
 }
 
 // store consumed streams offsets
