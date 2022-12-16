@@ -193,7 +193,7 @@ async function main() {
     cors(),
     bodyParser.json(),
     expressMiddleware(server, {
-      context: async ({ req, res }) => ({
+      context: async () => ({
         prisma,
       }),
     })

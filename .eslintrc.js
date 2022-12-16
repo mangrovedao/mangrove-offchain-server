@@ -11,6 +11,7 @@ module.exports = {
     "no-empty": ["error", { allowEmptyCatch: true }],
     "@typescript-eslint/no-explicit-any": "off",
     "no-control-regex": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-empty-function": ["error", { "allow": ["arrowFunctions"] }]
   },
   env: {

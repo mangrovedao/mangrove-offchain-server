@@ -2,20 +2,15 @@ import * as prisma from "@prisma/client";
 import * as _ from "lodash";
 
 import { MangroveOrder, TakenOffer } from "@prisma/client";
-import { Timestamp } from "@proximaone/stream-client-js";
-import BigNumber from "bignumber.js";
 import {
   addNumberStrings,
   getNumber,
-  getPrice,
-  subtractNumberStrings,
+  getPrice
 } from "../handlerUtils";
 import {
-  ChainId,
-  MangroveId,
   MangroveOrderId,
   MangroveOrderVersionId,
-  OfferId,
+  OfferId
 } from "../model";
 import { DbOperations, PrismaTx, toUpsert } from "./dbOperations";
 import { OfferListOperations } from "./offerListOperations";

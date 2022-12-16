@@ -1,22 +1,22 @@
-import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 import {
   MakerBalance,
   MakerBalanceVersion,
   Mangrove,
+  MangroveOrder,
+  MangroveOrderVersion,
   MangroveVersion,
   Offer,
   OfferList,
   OfferListVersion,
   OfferVersion,
   Order,
-  MangroveOrder,
-  MangroveOrderVersion,
   TakenOffer,
   TakerApproval,
   TakerApprovalVersion,
   Token,
 } from "@generated/type-graphql";
 import { PrismaClient } from "@prisma/client";
+import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 
 // At most re-fetch once per 1000 ms for each token
 import { fetchBuilder, MemoryCache } from "node-fetch-cache";

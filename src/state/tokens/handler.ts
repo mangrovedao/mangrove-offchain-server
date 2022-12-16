@@ -43,7 +43,7 @@ export class TokenEventHandler extends PrismaStreamEventHandler<NewToken> {
 
     // handle
     for (const event of events) {
-      const { undo, timestamp, payload } = event;
+      const { undo, payload } = event;
       // Skip tokens with malformed data
       if (!isValidToken(payload)) {
         continue;
