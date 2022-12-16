@@ -3,7 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import { clearPostgres } from "./prismaUtils";
 
-export let prisma:PrismaClient = new PrismaClient();
+export const prisma:PrismaClient = new PrismaClient();
 
 export const mochaHooks = {
 

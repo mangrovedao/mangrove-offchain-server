@@ -1,4 +1,4 @@
-export function barrier(resourcesCount: number = 1): Barrier {
+export function barrier(resourcesCount = 1): Barrier {
   let unlock = () => {};
   let unlockWithError = (err: any) => {};
 
