@@ -23,21 +23,28 @@ Prisma schema is located at `prisma/schema.prisma`.
 
 #### Change Schema
 
-Manually adjust schema file and run `prisma migrate dev --name {migrationname}` create SQL migration and generate client code.
+Manually adjust schema file and run `yarn prisma:migrate {migrationname}` create SQL migration and generate client code.
 
 #### Deploy Schema
 
-Run `prisma migrate deploy` to apply all migrations to selected database (connection string is taken from `DATABASE_URL` env var).
+Run `yarn prisma:deploy` to apply all migrations to selected database (connection string is taken from `DATABASE_URL` env var).
 
-(!) Check out `.env` file
+(!) Check out `.env.development` and `.env.test` file
 
 ### Useful commands
+
 - `yarn start:consumer` to start event stream consumer
 - `yarn start:server` to start graphql server
 - `yarn test` to run all tests
+- `yarn test:integration` to run all integration tests
+- `yarn test:unit` to run all unit tests
+- `yarn start:test:server` to run Apollo on test database. (useful when debugging tests)
+- `yarn debug:integration` to run all integrations tests in debug mode
+- `yarn debug:unit` to run all unit tests in debug mode
 - `yarn lint` to run linter
 
 ### Versioning of entities
+
 Events should not overwrite/delete data, as the data might have to be restored if the event is undone.
 Instead of overwrites/deletes of entities, the following versioning pattern is applied:
 
