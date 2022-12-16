@@ -1,15 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import assert from "assert";
+import { describe, it } from "mocha";
 import { AccountOperations } from "../../../../src/state/dbOperations/accountOperations";
 import { AccountId, ChainId } from "../../../../src/state/model";
-import assert from "assert";
-import { after, before, describe, it } from "mocha";
-import { clearPostgres } from "../../../util/prismaUtils";
+import { prisma } from "../../../../src/utils/test/mochaHooks";
 
 describe("Account Operations Integration test suite", () => {
-  let prisma: PrismaClient;
-  before(() => {
-    prisma = new PrismaClient();
-  });
+
 
   describe("ensureAccount", () => {
     it("account==undefined", async () => {
@@ -33,11 +29,4 @@ describe("Account Operations Integration test suite", () => {
     });
   });
 
-  afterEach(async () => {
-    await clearPostgres();
-  });
-
-  after(() => {
-    prisma.$disconnect();
-  });
 });

@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import * as prisma from "@prisma/client";
+import * as prismaModel from "@prisma/client";
 import assert from "assert";
-import { after, before, describe, it } from "mocha";
+import { before, describe, it } from "mocha";
 import { MangroveOrderOperations } from "../../../../src/state/dbOperations/mangroveOrderOperations";
 import {
   AccountId,
@@ -9,22 +8,18 @@ import {
   MangroveId,
   MangroveOrderId,
   MangroveOrderVersionId,
-  MangroveVersionId,
   OfferId,
   OfferListId,
   OfferListKey,
   OfferListVersionId,
   OrderId,
-  TakenOfferId,
-  TokenId,
+  TokenId
 } from "../../../../src/state/model";
-import { clearPostgres } from "../../../util/prismaUtils";
+import { prisma } from "../../../../src/utils/test/mochaHooks";
 
 describe("Mangrove Order Operations Integration test suite", () => {
-  let prisma: PrismaClient;
   let mangroveOrderOperations: MangroveOrderOperations;
   before(() => {
-    prisma = new PrismaClient();
     mangroveOrderOperations = new MangroveOrderOperations(prisma);
   });
 
@@ -50,8 +45,8 @@ describe("Mangrove Order Operations Integration test suite", () => {
   });
   const orderId = new OrderId(mangroveId, offerListKey, "order");
   const takerId = new AccountId(chainId, "taker");
-  let mangroveOrder: prisma.MangroveOrder;
-  let mangroveOrderVersion: prisma.MangroveOrderVersion;
+  let mangroveOrder: prismaModel.MangroveOrder;
+  let mangroveOrderVersion: prismaModel.MangroveOrderVersion;
 
   beforeEach(async () => {
     await prisma.token.create({
@@ -437,7 +432,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
 
   describe("updateMangroveOrderFromTakenOffer", () => {
     it("Update with taken offer", async () => {
-      const takenOffer: Omit<prisma.TakenOffer, "orderId" | "offerVersionId"> =
+      const takenOffer: Omit<prismaModel.TakenOffer, "orderId" | "offerVersionId"> =
         {
           id: "takenOffer",
           takerGot: "50",
@@ -524,11 +519,4 @@ describe("Mangrove Order Operations Integration test suite", () => {
     });
   });
 
-  afterEach(async () => {
-    await clearPostgres();
-  });
-
-  after(() => {
-    prisma.$disconnect();
-  });
 });

@@ -1,7 +1,6 @@
-import { MakerBalanceVersion, PrismaClient } from "@prisma/client";
+import { MakerBalanceVersion } from "@prisma/client";
 import assert from "assert";
-import { assertType } from "graphql";
-import { after, before, describe, it } from "mocha";
+import { before, describe, it } from "mocha";
 import { MakerBalanceOperations } from "../../../../src/state/dbOperations/makerBalanceOperations";
 import {
   AccountId,
@@ -10,13 +9,11 @@ import {
   MakerBalanceVersionId,
   MangroveId,
 } from "../../../../src/state/model";
-import { clearPostgres } from "../../../util/prismaUtils";
+import { prisma } from "../../../../src/utils/test/mochaHooks";
 
 describe("Maker Balance Operations Integration test suite", () => {
-  let prisma: PrismaClient;
   let makerBalanceOperations: MakerBalanceOperations;
   before(() => {
-    prisma = new PrismaClient();
     makerBalanceOperations = new MakerBalanceOperations(prisma);
   });
 
@@ -243,11 +240,5 @@ describe("Maker Balance Operations Integration test suite", () => {
     });
   });
 
-  afterEach(async () => {
-    await clearPostgres();
-  });
 
-  after(() => {
-    prisma.$disconnect();
-  });
 });

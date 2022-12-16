@@ -1,8 +1,7 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
 
-export async function clearPostgres() {
+export async function clearPostgres(prisma:PrismaClient) {
   const models = Prisma.dmmf.datamodel.models;
   const tables = models.map((model) => model.name);
 

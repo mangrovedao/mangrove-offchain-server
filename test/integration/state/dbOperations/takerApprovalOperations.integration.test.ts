@@ -1,26 +1,22 @@
-import { PrismaClient } from "@prisma/client";
 import assert from "assert";
-import { after, before, describe, it } from "mocha";
+import { before, describe, it } from "mocha";
 import { TakerApprovalOperations } from "../../../../src/state/dbOperations/takerApprovalOperations";
 import {
+  AccountId,
   ChainId,
   MangroveId,
-  MangroveVersionId,
-  TakerApprovalId,
-  OfferListKey,
-  TokenId,
-  AccountId,
   OfferListId,
+  OfferListKey,
+  OrderId,
+  TakerApprovalId,
   TakerApprovalVersionId,
-  OrderId
+  TokenId
 } from "../../../../src/state/model";
-import { clearPostgres } from "../../../util/prismaUtils";
+import { prisma } from "../../../../src/utils/test/mochaHooks";
 
-describe("Mangrove Operations Integration test suite", () => {
-  let prisma: PrismaClient;
+describe("Taker Approval Operations Integration test suite", () => {
   let takerApprovalOperations: TakerApprovalOperations;
   before(() => {
-    prisma = new PrismaClient();
     takerApprovalOperations = new TakerApprovalOperations(prisma);
   });
 
@@ -183,15 +179,4 @@ describe("Mangrove Operations Integration test suite", () => {
     })
   })
 
-
-
-
-
-  afterEach(async () => {
-    await clearPostgres();
-  });
-
-  after(() => {
-    prisma.$disconnect();
-  });
 });

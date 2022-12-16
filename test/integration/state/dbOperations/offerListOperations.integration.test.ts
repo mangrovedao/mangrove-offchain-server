@@ -1,25 +1,21 @@
-import * as prisma from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
-import { after, before, describe } from "mocha";
+import * as prismaModel from "@prisma/client";
+import assert from "assert";
+import { before, describe } from "mocha";
 import { OfferListOperations } from "../../../../src/state/dbOperations/offerListOperations";
 import {
   ChainId,
   MangroveId,
-  MangroveVersionId,
   OfferId,
   OfferListId,
   OfferListKey,
   OfferListVersionId,
-  TokenId,
+  TokenId
 } from "../../../../src/state/model";
-import { clearPostgres } from "../../../util/prismaUtils";
-import assert from "assert";
+import { prisma } from "../../../../src/utils/test/mochaHooks";
 
 describe("OfferList Operations Integration test suite", () => {
-  let prisma: PrismaClient;
   let offerListOperations: OfferListOperations;
   before(() => {
-    prisma = new PrismaClient();
     offerListOperations = new OfferListOperations(prisma);
   });
 
@@ -34,10 +30,10 @@ describe("OfferList Operations Integration test suite", () => {
   const offerId = new OfferId(mangroveId, offerListKey, 1);
   const offerListId = new OfferListId(mangroveId, offerListKey);
   const offerListVersionId = new OfferListVersionId(offerListId, 0);
-  let offerList: prisma.OfferList;
-  let offerListVersion: prisma.OfferListVersion;
-  let outboundToken: prisma.Token;
-  let inboundToken: prisma.Token;
+  let offerList: prismaModel.OfferList;
+  let offerListVersion: prismaModel.OfferListVersion;
+  let outboundToken: prismaModel.Token;
+  let inboundToken: prismaModel.Token;
 
   beforeEach(async () => {
     inboundToken = await prisma.token.create({
@@ -243,11 +239,4 @@ describe("OfferList Operations Integration test suite", () => {
     });
   });
 
-  afterEach(async () => {
-    await clearPostgres();
-  });
-
-  after(() => {
-    prisma.$disconnect();
-  });
 });

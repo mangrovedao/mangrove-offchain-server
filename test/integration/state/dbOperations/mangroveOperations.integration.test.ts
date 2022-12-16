@@ -1,19 +1,16 @@
-import { PrismaClient } from "@prisma/client";
 import assert from "assert";
-import { after, before, describe, it } from "mocha";
+import { before, describe, it } from "mocha";
 import { MangroveOperations } from "../../../../src/state/dbOperations/mangroveOperations";
 import {
   ChainId,
   MangroveId,
   MangroveVersionId,
 } from "../../../../src/state/model";
-import { clearPostgres } from "../../../util/prismaUtils";
+import { prisma } from "../../../../src/utils/test/mochaHooks";
 
 describe("Mangrove Operations Integration test suite", () => {
-  let prisma: PrismaClient;
   let mangroveOperations: MangroveOperations;
   before(() => {
-    prisma = new PrismaClient();
     mangroveOperations = new MangroveOperations(prisma);
   });
 
@@ -215,11 +212,4 @@ describe("Mangrove Operations Integration test suite", () => {
     });
   });
 
-  afterEach(async () => {
-    await clearPostgres();
-  });
-
-  after(() => {
-    prisma.$disconnect();
-  });
 });

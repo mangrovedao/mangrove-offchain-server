@@ -1,28 +1,22 @@
-import * as prisma from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
-import { after, before, describe } from "mocha";
+import * as prismaModel from "@prisma/client";
+import assert from "assert";
+import { before, describe } from "mocha";
 import { OfferOperations } from "../../../../src/state/dbOperations/offerOperations";
 import {
   AccountId,
   ChainId,
   MangroveId,
-  MangroveVersionId,
   OfferId,
   OfferListId,
   OfferListKey,
-  OfferListVersionId,
   OfferVersionId,
-  TokenId,
+  TokenId
 } from "../../../../src/state/model";
-import { clearPostgres } from "../../../util/prismaUtils";
-import assert from "assert";
-import { off } from "process";
+import { prisma } from "../../../../src/utils/test/mochaHooks";
 
 describe("Offer Operations Integration test suite", () => {
-  let prisma: PrismaClient;
   let offerOperations: OfferOperations;
   before(() => {
-    prisma = new PrismaClient();
     offerOperations = new OfferOperations(prisma);
   });
 
@@ -38,8 +32,8 @@ describe("Offer Operations Integration test suite", () => {
   const offerVersionId = new OfferVersionId(offerId, 0);
   const offerListId = new OfferListId(mangroveId, offerListKey);
   const makerId = new AccountId(chainId, "makerAddress");
-  let offer: prisma.Offer;
-  let offerVersion: prisma.OfferVersion;
+  let offer: prismaModel.Offer;
+  let offerVersion: prismaModel.OfferVersion;
 
   beforeEach(async () => {
     offer = await prisma.offer.create({
@@ -206,11 +200,4 @@ describe("Offer Operations Integration test suite", () => {
 
   })
 
-  afterEach(async () => {
-    await clearPostgres();
-  });
-
-  after(() => {
-    prisma.$disconnect();
-  });
 });
