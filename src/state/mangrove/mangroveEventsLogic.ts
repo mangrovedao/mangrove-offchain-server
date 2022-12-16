@@ -133,7 +133,7 @@ export class MangroveEventsLogic {
 
     await db.takerApprovalOperations.addVersionedTakerApproval(
       id,
-      transaction!,
+      transaction!.id,
       (model) => {
         model.value = amount;
       },

@@ -4,7 +4,7 @@ import {
   OrderId,
   TakerApprovalId,
   TakerApprovalVersionId,
-} from "state/model";
+} from "../../state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 import * as _ from "lodash";
 import * as prisma from "@prisma/client";
@@ -13,7 +13,7 @@ export class TakerApprovalOperations extends DbOperations {
   // Add a new TakerApprovalVersion to a (possibly new) TakerApproval
   public async addVersionedTakerApproval(
     id: TakerApprovalId,
-    tx: prisma.Transaction,
+    txId: string,
     updateFunc: (model: prisma.TakerApprovalVersion) => void,
     parentOrderId?: OrderId
   ) {
@@ -37,7 +37,7 @@ export class TakerApprovalOperations extends DbOperations {
       newVersion = {
         id: newVersionId.value,
         takerApprovalId: id.value,
-        txId: tx.id,
+        txId: txId,
         parentOrderId: parentOrderId?.value ?? null,
         versionNumber: 0,
         prevVersionId: null,
@@ -79,12 +79,13 @@ export class TakerApprovalOperations extends DbOperations {
     const takerApproval = await this.tx.takerApproval.findUnique({
       where: { id: id.value },
     });
-    if (takerApproval === null)
-      throw Error(`TakerApproval not found - id: ${id.value}`);
+    if (takerApproval === null) throw Error(`TakerApproval not found - id: ${id.value}`);
 
     const currentVersion = await this.tx.takerApprovalVersion.findUnique({
       where: { id: takerApproval.currentVersionId },
     });
+    if (currentVersion === null) throw Error(`TakerApprovalVersion not found - id: ${id.value}`);
+
     await this.tx.takerApprovalVersion.delete({
       where: { id: takerApproval.currentVersionId },
     });
