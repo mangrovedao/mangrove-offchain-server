@@ -9,7 +9,7 @@ import { OfferOperations } from "./offerOperations";
 import { OrderOperations } from "./orderOperations";
 import { TokenOperations } from "./tokenOperations";
 import { TakerApprovalOperations } from "./takerApprovalOperations";
-import { TransactionOperations } from "./transationOperations";
+import { TransactionOperations } from "./transactionOperations";
 
 export type AllDbOperations = {
   accountOperations: AccountOperations;

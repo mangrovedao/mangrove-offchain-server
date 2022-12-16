@@ -5,26 +5,26 @@ import { TransactionId } from "../model";
 import { DbOperations } from "./dbOperations";
 
 export class TransactionOperations extends DbOperations {
-  public async ensureTransaction(
+  public async ensureTransaction( params: {
     id: TransactionId,
     txHash: string,
     from: string,
-    timestamp: Timestamp,
+    timestamp: Timestamp["date"],
     blockNumber: number,
-    blockHash: string
+    blockHash: string }
   ): Promise<prisma.Transaction> {
     let transaction = await this.tx.transaction.findUnique({
-      where: { id: id.value },
+      where: { id: params.id.value },
     });
     if (transaction === null) {
       transaction = {
-        id: id.value,
-        chainId: id.chainId.value,
-        txHash: txHash,
-        from: from,
-        blockNumber: blockNumber,
-        blockHash: blockHash,
-        time: timestamp.date,
+        id: params.id.value,
+        chainId: params.id.chainId.value,
+        txHash: params.txHash,
+        from: params.from,
+        blockNumber: params.blockNumber,
+        blockHash: params.blockHash,
+        time: params.timestamp,
       };
       await this.tx.transaction.create({ data: transaction });
     }
