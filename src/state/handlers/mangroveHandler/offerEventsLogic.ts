@@ -11,7 +11,7 @@ import {
   OfferId,
   OfferListId,
   OrderId,
-} from "../model";
+} from "../../model";
 
 export class OfferEventsLogic {
   async handleOfferRetracted(

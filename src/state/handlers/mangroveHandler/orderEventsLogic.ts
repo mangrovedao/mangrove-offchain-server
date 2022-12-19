@@ -4,8 +4,8 @@ import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import { strict as assert } from "assert";
 import BigNumber from "bignumber.js";
 import { AllDbOperations } from "state/dbOperations/allDbOperations";
-import { getBigNumber, getNumber } from "state/handlerUtils";
-import { PrismaTransaction } from "../../common";
+import { getBigNumber, getNumber } from "../../../state/handlers/handlerUtils";
+import { PrismaTransaction } from "../../../common";
 import {
   AccountId,
   ChainId,
@@ -14,7 +14,7 @@ import {
   OfferListId,
   OrderId,
   TakenOfferId,
-} from "../model";
+} from "../../model";
 
 export class OrderEventLogic {
   async handleOrderCompleted(

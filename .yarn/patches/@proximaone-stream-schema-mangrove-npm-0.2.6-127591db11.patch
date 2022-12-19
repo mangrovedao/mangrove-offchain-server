@@ -66,7 +66,7 @@ index 514cbc4807aea91aca924df9d6a261fe77d51df5..6298cab27f212f32a0dd367a8803258d
 +    fillOrKill: boolean;
 +    restingOrder: boolean;
      taker: TakerId;
-     selling: boolean;
+-    selling: boolean;
 +    takerWants: Amount;
 +    takerGives: Amount;
      takerGot: Amount;

@@ -3,8 +3,8 @@ import { PrismaClient } from "@prisma/client";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import { OrderSummary } from "@proximaone/stream-schema-mangrove/dist/strategyEvents";
 import { Timestamp } from "@proximaone/stream-client-js";
-import { AllDbOperations } from "state/dbOperations/allDbOperations";
-import { addNumberStrings, getNumber, getPrice } from "state/handlerUtils";
+import { AllDbOperations } from "../../../state/dbOperations/allDbOperations";
+import { addNumberStrings, getNumber, getPrice } from "../../../state/handlers/handlerUtils";
 import {
   AccountId,
   ChainId,
@@ -15,7 +15,7 @@ import {
   OfferListId,
   StratId,
   TokenId,
-} from "../model";
+} from "../../model";
 
 type MangroveOrderIds = {
   mangroveOrderId: string;
