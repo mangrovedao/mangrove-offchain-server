@@ -43,8 +43,8 @@ describe( "All Handlers Integration Test Suite" ,() => {
         assert.strictEqual( await prisma.makerBalanceVersion.count(), 1)
         assert.strictEqual( await prisma.takerApproval.count(), 1)
         assert.strictEqual( await prisma.takerApprovalVersion.count(), 1)
-        assert.strictEqual( await prisma.offer.count(), 100)
-        assert.strictEqual( await prisma.offerVersion.count(), 100)
+        assert.strictEqual( await prisma.offer.count(), 11)
+        assert.strictEqual( await prisma.offerVersion.count(), 22)
     })
 })
 
