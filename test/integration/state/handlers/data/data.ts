@@ -226,7 +226,7 @@ export function getOrderSummaryEvent(): StreamEvent {
         mangroveId: "mangroveId",
         outboundToken: "outboundAddress",
         inboundToken: "inboundAddress",
-        orderId: "orderId", // should match the created order
+        // orderId: "orderId", // should match the created order
         fillWants: true,
         fillOrKill: false,
         restingOrder: true,
