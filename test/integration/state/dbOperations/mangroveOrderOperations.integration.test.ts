@@ -124,7 +124,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
         stratId: "stratId",
         offerListId: offerListId.value,
         takerId: takerId.value,
-        orderId: orderId.value,
+        // orderId: orderId.value,
         restingOrderId: offerId.value,
         restingOrder: true,
         fillOrKill: true,
