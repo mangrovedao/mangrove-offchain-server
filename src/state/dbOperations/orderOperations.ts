@@ -37,8 +37,8 @@ export class OrderOperations extends DbOperations {
     inboundToken: prismaModel.Token,
     outboundToken: prismaModel.Token,
   ) {
-    const takerGotBigNumber = getBigNumber({ value: takenOfferEvent.takerGot, token: outboundToken} );
-    const takerGaveBigNumber = getBigNumber({ value: takenOfferEvent.takerGave, token: inboundToken} );
+    const takerGotBigNumber = getBigNumber({ value: takenOfferEvent.takerWants, token: outboundToken} );
+    const takerGaveBigNumber = getBigNumber({ value: takenOfferEvent.takerGives, token: inboundToken} );
     const offerId = new OfferId(orderId.mangroveId, orderId.offerListKey, takenOfferEvent.id);
     const offer = await this.offerOperations.getOffer(offerId);
 
@@ -47,9 +47,9 @@ export class OrderOperations extends DbOperations {
       offerVersion: {
         connect: { id: offer?.currentVersionId },
       },
-      takerGot: takenOfferEvent.takerGot,
+      takerGot: takenOfferEvent.takerWants,
       takerGotNumber: takerGotBigNumber.toNumber(),
-      takerGave: takenOfferEvent.takerGave,
+      takerGave: takenOfferEvent.takerGives,
       takerGaveNumber: takerGaveBigNumber.toNumber(),
       takerPaidPrice: getPrice({ over: takerGaveBigNumber, under: takerGotBigNumber}),
       makerPaidPrice: getPrice({ over: takerGotBigNumber, under: takerGaveBigNumber}),
@@ -109,16 +109,16 @@ export class OrderOperations extends DbOperations {
         offerListId: offerListId.value,
         mangroveId: mangroveId.value,
         takerId: takerAccountId.value,
-        takerWants: order.takerWants,
-        takerWantsNumber: getNumber({
-          value: order.takerWants,
-          token: outboundToken,
-        }),
-        takerGives: order.takerGives,
-        takerGivesNumber: getNumber({
-          value: order.takerGives,
-          token: inboundToken,
-        }),
+        // takerWants: order.takerWants,
+        // takerWantsNumber: getNumber({
+        //   value: order.takerWants,
+        //   token: outboundToken,
+        // }),
+        // takerGives: order.takerGives,
+        // takerGivesNumber: getNumber({
+        //   value: order.takerGives,
+        //   token: inboundToken,
+        // }),
         takerGot: order.takerGot,
         takerGotNumber: takerGotBigNumber.toNumber(),
         takerGave: order.takerGave,
@@ -129,13 +129,13 @@ export class OrderOperations extends DbOperations {
         makerPaidPrice: takerGaveBigNumber.gt(0)
           ? takerGotBigNumber.div(takerGaveBigNumber).toNumber()
           : undefined,
-        bounty: order.bounty,
-        bountyNumber: getNumber({ value: order.bounty, decimals: 18 }),
-        totalFee: order.feePaid,
-        totalFeeNumber: getNumber({
-          value: order.feePaid,
-          token: outboundToken,
-        }),
+        bounty: order.penalty,
+        bountyNumber: getNumber({ value: order.penalty, decimals: 18 }),
+        // totalFee: order.feePaid,
+        // totalFeeNumber: getNumber({
+        //   value: order.feePaid,
+        //   token: outboundToken,
+        // }),
         takenOffers: {
           create: await Promise.all(
             order.takenOffers.map((o) => db.orderOperations.mapTakenOffer(orderId, o, inboundToken, outboundToken)

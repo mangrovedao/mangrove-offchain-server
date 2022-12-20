@@ -49,17 +49,6 @@ export class MangroveOrderEventsLogic {
     return { outboundToken, inboundToken };
   }
 
-  async getTotalFee(
-    e: mangroveSchema.strategyEvents.OrderSummary,
-    prisma: PrismaClient
-  ): Promise<{ totalFee: string; totalFeeNumber: number }> {
-    const order = await prisma.order.findUnique({
-      where: { id: e.orderId },
-    });
-    return order
-      ? { totalFee: order.totalFee, totalFeeNumber: order.totalFeeNumber }
-      : { totalFee: "0", totalFeeNumber: 0 };
-  }
 
   async handleSetExpiry(
     db: AllDbOperations,
@@ -67,7 +56,7 @@ export class MangroveOrderEventsLogic {
     params: {
       mangroveId: string;
       offerId: number;
-      expiry: Timestamp["date"];
+      expiry: Timestamp;
       outboundToken: string;
       inboundToken: string;
     }
@@ -83,7 +72,7 @@ export class MangroveOrderEventsLogic {
 
     db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
       offerId,
-      (m) => (m.expiryDate = params.expiry)
+      (m) => (m.expiryDate = new Date( params.expiry.epochMs ))
     );
   }
 
@@ -97,8 +86,8 @@ export class MangroveOrderEventsLogic {
     transaction: Transaction
   ) {
     const offerList = {
-      outboundToken: e.fillWants ? e.base : e.quote,
-      inboundToken: e.fillWants ? e.quote : e.base,
+      outboundToken: e.outboundToken,
+      inboundToken: e.inboundToken,
     };
     await db.tokenOperations.assertTokenExists(
       new TokenId(chainId, offerList.outboundToken)
@@ -233,7 +222,7 @@ export class MangroveOrderEventsLogic {
       takerGave: e.takerGave,
       takerGaveNumber: takerGaveNumber,
       price: getPrice({ over: takerGaveNumber, under: takerGotNumber}) ?? 0,
-      expiryDate: e.expiryDate,
+      expiryDate: new Date( e.expiryDate ),
       versionNumber: 0,
       prevVersionId: null,
     });

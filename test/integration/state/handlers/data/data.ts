@@ -1,80 +1,39 @@
-import { Event, State, Timestamp, Transition } from "@proximaone/stream-client-js";
-import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
-import { NewFungibleTokenStreamEvent } from "@proximaone/stream-schema-fungible-token/dist/streams";
-import { MangroveEvent } from "@proximaone/stream-schema-mangrove/dist/events";
-import * as ft from "@proximaone/stream-schema-fungible-token";
 import { TakenOffer } from "@proximaone/stream-schema-mangrove/dist/core";
-import { SetExpiry, TakerStrategyEvent } from "@proximaone/stream-schema-mangrove/dist/strategyEvents";
+import { MangroveEvent } from "@proximaone/stream-schema-mangrove/dist/events";
+import { StrategyEvent } from "@proximaone/stream-schema-mangrove/dist/strategyEvents";
+import { NewToken } from "../../../../../src/state/handlers/tokensHandler/handler";
+import { Offset, StreamEvent, Timestamp } from "@proximaone/stream-client-js";
 
 const chainName = "polygon-main";
 const chainId = 137;
 
 
-
-function toMangroveTransition(event: MangroveEvent): Transition {
-    const state = new State(event.type);
-    const serializedEvent = mangroveSchema.streams.mangrove.serdes.serialize(event);
-
-    const proximaEvent = new Event(serializedEvent, Timestamp.fromEpochMs(1671437095721), false);  // 1671437095721 =>  Mon Dec 19 2022 08:04:55
-
-    return new Transition(state, proximaEvent);
-}
-
-function toStratsTransition(event: TakerStrategyEvent): Transition {
-    const state = new State(event.type);
-    const serializedEvent = mangroveSchema.streams.takerStrategies.serdes.serialize(event);
-
-    const proximaEvent = new Event(serializedEvent, Timestamp.fromEpochMs(1671437095721), false);  // 1671437095721 =>  Mon Dec 19 2022 08:04:55
-
-    return new Transition(state, proximaEvent);
-}
-
-function toTokenTransition(event: NewFungibleTokenStreamEvent): Transition {
-    const state = new State(event.type);
-    const serializedEvent = ft.streams.newFungibleToken.serdes.serialize(event);
-
-    const proximaEvent = new Event(serializedEvent, Timestamp.fromEpochMs(1671437095721), false);  // 1671437095721 =>  Mon Dec 19 2022 08:04:55
-
-    return new Transition(state, proximaEvent);
+function toStreamEvent(json:string):StreamEvent{
+    return new StreamEvent(Offset.zero, Buffer.from(json), Timestamp.fromEpochMs(1671490800000), false);
 }
 
 
 
-export function getTokenEvents(): Transition[] {
-    const inboundEvent: NewFungibleTokenStreamEvent = {
-        ref: {
-            blockHash: "hash",
-            blockNumber: "10",
-            txHash: "txHash"
-        },
-        type: "new",
-        id: "inboundTokenId",
-        chain: chainName,
-        contractAddress: "inboundAddress",
+export function getTokenEvents(): StreamEvent[] {
+    const inboundEvent: NewToken= {
+        address: "inboundAddress",
         symbol: "i",
         name: "inbound",
         totalSupply: "10000",
         decimals: 6
     }
-    const outboundEvent: NewFungibleTokenStreamEvent = {
-        ref: {
-            blockHash: "hash",
-            blockNumber: "10",
-            txHash: "txHash"
-        },
-        type: "new",
-        id: "outboundTokenId",
-        chain: chainName,
-        contractAddress: "outboundAddress",
+    const outboundEvent: NewToken = {
+
+        address: "outboundAddress",
         symbol: "o",
         name: "outbound",
         totalSupply: "10000",
         decimals: 18
     }
-    return [toTokenTransition(inboundEvent), toTokenTransition(outboundEvent)];
+    return [toStreamEvent( JSON.stringify( inboundEvent ) ), toStreamEvent( JSON.stringify( outboundEvent))] ;
 }
 
-export function getMangroveCreatedEvent(): Transition {
+export function getMangroveCreatedEvent(): StreamEvent {
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -92,10 +51,10 @@ export function getMangroveCreatedEvent(): Transition {
             chainlistId: 10
         }
     };
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
-export function getMangroveParamsUpdatedEvent(): Transition {
+export function getMangroveParamsUpdatedEvent(): StreamEvent {
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -117,10 +76,10 @@ export function getMangroveParamsUpdatedEvent(): Transition {
             dead: false
         }
     };
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
-export function getOfferListParamsUpdated(): Transition {
+export function getOfferListParamsUpdated(): StreamEvent {
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -142,10 +101,10 @@ export function getOfferListParamsUpdated(): Transition {
             density: "20"
         }
     };
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
-export function getMakerBalanceUpdated(): Transition {
+export function getMakerBalanceUpdated(): StreamEvent {
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -159,10 +118,10 @@ export function getMakerBalanceUpdated(): Transition {
         maker: "makerAddress",
         amountChange: "10000"
     };
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
-export function getTakerApprovalUpdated(): Transition {
+export function getTakerApprovalUpdated(): StreamEvent {
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -181,10 +140,10 @@ export function getTakerApprovalUpdated(): Transition {
         spender: "spenderAddress",
         amount: "10000"
     };
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
-export function getOfferWrittenEvent(offerNumber: number, wants: string, gives: string): Transition {
+export function getOfferWrittenEvent(offerNumber: number, wants: string, gives: string): StreamEvent {
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -209,11 +168,11 @@ export function getOfferWrittenEvent(offerNumber: number, wants: string, gives: 
         },
         maker: "makerAddress"
     };
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
 
-export function getOrderCompletedEvent(): Transition {
+export function getOrderCompletedEvent(): StreamEvent {
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -233,26 +192,26 @@ export function getOrderCompletedEvent(): Transition {
             taker: "takerAddress",
             takerGot: "1000",
             takerGave: "500",
-            takerWants: "2000",
-            takerGives: "1000",
-            feePaid: "10",
-            bounty: "0",
+            // takerWants: "2000",
+            // takerGives: "1000",
+            // feePaid: "10",
+            penalty: "0",
             takenOffers:  Array.from(Array(10).keys()).flatMap((value) => getTakenOffer(value))
         }
     };
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
 export function getTakenOffer(offerNumber: number):TakenOffer{
     return {
         id: offerNumber,
-        takerGot: "100",
-        takerGave: "50",
+        takerWants: "100",
+        takerGives: "50",
     };
 }
 
-export function getOrderSummaryEvent(): Transition {
-    const event: TakerStrategyEvent = {
+export function getOrderSummaryEvent(): StreamEvent {
+    const event: StrategyEvent = {
         tx: {
             chain: chainName,
             blockHash: "hash",
@@ -265,8 +224,8 @@ export function getOrderSummaryEvent(): Transition {
         address: "MangroveOrderAddress",
         type: "OrderSummary",
         mangroveId: "mangroveId",
-        base: "outboundAddress",
-        quote: "inboundAddress",
+        outboundToken: "outboundAddress",
+        inboundToken: "inboundAddress",
         orderId: "orderId", // should match the created order
         fillWants: true,
         fillOrKill: false,
@@ -278,35 +237,35 @@ export function getOrderSummaryEvent(): Transition {
         takerGave: "500",
         bounty: "0",
         fee: "10",
-        expiryDate: Timestamp.fromEpochMs(1672354800000).date, // Fri Dec 30 2022 00:00:00
+        expiryDate: 1672354800000, // Fri Dec 30 2022 00:00:00
         restingOrderId: 11
     };
-    return toStratsTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );
 }
 
-export function getSetExpiryEvent(expiryDate: Timestamp){
-    const event:TakerStrategyEvent= {
-        tx: {
-            chain: chainName,
-            blockHash: "hash",
-            blockNumber: 1,
-            sender: "sender",
-            txHash: "txHash"
-        },
-        id: "MangroveOrderId",
-        chainId: chainId,
-        address: "MangroveOrderAddress",
-        type: "SetExpiry",
-        mangroveId: "mangroveId",
-        outboundToken: "outboundAddress",
-        inboundToken: "inboundAddress",
-        offerId: 11,
-        expiry: expiryDate.date
-    }
-    return toStratsTransition(event);
-}
+// export function getSetExpiryEvent(expiryDate: Timestamp){
+//     const event:StrategyEvent= {
+//         tx: {
+//             chain: chainName,
+//             blockHash: "hash",
+//             blockNumber: 1,
+//             sender: "sender",
+//             txHash: "txHash"
+//         },
+//         id: "MangroveOrderId",
+//         chainId: chainId,
+//         address: "MangroveOrderAddress",
+//         type: "SetExpiry",
+//         mangroveId: "mangroveId",
+//         outboundToken: "outboundAddress",
+//         inboundToken: "inboundAddress",
+//         offerId: 11,
+//         expiry: expiryDate.date
+//     }
+//     return toStreamEvent( JSON.stringify( event ) );;
+// }
 
-export function getOfferRetracted(){
+export function getOfferRetracted():StreamEvent{
     const event: MangroveEvent = {
         tx: {
             blockHash: "hash",
@@ -324,6 +283,6 @@ export function getOfferRetracted(){
         offerId:11
         };
     
-    return toMangroveTransition(event)
+    return toStreamEvent( JSON.stringify( event ) );;
 }
 

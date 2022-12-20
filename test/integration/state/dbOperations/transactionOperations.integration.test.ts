@@ -8,6 +8,7 @@ import {
 } from "../../../../src/state/model";
 import { clearPostgres } from "../../../../src/utils/test/prismaUtils";
 import {prisma} from "../../../../src/utils/test/mochaHooks"
+import { Timestamp } from "@proximaone/stream-client-js";
 
 describe("Transaction Operations Integration test suite", () => {
   let transactionOperations: TransactionOperations;
@@ -45,7 +46,7 @@ describe("Transaction Operations Integration test suite", () => {
         id: newTransactionId,
         txHash: "newTxHash",
         from: "from",
-        timestamp: new Date(),
+        timestamp: Timestamp.fromEpochMs(1671490800000), // Tue Dec 20 2022 00:00:00
         blockHash: "newBlockHash",
         blockNumber: 11
       };
@@ -60,7 +61,7 @@ describe("Transaction Operations Integration test suite", () => {
         from: params.from,
         blockNumber: params.blockNumber,
         blockHash: params.blockHash,
-        time: params.timestamp,
+        time: new Date( params.timestamp.epochMs ),
       })
     });
 
@@ -71,7 +72,7 @@ describe("Transaction Operations Integration test suite", () => {
         id: transactionId,
         txHash: "newTxHash",
         from: "newFrom",
-        timestamp: new Date(),
+        timestamp: Timestamp.fromEpochMs(1671490800000), // Tue Dec 20 2022 00:00:00
         blockHash: "newBlockHash",
         blockNumber: 11
       };

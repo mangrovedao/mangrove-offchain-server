@@ -312,18 +312,18 @@ model Order {
   mangroveId       String  @db.VarChar(255)
   offerListId      String  @db.VarChar(255) // maybe index?
   takerId          String  @db.VarChar(255) // index?
-  takerWants       String
-  takerWantsNumber Float
-  takerGives       String
-  takerGivesNumber Float
+  // takerWants       String
+  // takerWantsNumber Float
+  // takerGives       String
+  // takerGivesNumber Float
   takerGot         String
   takerGotNumber   Float
   takerGave        String
   takerGaveNumber  Float
   takerPaidPrice   Float?
   makerPaidPrice   Float?
-  totalFee         String
-  totalFeeNumber   Float
+  // totalFee         String
+  // totalFeeNumber   Float
   bounty           String
   bountyNumber     Float
 

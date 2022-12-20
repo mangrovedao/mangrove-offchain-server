@@ -19,7 +19,7 @@
     "build": "yarn gen && tsc --project tsconfig.build.json --pretty",
     "start:server": "dotenv -e .env.development -- ts-node -r tsconfig-paths/register src/cmd/server.ts",
     "start:test:server": "dotenv -e .env.test -- ts-node -r tsconfig-paths/register src/cmd/server.ts",
-    "start:consumer": "ts-node -r tsconfig-paths/register src/cmd/consumer.ts",
+    "start:consumer": "dotenv -e .env.development -- ts-node -r tsconfig-paths/register src/cmd/consumer.ts",
     "dev": "ts-node -r tsconfig-paths/register src/cmd/dev.ts",
     "start:dist:server": "node dist/cmd/server.js",
     "start:dist:consumer": "node dist/cmd/consumer.js",

@@ -9,7 +9,7 @@ export class TransactionOperations extends DbOperations {
     id: TransactionId,
     txHash: string,
     from: string,
-    timestamp: Timestamp["date"],
+    timestamp: Timestamp,
     blockNumber: number,
     blockHash: string }
   ): Promise<prisma.Transaction> {
@@ -24,7 +24,7 @@ export class TransactionOperations extends DbOperations {
         from: params.from,
         blockNumber: params.blockNumber,
         blockHash: params.blockHash,
-        time: params.timestamp,
+        time: new Date( params.timestamp.epochMs ),
       };
       await this.tx.transaction.create({ data: transaction });
     }

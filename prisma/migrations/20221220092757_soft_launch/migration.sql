@@ -12,12 +12,6 @@
   - You are about to drop the `OrderSummary` table. If the table is not empty, all the data it contains will be lost.
   - Added the required column `bounty` to the `Order` table without a default value. This is not possible if the table is not empty.
   - Added the required column `bountyNumber` to the `Order` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `takerGives` to the `Order` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `takerGivesNumber` to the `Order` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `takerWants` to the `Order` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `takerWantsNumber` to the `Order` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `totalFee` to the `Order` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `totalFeeNumber` to the `Order` table without a default value. This is not possible if the table is not empty.
   - Added the required column `offerVersionId` to the `TakenOffer` table without a default value. This is not possible if the table is not empty.
   - Added the required column `takerGave` to the `TakenOffer` table without a default value. This is not possible if the table is not empty.
   - Added the required column `takerGaveNumber` to the `TakenOffer` table without a default value. This is not possible if the table is not empty.
@@ -34,13 +28,7 @@ ALTER TABLE "OfferVersion" ADD COLUMN     "deleted" BOOLEAN NOT NULL DEFAULT fal
 -- AlterTable
 ALTER TABLE "Order" DROP COLUMN "penalty",
 ADD COLUMN     "bounty" TEXT NOT NULL,
-ADD COLUMN     "bountyNumber" DOUBLE PRECISION NOT NULL,
-ADD COLUMN     "takerGives" TEXT NOT NULL,
-ADD COLUMN     "takerGivesNumber" DOUBLE PRECISION NOT NULL,
-ADD COLUMN     "takerWants" TEXT NOT NULL,
-ADD COLUMN     "takerWantsNumber" DOUBLE PRECISION NOT NULL,
-ADD COLUMN     "totalFee" TEXT NOT NULL,
-ADD COLUMN     "totalFeeNumber" DOUBLE PRECISION NOT NULL;
+ADD COLUMN     "bountyNumber" DOUBLE PRECISION NOT NULL;
 
 -- AlterTable
 ALTER TABLE "TakenOffer" DROP COLUMN "makerPaysPrice",
