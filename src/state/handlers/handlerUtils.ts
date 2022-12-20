@@ -19,8 +19,16 @@ export function getNumber(
 ) {
   return getBigNumber(params).toNumber();
 }
-export function getPrice(gave: number, got: number) {
-  return gave / got;
+export function getPrice(params:{over: number, under: number} | { over:BigNumber, under: BigNumber}) {
+  if( typeof params.under === "number" && typeof params.over === "number" ) {
+    return params.under > 0 ? params.over/params.under : null;
+  } else if( params.over instanceof BigNumber && params.under instanceof BigNumber) {
+    return params.under.gt(0)
+        ? params.over.div(params.under).toNumber()
+        : null;
+  }
+  return null;
+
 }
 
 export function addNumberStrings(

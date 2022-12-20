@@ -210,10 +210,10 @@ export class MangroveOrderOperations extends DbOperations {
         mangroveOrder.totalFee,
         tokens.outboundToken
       );
-      newVersion.price = getPrice(
-        newVersion.takerGaveNumber,
-        newVersion.takerGotNumber
-      );
+      newVersion.price = getPrice({ 
+        over: newVersion.takerGaveNumber,
+        under: newVersion.takerGotNumber }
+      ) ?? 0;
       await this.addMangroveOrderVersion(
         new MangroveOrderId({ mangroveOrder: mangroveOrder }),
         mangroveOrder,

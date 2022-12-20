@@ -102,10 +102,9 @@ export class MangroveEventsLogic {
 
     // TODO: Add parentOrderId when sufficient information is available
 
-    const amount = new BigNumber(amountChange);
 
     await db.addVersionedMakerBalance(id, transaction!.id, (model) => {
-      model.balance = new BigNumber(model.balance).plus(amount).toFixed();
+      model.balance = new BigNumber(model.balance).plus(new BigNumber(amountChange)).toFixed();
     });
   }
 
@@ -128,8 +127,7 @@ export class MangroveEventsLogic {
       return;
     }
 
-    const accountId = new AccountId(chainId, owner);
-    await db.accountOperations.ensureAccount(accountId);
+    await db.accountOperations.ensureAccount(new AccountId(chainId, owner));
 
     await db.takerApprovalOperations.addVersionedTakerApproval(
       id,

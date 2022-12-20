@@ -232,7 +232,7 @@ export class MangroveOrderEventsLogic {
       takerGotNumber: takerGotNumber,
       takerGave: e.takerGave,
       takerGaveNumber: takerGaveNumber,
-      price: getPrice(takerGaveNumber, takerGotNumber),
+      price: getPrice({ over: takerGaveNumber, under: takerGotNumber}) ?? 0,
       expiryDate: e.expiryDate,
       versionNumber: 0,
       prevVersionId: null,
