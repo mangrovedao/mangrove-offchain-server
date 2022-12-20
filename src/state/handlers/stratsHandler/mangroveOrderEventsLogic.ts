@@ -24,7 +24,7 @@ type MangroveOrderIds = {
   stratId: string;
   offerListId: string;
   takerId: string;
-  orderId: string;
+  // orderId: string;
   currentVersionId: string;
 };
 
@@ -131,7 +131,7 @@ export class MangroveOrderEventsLogic {
       stratId: new StratId(chainId, e.address).value,
       offerListId: offerListId.value,
       takerId: new AccountId(chainId, e.taker).value,
-      orderId: e.orderId,
+      // orderId: e.orderId,
       currentVersionId: mangroveOrderVersion.id,
     };
 
@@ -160,7 +160,7 @@ export class MangroveOrderEventsLogic {
       stratId: mangroveOrderIds.stratId,
       offerListId: mangroveOrderIds.offerListId,
       takerId: mangroveOrderIds.takerId,
-      orderId: mangroveOrderIds.orderId,
+      // orderId: mangroveOrderIds.orderId,
       fillOrKill: e.fillOrKill.valueOf(),
       fillWants: e.fillWants.valueOf(),
       restingOrder: e.restingOrder.valueOf(),

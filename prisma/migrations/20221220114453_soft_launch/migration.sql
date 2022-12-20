@@ -57,7 +57,6 @@ CREATE TABLE "MangroveOrder" (
     "stratId" VARCHAR(255) NOT NULL,
     "offerListId" VARCHAR(255) NOT NULL,
     "takerId" VARCHAR(255) NOT NULL,
-    "orderId" VARCHAR(255) NOT NULL,
     "restingOrderId" VARCHAR(255) NOT NULL,
     "restingOrder" BOOLEAN NOT NULL,
     "fillOrKill" BOOLEAN NOT NULL,

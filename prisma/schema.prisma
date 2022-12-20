@@ -55,12 +55,12 @@ model Transaction {
 // probably have few tokens, so no extra index needed
 
 model Token {
-  id            String  @id @db.VarChar(255)
-  chainId       Int
-  address       String  @default("") @db.VarChar(80)
-  symbol        String
-  name          String
-  decimals      Int
+  id       String @id @db.VarChar(255)
+  chainId  Int
+  address  String @default("") @db.VarChar(80)
+  symbol   String
+  name     String
+  decimals Int
 
   chain                   Chain       @relation(fields: [chainId], references: [id])
   offerListsWhereInbound  OfferList[] @relation("OfferListsByInboundToken")
@@ -306,26 +306,26 @@ model OfferVersion {
 // could have many orders. probably needs extra indexes.
 
 model Order {
-  id               String  @id @db.VarChar(255)
-  txId             String  @db.VarChar(255) // index?
-  parentOrderId    String? @db.VarChar(255)
-  mangroveId       String  @db.VarChar(255)
-  offerListId      String  @db.VarChar(255) // maybe index?
-  takerId          String  @db.VarChar(255) // index?
+  id              String  @id @db.VarChar(255)
+  txId            String  @db.VarChar(255) // index?
+  parentOrderId   String? @db.VarChar(255)
+  mangroveId      String  @db.VarChar(255)
+  offerListId     String  @db.VarChar(255) // maybe index?
+  takerId         String  @db.VarChar(255) // index?
   // takerWants       String
   // takerWantsNumber Float
   // takerGives       String
   // takerGivesNumber Float
-  takerGot         String
-  takerGotNumber   Float
-  takerGave        String
-  takerGaveNumber  Float
-  takerPaidPrice   Float?
-  makerPaidPrice   Float?
+  takerGot        String
+  takerGotNumber  Float
+  takerGave       String
+  takerGaveNumber Float
+  takerPaidPrice  Float?
+  makerPaidPrice  Float?
   // totalFee         String
   // totalFeeNumber   Float
-  bounty           String
-  bountyNumber     Float
+  bounty          String
+  bountyNumber    Float
 
   tx          Transaction @relation(fields: [txId], references: [id])
   parentOrder Order?      @relation("ParentOrders", fields: [parentOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -337,7 +337,6 @@ model Order {
   childOrders                Order[]                @relation("ParentOrders")
   childTakerApprovalVersions TakerApprovalVersion[]
   childOfferVersions         OfferVersion[]
-  MangroveOrder              MangroveOrder[]
 }
 
 // With many offers and offer versions, we could have many takenOffers, this probably needs indexes
@@ -380,7 +379,7 @@ model MangroveOrder {
   stratId          String  @db.VarChar(255)
   offerListId      String  @db.VarChar(255)
   takerId          String  @db.VarChar(255)
-  orderId          String  @db.VarChar(255)
+  // orderId          String  @db.VarChar(255)
   restingOrderId   String  @db.VarChar(255) // maybe index?
   restingOrder     Boolean
   fillOrKill       Boolean
@@ -402,7 +401,7 @@ model MangroveOrder {
   strat                Strat                  @relation(fields: [stratId], references: [id])
   offerList            OfferList              @relation(fields: [offerListId], references: [id])
   taker                Account                @relation(fields: [takerId], references: [id])
-  order                Order                  @relation(fields: [orderId], references: [id])
+  // order                Order                  @relation(fields: [orderId], references: [id])
   offer                Offer                  @relation(fields: [restingOrderId], references: [id])
   MangroveOrderVersion MangroveOrderVersion[]
 }
