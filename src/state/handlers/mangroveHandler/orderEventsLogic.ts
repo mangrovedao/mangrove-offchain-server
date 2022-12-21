@@ -22,7 +22,6 @@ export class OrderEventLogic {
     transaction: prisma.Transaction | undefined,
     db: AllDbOperations,
     parentOrderId: OrderId | undefined,
-    tx: PrismaTransaction
   ) {
     assert(txRef);
     const orderId = new OrderId(mangroveId, offerList, id);
@@ -32,7 +31,7 @@ export class OrderEventLogic {
       return;
     }
 
-    await db.orderOperations.createOrder(mangroveId, offerList, db, order, chainId, tx, orderId, transaction, parentOrderId);
+    await db.orderOperations.createOrder(mangroveId, offerList, order, chainId, orderId, transaction!.id, parentOrderId);
   }
 
   

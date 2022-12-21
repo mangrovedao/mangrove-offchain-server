@@ -11,7 +11,7 @@ import { ChainId } from "../../../../src/state/model";
 
 
 describe( "All Handlers Integration Test Suite" ,() => {
-    it("Handle Mangrove setup and offers", async () => {
+    it("Handle Mangrove setup, new offers, mangroveOrder, etc.", async () => {
         const chainId =new ChainId(123);
         const tokensHandler = new TokenEventHandler(prisma, "testStream", chainId);
         await tokensHandler.handleEvents(  data.getTokenEvents() ); 

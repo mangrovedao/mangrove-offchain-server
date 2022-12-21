@@ -59,7 +59,7 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
           timestamp: timestamp,
           blockNumber: txRef.blockNumber,
           blockHash: txRef.blockHash
-      });
+        });
       }
 
       await eventMatcher({
@@ -139,7 +139,6 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
             transaction,
             allDbOperation,
             parentOrderId,
-            tx
           ),
       })(payload);
     }

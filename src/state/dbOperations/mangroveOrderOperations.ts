@@ -1,19 +1,35 @@
 import * as prisma from "@prisma/client";
 import * as _ from "lodash";
-
-import { MangroveOrder, TakenOffer } from "@prisma/client";
+import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
+import { MangroveOrder, TakenOffer, Transaction } from "@prisma/client";
 import {
   addNumberStrings,
   getNumber,
   getPrice
 } from "../handlers/handlerUtils";
 import {
+  AccountId,
+  ChainId,
+  MangroveId,
   MangroveOrderId,
   MangroveOrderVersionId,
-  OfferId
+  OfferId,
+  OfferListId,
+  StratId
 } from "../model";
 import { DbOperations, PrismaTx, toUpsert } from "./dbOperations";
 import { OfferListOperations } from "./offerListOperations";
+
+export type MangroveOrderIds = {
+  mangroveOrderId: string;
+  txId: string;
+  mangroveId: string;
+  stratId: string;
+  offerListId: string;
+  takerId: string;
+  // orderId: string;
+  currentVersionId: string;
+};
 
 export class MangroveOrderOperations extends DbOperations {
   private offerListOperations: OfferListOperations;
@@ -71,7 +87,6 @@ export class MangroveOrderOperations extends DbOperations {
     return version;
   }
 
-  // Add a new OfferVersion to a (possibly new) Offer
   public async addMangroveOrderVersion(
     id: MangroveOrderId,
     mangroveOrder: Omit<prisma.MangroveOrder, "currentVersionId">,
@@ -224,23 +239,23 @@ export class MangroveOrderOperations extends DbOperations {
 
   // strats
 
-  public async createMangroveOrder(
-    mangroveOrder: prisma.MangroveOrder
-  ): Promise<prisma.MangroveOrder> {
-    return await this.tx.mangroveOrder.create({ data: mangroveOrder });
-  }
+  // public async createMangroveOrder(
+  //   mangroveOrder: prisma.MangroveOrder
+  // ): Promise<prisma.MangroveOrder> {
+  //   return  mangroveOrder });
+  // }
 
   public async deleteMangroveOrder(id: MangroveOrderId) {
     await this.tx.mangroveOrder.delete({ where: { id: id.value } });
   }
 
-  public async createMangroveOrderVersion(
-    mangroveOrderVersion: prisma.MangroveOrderVersion
-  ): Promise<prisma.MangroveOrderVersion> {
-    return await this.tx.mangroveOrderVersion.create({
-      data: mangroveOrderVersion,
-    });
-  }
+  // public async createMangroveOrderVersion(
+  //   mangroveOrderVersion: prisma.MangroveOrderVersion
+  // ): Promise<prisma.MangroveOrderVersion> {
+  //   return await this.tx.mangroveOrderVersion.create({
+  //     data: mangroveOrderVersion,
+  //   });
+  // }
 
   //FIXME: add unit tests
   getFailedReason(
@@ -267,5 +282,126 @@ export class MangroveOrderOperations extends DbOperations {
           token: token,
         }) == mangroveOrder.takerWants
       : takerGave == mangroveOrder.takerGives;
+  }
+
+  async createMangroveOrderVersion(
+    e: mangroveSchema.strategyEvents.OrderSummary,
+    inboundToken: { decimals: number },
+    outboundToken: { decimals: number },
+    mangroveOrderId: MangroveOrderId,
+  ) {
+    const takerGaveNumber = getNumber({
+      value: e.takerGave,
+      token: inboundToken,
+    });
+    const takerGotNumber = getNumber({
+      value: e.takerGot,
+      token: outboundToken,
+    });
+    const mangroveOrderVersionId = new MangroveOrderVersionId({
+      mangroveOrderId: mangroveOrderId,
+      versionNumber: 0,
+    });
+
+    return await this.tx.mangroveOrderVersion.create({ data: {
+      id: mangroveOrderVersionId.value,
+      mangroveOrderId: mangroveOrderId.value,
+      filled: e.fillWants
+        ? e.takerWants ==
+          addNumberStrings({
+            value1: e.takerGot,
+            value2: e.fee,
+            token: outboundToken,
+          })
+        : e.takerGave == e.takerGives,
+      cancelled: false,
+      failed: false,
+      failedReason: null,
+      takerGot: e.takerGot,
+      takerGotNumber: takerGotNumber,
+      takerGave: e.takerGave,
+      takerGaveNumber: takerGaveNumber,
+      price: getPrice({ over: takerGaveNumber, under: takerGotNumber}) ?? 0,
+      expiryDate: new Date( e.expiryDate ),
+      versionNumber: 0,
+      prevVersionId: null,
+    } });
+  }
+
+
+  async createMangroveOrder(
+    mangroveOrderIds: MangroveOrderIds,
+    e: mangroveSchema.strategyEvents.OrderSummary,
+    outboundToken: { decimals: number },
+    inboundToken: { decimals: number },
+    restingOrderId: OfferId
+  ) {
+    await this.tx.mangroveOrder.create({ data: {
+      id: mangroveOrderIds.mangroveOrderId,
+      txId: mangroveOrderIds.txId,
+      mangroveId: mangroveOrderIds.mangroveId,
+      stratId: mangroveOrderIds.stratId,
+      offerListId: mangroveOrderIds.offerListId,
+      takerId: mangroveOrderIds.takerId,
+      // orderId: mangroveOrderIds.orderId,
+      fillOrKill: e.fillOrKill.valueOf(),
+      fillWants: e.fillWants.valueOf(),
+      restingOrder: e.restingOrder.valueOf(),
+      takerWants: e.takerWants,
+      takerWantsNumber: getNumber({
+        value: e.takerWants,
+        token: outboundToken,
+      }),
+      takerGives: e.takerGives,
+      takerGivesNumber: getNumber({
+        value: e.takerGives,
+        token: inboundToken,
+      }),
+      bounty: e.bounty,
+      bountyNumber: getNumber({ value: e.bounty, decimals: 18 }),
+      totalFee: e.fee,
+      totalFeeNumber: getNumber({ value: e.fee, token: outboundToken }),
+      restingOrderId: restingOrderId.value,
+      currentVersionId: mangroveOrderIds.currentVersionId,
+    }});
+  }
+
+
+  async createNewMangroveOrderAndVersion(
+    e: mangroveSchema.strategyEvents.OrderSummary & { id: string; address: string; }, 
+    inboundToken:{decimals:number}, 
+    outboundToken:{decimals:number}, 
+    mangroveOrderId: MangroveOrderId, 
+    transaction: Transaction, 
+    mangroveId: MangroveId, 
+    chainId: ChainId, 
+    offerListId: OfferListId, 
+    restingOrderId: OfferId
+    ) {
+    const mangroveOrderVersion = await this.createMangroveOrderVersion(
+      e,
+      inboundToken,
+      outboundToken,
+      mangroveOrderId
+    );
+
+    const mangroveOrderIds: MangroveOrderIds = {
+      mangroveOrderId: mangroveOrderId.value,
+      txId: transaction.id,
+      mangroveId: mangroveId.value,
+      stratId: new StratId(chainId, e.address).value,
+      offerListId: offerListId.value,
+      takerId: new AccountId(chainId, e.taker).value,
+      // orderId: e.orderId,
+      currentVersionId: mangroveOrderVersion.id,
+    };
+
+    await this.createMangroveOrder(
+      mangroveOrderIds,
+      e,
+      outboundToken,
+      inboundToken,
+      restingOrderId
+    );
   }
 }
