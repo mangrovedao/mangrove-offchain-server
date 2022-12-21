@@ -1,79 +1,69 @@
-import assert from "assert";
-import _ from "lodash";
-import { ChainId, MangroveId, MangroveVersionId } from "../../state/model";
-import { DbOperations, toUpsert } from "./dbOperations";
 import * as prisma from "@prisma/client";
+import _ from "lodash";
+import { MangroveId, MangroveVersionId } from "../../state/model";
+import { DbOperations, toUpsert } from "./dbOperations";
 
 export class MangroveOperations extends DbOperations {
-  public async createMangrove(
-    id: MangroveId,
-    chainId: ChainId,
-    address: string,
-    txId: string | null
-  ) {
-    const mangrove = await this.tx.mangrove.findUnique({
-      where: { id: id.value },
-    });
-
-    if (mangrove) {
-      throw Error(`Mangrove already exists for id: ${id}`);
-    }
-    const newVersionId = new MangroveVersionId(id, 0);
-    await this.tx.mangrove.create({
-      data: {
-        id: id.value,
-        chainId: chainId.value,
-        address: address,
-        currentVersionId: newVersionId.value,
-      },
-    });
-    await this.tx.mangroveVersion.create({
-      data: {
-        id: newVersionId.value,
-        mangroveId: id.value,
-        txId: txId,
-        versionNumber: 0,
-        prevVersionId: null,
-        governance: null,
-        monitor: null,
-        vault: null,
-        useOracle: null,
-        notify: null,
-        gasmax: null,
-        gasprice: null,
-        dead: null,
-      },
-    });
-  }
 
   // Add a new MangroveVersion to an existing Mangrove
-  public async addVersionedMangrove(
+  public async addVersionedMangrove(params:{
     id: MangroveId,
-    updateFunc: (model: prisma.MangroveVersion) => void,
-    txId: string | null
-  ) {
-    const mangrove: prisma.Mangrove | null = await this.tx.mangrove.findUnique({
-      where: { id: id.value },
+    txId: string | null,
+    updateFunc?: (model: prisma.MangroveVersion) => void,
+    address?:string,
+  }) {
+    let mangrove: prisma.Mangrove | null = await this.tx.mangrove.findUnique({
+      where: { id: params.id.value },
     });
-    assert(mangrove);
 
-    const oldVersionId = mangrove.currentVersionId;
-    const oldVersion = await this.tx.mangroveVersion.findUnique({
-      where: { id: oldVersionId },
-    });
-    if (oldVersion === null) {
-      throw new Error(`Old MangroveVersion not found, id: ${oldVersionId}`);
+    if(mangrove && !params.updateFunc){
+      throw new Error( `You are trying to create a new version of an existing mangrove ${mangrove.id}, but gave no updateFunction`)
     }
-    const newVersionNumber = oldVersion.versionNumber + 1;
-    const newVersionId = new MangroveVersionId(id, newVersionNumber);
-    const newVersion = _.merge(oldVersion, {
-      id: newVersionId.value,
-      txId: txId,
-      versionNumber: newVersionNumber,
-      prevVersionId: oldVersionId,
-    });
+    
+    let newVersion: prisma.MangroveVersion;
 
-    updateFunc(newVersion);
+    if( mangrove === null){
+      if(!params.address){
+        throw new Error( "Cant create Mangrove without an address");
+      }
+      const newVersionId = new MangroveVersionId(params.id, 0);
+      mangrove = {
+          id: params.id.value,
+          chainId: params.id.chainId.value,
+          address: params.address,
+          currentVersionId: newVersionId.value,
+        };
+      newVersion= {
+          id: newVersionId.value,
+          mangroveId: params.id.value,
+          txId: params.txId,
+          versionNumber: 0,
+          prevVersionId: null,
+          governance: null,
+          monitor: null,
+          vault: null,
+          useOracle: null,
+          notify: null,
+          gasmax: null,
+          gasprice: null,
+          dead: null,
+        };
+    } else {
+          const oldVersion = await this.getCurrentMangroveVersion(mangrove);
+          const newVersionNumber = oldVersion.versionNumber + 1;
+          const newVersionId = new MangroveVersionId(params.id, newVersionNumber);
+          newVersion = _.merge(oldVersion, {
+            id: newVersionId.value,
+            txId: params.txId,
+            versionNumber: newVersionNumber,
+            prevVersionId: oldVersion.id,
+          });
+
+    }
+    if( params.updateFunc){
+      params.updateFunc(newVersion);
+    }
+
 
     await this.tx.mangrove.upsert(
       toUpsert(
@@ -84,6 +74,17 @@ export class MangroveOperations extends DbOperations {
     );
 
     await this.tx.mangroveVersion.create({ data: newVersion });
+  }
+
+  private async getCurrentMangroveVersion(mangrove: prisma.Mangrove) {
+    const oldVersionId = mangrove.currentVersionId;
+    const oldVersion = await this.tx.mangroveVersion.findUnique({
+      where: { id: oldVersionId },
+    });
+    if (oldVersion === null) {
+      throw new Error(`Old MangroveVersion not found, id: ${oldVersionId}`);
+    }
+    return oldVersion;
   }
 
   public async deleteLatestMangroveVersion(id: MangroveId) {

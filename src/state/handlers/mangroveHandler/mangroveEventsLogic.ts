@@ -19,21 +19,7 @@ import {
 } from "../../model";
 
 export class MangroveEventsLogic {
-  async handleMangroveCreated(
-    undo: boolean,
-    mangroveId: MangroveId,
-    chainId: ChainId,
-    transaction: prisma.Transaction | undefined,
-    db: MangroveOperations,
-    e: mangroveSchema.events.MangroveCreated
-  ) {
-    if (undo) {
-      await db.deleteLatestMangroveVersion(mangroveId);
-      return;
-    }
 
-    await db.createMangrove(mangroveId, chainId, e.address, transaction!.id);
-  }
 
   async handleMangroveParamsUpdated(
     undo: boolean,
@@ -47,13 +33,13 @@ export class MangroveEventsLogic {
       return;
     }
 
-    await db.addVersionedMangrove(
-      mangroveId,
-      (model) => {
+    await db.addVersionedMangrove({
+      id: mangroveId,
+      txId: transaction!.id,
+      updateFunc: (model) => {
         _.merge(model, params);
       },
-      transaction!.id
-    );
+    });
   }
 
   async handleOfferListParamsUpdated(

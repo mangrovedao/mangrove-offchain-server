@@ -42,31 +42,28 @@ describe("Mangrove Operations Integration test suite", () => {
     });
   });
 
-  describe("createMangrove", () => {
-    it("Already exists", async () => {
+
+  describe("addVersionedMangrove", () => {
+
+    it("Does not exit, missing address", async () =>{
       const chainId = new ChainId(10);
-      const mangroveId = new MangroveId(chainId, "mangroveId");
-      await assert.rejects(
-        mangroveOperations.createMangrove(
-          mangroveId,
-          chainId,
-          "address",
-          "txId"
-        )
-      );
-    });
+      const mangroveId = new MangroveId(chainId, "mangroveId2");
+      await assert.rejects( mangroveOperations.addVersionedMangrove({
+        id:mangroveId,
+        txId:"txId"
+    }) );
+    })
 
     it("Does not exist, will be created", async () => {
       const chainId = new ChainId(10);
       const mangroveId = new MangroveId(chainId, "mangroveId2");
       assert.strictEqual(await prisma.mangrove.count(), 1);
       assert.strictEqual(await prisma.mangroveVersion.count(), 1);
-      await mangroveOperations.createMangrove(
-        mangroveId,
-        chainId,
-        "address",
-        "txId"
-      );
+      await mangroveOperations.addVersionedMangrove({
+        id:mangroveId,
+        address:"address",
+        txId:"txId"
+    });
       assert.strictEqual(await prisma.mangrove.count(), 2);
       assert.strictEqual(await prisma.mangroveVersion.count(), 2);
       const mangrove = await prisma.mangrove.findUnique({
@@ -98,31 +95,26 @@ describe("Mangrove Operations Integration test suite", () => {
         dead: null,
       });
     });
-  });
 
-  describe("addVersionedMangrove", () => {
-    it("Mangrove does not exist", async () => {
+    it("Mangrove exists, np update function given", async () => {
       const chainId = new ChainId(10);
-      const mangroveId = new MangroveId(chainId, "mangroveId2");
-      await assert.rejects(
-        mangroveOperations.addVersionedMangrove(
-          mangroveId,
-          (m) => (m.dead = true),
-          "txId"
-        )
-      );
-    });
+      const mangroveId = new MangroveId(chainId, "mangroveId");
+      await assert.rejects( mangroveOperations.addVersionedMangrove({
+        id:mangroveId,
+        txId:"txId",
+    }) );
+    })
 
     it("Mangrove current version does not exist", async () => {
       const chainId = new ChainId(10);
       const mangroveId = new MangroveId(chainId, "mangroveId");
       await prisma.mangroveVersion.deleteMany();
       await assert.rejects(
-        mangroveOperations.addVersionedMangrove(
-          mangroveId,
-          (m) => (m.dead = true),
-          "txId"
-        )
+        mangroveOperations.addVersionedMangrove({
+          id: mangroveId,
+          txId: "txId",
+          updateFunc: (m) => (m.dead = true),
+    })
       );
     });
 
@@ -137,11 +129,11 @@ describe("Mangrove Operations Integration test suite", () => {
       const oldMangroveVersion = await prisma.mangroveVersion.findUnique({
         where: { id: oldMangrove?.currentVersionId },
       });
-      await mangroveOperations.addVersionedMangrove(
-        mangroveId,
-        (m) => (m.dead = true),
-        "txId"
-      );
+      await mangroveOperations.addVersionedMangrove({
+        id: mangroveId,
+        txId: "txId",
+        updateFunc: (m) => (m.dead = true),
+    });
       assert.strictEqual(await prisma.mangrove.count(), 1);
       assert.strictEqual(await prisma.mangroveVersion.count(), 2);
       const newMangrove = await prisma.mangrove.findUnique({
@@ -181,11 +173,11 @@ describe("Mangrove Operations Integration test suite", () => {
     it("Has prevVersion", async () => {
       const chainId = new ChainId(10);
       const mangroveId = new MangroveId(chainId, "mangroveId");
-      await mangroveOperations.addVersionedMangrove(
-        mangroveId,
-        (m) => (m.dead = true),
-        "txId"
-      );
+      await mangroveOperations.addVersionedMangrove({
+        id: mangroveId,
+        txId: "txId",
+        updateFunc: (m) => (m.dead = true),
+    });
       assert.strictEqual(await prisma.mangrove.count(), 1);
       assert.strictEqual(await prisma.mangroveVersion.count(), 2);
       const oldMangrove = await prisma.mangrove.findUnique({

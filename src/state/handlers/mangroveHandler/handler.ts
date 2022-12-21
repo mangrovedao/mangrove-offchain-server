@@ -1,6 +1,6 @@
 import * as prisma from "@prisma/client";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
-
+import _ from "lodash";
 import { PrismaClient } from "@prisma/client";
 import {
   PrismaStreamEventHandler,
@@ -63,23 +63,28 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
       }
 
       await eventMatcher({
-        MangroveCreated: async (e) =>
-          this.mangroveEventsLogic.handleMangroveCreated(
-            undo,
-            mangroveId,
-            this.chainId,
-            transaction,
-            allDbOperation.mangroveOperation,
-            e
-          ),
-        MangroveParamsUpdated: async ({ params }) =>
-          this.mangroveEventsLogic.handleMangroveParamsUpdated(
-            undo,
-            mangroveId,
-            params,
-            transaction,
-            allDbOperation.mangroveOperation
-          ),
+        MangroveCreated: async (e) =>{
+          if (undo) {
+            await allDbOperation.mangroveOperation.deleteLatestMangroveVersion(mangroveId);
+            return;
+          }
+          await allDbOperation.mangroveOperation.addVersionedMangrove({ id:mangroveId, txId: transaction!.id, address: e.address });
+        }
+        ,
+        MangroveParamsUpdated: async ({ params }) =>{
+          if (undo) {
+            await allDbOperation.mangroveOperation.deleteLatestMangroveVersion(mangroveId);
+            return;
+          }
+      
+          await allDbOperation.mangroveOperation.addVersionedMangrove({
+            id: mangroveId,
+            txId: transaction!.id,
+            updateFunc: (model) => {
+              _.merge(model, params);
+            },
+          });
+        },
         OfferRetracted: async (e) =>
           this.offerEventsLogic.handleOfferRetracted(mangroveId, undo, e, allDbOperation),
         OfferWritten: async ({ offer, maker, offerList }) =>
