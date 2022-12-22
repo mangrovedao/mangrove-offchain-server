@@ -1,20 +1,22 @@
-import { TakenOffer } from "@prisma/client";
+import { Order, TakenOffer } from "@prisma/client";
 import assert from "assert";
 import { describe, it } from "mocha";
+import { MangroveOrderOperations } from "../../../../src/state/dbOperations/mangroveOrderOperations";
 import { OrderOperations } from "../../../../src/state/dbOperations/orderOperations";
 import { AccountId, ChainId, MangroveId, MangroveOrderId, MangroveOrderVersionId, OfferId, OfferListId, OfferListVersionId, OfferVersionId, OrderId, StratId, TakenOfferId, TokenId } from "../../../../src/state/model";
 import { prisma } from "../../../../src/utils/test/mochaHooks";
-import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
-import { MangroveOrderOperations } from "../../../../src/state/dbOperations/mangroveOrderOperations";
-import { Timestamp } from "@proximaone/stream-client-js";
+import { OfferListParams } from "@proximaone/stream-schema-mangrove/dist/core";
+import { OfferOperations } from "../../../../src/state/dbOperations/offerOperations";
 
 describe("Order Operations Integration test Suite", () => {
 
     let orderOperations: OrderOperations;
     let mangroveOrderOperations: MangroveOrderOperations;
+    let offerOperations: OfferOperations;
     before(() => {
         orderOperations = new OrderOperations(prisma);
         mangroveOrderOperations = new MangroveOrderOperations(prisma);
+        offerOperations = new OfferOperations(prisma);
     });
 
 
@@ -37,7 +39,6 @@ describe("Order Operations Integration test Suite", () => {
     const takenOfferId1 = new TakenOfferId(orderId, 1);
     const makerId = new AccountId(chainId, "makerAddress");
     const mangroveOrderId = new MangroveOrderId(mangroveId, offerListKey, "mangroveOrderId" );
-    const mangroveOrderVersionId = new MangroveOrderVersionId( { mangroveOrderId, versionNumber: 0});
 
     beforeEach(async () => {
 
@@ -228,74 +229,280 @@ describe("Order Operations Integration test Suite", () => {
 
     })
 
-    describe("handleOrderCompleted", () => {
-        it("undoOrder", async () => {
-            assert.strictEqual(await prisma.offer.count(), 2);
-            assert.strictEqual(await prisma.offerVersion.count(), 4);
-            await orderOperations.undoOrder(mangroveId, offerListKey, orderId, { takenOffers: [{ id: 0 }, { id: 1 }] });
-            assert.strictEqual(await prisma.offer.count(), 2);
-            assert.strictEqual(await prisma.offerVersion.count(), 2);
-        })
+    it("undoOrder", async () => {
+        assert.strictEqual(await prisma.offer.count(), 2);
+        assert.strictEqual(await prisma.offerVersion.count(), 4);
+        await orderOperations.undoOrder(mangroveId, offerListKey, orderId, { takenOffers: [{ id: 0 }, { id: 1 }] });
+        assert.strictEqual(await prisma.offer.count(), 2);
+        assert.strictEqual(await prisma.offerVersion.count(), 2);
+    })
 
-        it("mapTakenOffer", async () => {
-            const takenOfferEvent:mangroveSchema.core.TakenOffer = {
-                id: offerId0.offerNumber,
-                takerWants: "50",
-                takerGives: "100"
-            }
-            assert.strictEqual( await prisma.offer.count(), 2);
-            assert.strictEqual( await prisma.offerVersion.count(), 4);
-            assert.strictEqual( await prisma.mangroveOrder.count(), 1)
-            assert.strictEqual( await prisma.mangroveOrderVersion.count(), 1)
-            const takenOffer = await orderOperations.mapTakenOffer(orderId, takenOfferEvent, {decimals: 0}, {decimals: 0})
-            assert.strictEqual( await prisma.offer.count(), 2);
-            assert.strictEqual( await prisma.offerVersion.count(), 5);
-            assert.strictEqual( await prisma.mangroveOrder.count(), 1)
-            assert.strictEqual( await prisma.mangroveOrderVersion.count(), 2)
 
-            assert.deepStrictEqual( takenOffer, {
-                id: new TakenOfferId( orderId, offerId0.offerNumber).value,
-                offerVersion:{
-                    connect: { id: offer0VersionId1.value }
-                } ,
+    describe("createOrder", () => {
+
+        it("Creates order, takenOffers, offerVersios and mangroveOrderVersion", async () => {
+            const newOrderId = new OrderId( mangroveId, offerListKey, "2")
+            const newOrder:Order = {
+                id: newOrderId.value,
+                txId: "txId",
+                proximaId: newOrderId.proximaId,
+                parentOrderId:  null,
+                offerListId: offerListId.value,
+                mangroveId: mangroveId.value,
+                takerId: takerId.value,
+                // takerWants: order.takerWants,
+                // takerWantsNumber: getNumber({
+                //   value: order.takerWants,
+                //   token: outboundToken,
+                // }),
+                // takerGives: order.takerGives,
+                // takerGivesNumber: getNumber({
+                //   value: order.takerGives,
+                //   token: inboundToken,
+                // }),
+                takerGot: "100",
+                takerGotNumber: 100,
+                takerGave: "50",
+                takerGaveNumber: 50,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                bounty: "0",
+                bountyNumber: 0,
+                // totalFee: order.feePaid,
+                // totalFeeNumber: getNumber({
+                //   value: order.feePaid,
+                //   token: outboundToken,
+                // }),
+              };
+            const offerId2 = new OfferId(mangroveId, offerListKey, 2);
+            await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
+            const offerId3 = new OfferId(mangroveId, offerListKey, 3);
+            await offerOperations.addVersionedOffer( offerId3, "txId", (o) => {}, { makerId: makerId})
+            
+            const takenOffers:Omit<TakenOffer, "orderId">[] =[{
+                id: new TakenOfferId(newOrderId, offerId0.offerNumber).value,
+                offerVersionId: new OfferVersionId(offerId2, 0).value,
                 takerGot: "50",
                 takerGotNumber: 50,
-                takerGave: "100",
-                takerGaveNumber: 100,
-                takerPaidPrice: 100/50,
-                makerPaidPrice: 50/100,
-                posthookData: null,
-                posthookFailed: false,
-                failReason: null
-            })
-        })
-
-        it("createOrder", async () => {
-            const order:mangroveSchema.core.Order = {
-                taker: takerId.address,
-                takerGot: "100",
-                takerGave: "50",
-                penalty: "0",
-                takenOffers: [{
-                    id: offerId0.offerNumber,
-                    takerWants: "50",
-                    takerGives: "25",
-                }, 
-                {
-                    id: offerId1.offerNumber,
-                    takerWants: "50",
-                    takerGives: "25",
-                }]
-            }
-            const orderId2 = new OrderId(mangroveId, offerListKey, "2");
+                takerGave: "25",
+                takerGaveNumber: 25,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                failReason: "failReasn",
+                posthookData: "posthookData" ,
+                posthookFailed: true,
+              },
+              {
+                id: new TakenOfferId(newOrderId, offerId1.offerNumber).value,
+                offerVersionId: new OfferVersionId( offerId3, 0).value, 
+                takerGot: "50",
+                takerGotNumber: 50,
+                takerGave: "25",
+                takerGaveNumber: 25,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                failReason: "failReasn",
+                posthookData: "posthookData" ,
+                posthookFailed: true,
+              }
+            ]
+            
+            await mangroveOrderOperations.addMangroveOrderVersion( new MangroveOrderId(mangroveId, offerListKey, "2"), "txId", (m) => m , {
+                stratId: new StratId(chainId, "mangroveOrder").value,
+                takerId: takerId.value,
+                restingOrderId: offerId2.value,
+                restingOrder: true,
+                fillOrKill: false,
+                fillWants: true,
+                takerWants: "100",
+                takerWantsNumber: 100,
+                takerGives: "50",
+                takerGivesNumber: 50,
+                bounty: "0",
+                bountyNumber:0,
+                totalFee: "1",
+                totalFeeNumber: 1
+            });
             assert.strictEqual( await prisma.order.count(), 1)
             assert.strictEqual( await prisma.account.count(), 0)
             assert.strictEqual( await prisma.takenOffer.count(), 2)
-            await orderOperations.createOrder( mangroveId, offerListKey, order, chainId, orderId2, "txId");
+            assert.strictEqual( await prisma.mangroveOrder.count(), 2)
+            assert.strictEqual( await prisma.mangroveOrderVersion.count(), 2)
+            assert.strictEqual( await prisma.offer.count(), 4)
+            assert.strictEqual( await prisma.offerVersion.count(), 6)
+            await orderOperations.createOrder( newOrderId, newOrder, takenOffers);
             assert.strictEqual( await prisma.order.count(), 2)
-            assert.strictEqual( await prisma.account.count(), 1)
             assert.strictEqual( await prisma.takenOffer.count(), 4)
+            assert.strictEqual( await prisma.mangroveOrder.count(), 2)
+            assert.strictEqual( await prisma.mangroveOrderVersion.count(), 3)
+            assert.strictEqual( await prisma.offer.count(), 4)
+            assert.strictEqual( await prisma.offerVersion.count(), 8)
+    
+        })
 
+        it("OfferVersion doesnt exist", async () => {
+            const newOrderId = new OrderId( mangroveId, offerListKey, "2")
+            const newOrder:Order = {
+                id: newOrderId.value,
+                txId: "txId",
+                proximaId: newOrderId.proximaId,
+                parentOrderId:  null,
+                offerListId: offerListId.value,
+                mangroveId: mangroveId.value,
+                takerId: takerId.value,
+                // takerWants: order.takerWants,
+                // takerWantsNumber: getNumber({
+                //   value: order.takerWants,
+                //   token: outboundToken,
+                // }),
+                // takerGives: order.takerGives,
+                // takerGivesNumber: getNumber({
+                //   value: order.takerGives,
+                //   token: inboundToken,
+                // }),
+                takerGot: "100",
+                takerGotNumber: 100,
+                takerGave: "50",
+                takerGaveNumber: 50,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                bounty: "0",
+                bountyNumber: 0,
+                // totalFee: order.feePaid,
+                // totalFeeNumber: getNumber({
+                //   value: order.feePaid,
+                //   token: outboundToken,
+                // }),
+              };
+            const offerId2 = new OfferId(mangroveId, offerListKey, 2);
+            await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
+
+            
+            const takenOffers:Omit<TakenOffer, "orderId">[] =[{
+                id: new TakenOfferId(newOrderId, offerId0.offerNumber).value,
+                offerVersionId: new OfferVersionId(offerId2, 4).value, // offer 4 should not exist
+                takerGot: "50",
+                takerGotNumber: 50,
+                takerGave: "25",
+                takerGaveNumber: 25,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                failReason: "failReasn",
+                posthookData: "posthookData" ,
+                posthookFailed: true,
+              }
+            ]
+            await assert.rejects( orderOperations.createOrder( newOrderId, newOrder, takenOffers) );
+        })
+
+        it("Offer from offerVersion does not exist", async () => {
+            const newOrderId = new OrderId( mangroveId, offerListKey, "2")
+            const newOrder:Order = {
+                id: newOrderId.value,
+                txId: "txId",
+                proximaId: newOrderId.proximaId,
+                parentOrderId:  null,
+                offerListId: offerListId.value,
+                mangroveId: mangroveId.value,
+                takerId: takerId.value,
+                // takerWants: order.takerWants,
+                // takerWantsNumber: getNumber({
+                //   value: order.takerWants,
+                //   token: outboundToken,
+                // }),
+                // takerGives: order.takerGives,
+                // takerGivesNumber: getNumber({
+                //   value: order.takerGives,
+                //   token: inboundToken,
+                // }),
+                takerGot: "100",
+                takerGotNumber: 100,
+                takerGave: "50",
+                takerGaveNumber: 50,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                bounty: "0",
+                bountyNumber: 0,
+                // totalFee: order.feePaid,
+                // totalFeeNumber: getNumber({
+                //   value: order.feePaid,
+                //   token: outboundToken,
+                // }),
+              };
+            const offerId2 = new OfferId(mangroveId, offerListKey, 2);
+            await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
+            await prisma.offer.delete({where: {id: offerId2.value}})
+            
+            const takenOffers:Omit<TakenOffer, "orderId">[] =[{
+                id: new TakenOfferId(newOrderId, offerId0.offerNumber).value,
+                offerVersionId: new OfferVersionId(offerId2, 0).value, 
+                takerGot: "50",
+                takerGotNumber: 50,
+                takerGave: "25",
+                takerGaveNumber: 25,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                failReason: "failReasn",
+                posthookData: "posthookData" ,
+                posthookFailed: true,
+              }
+            ]
+            await assert.rejects( orderOperations.createOrder( newOrderId, newOrder, takenOffers) );
+        })
+
+        it("OfferVersion is not current version", async () => {
+            const newOrderId = new OrderId( mangroveId, offerListKey, "2")
+            const newOrder:Order = {
+                id: newOrderId.value,
+                txId: "txId",
+                proximaId: newOrderId.proximaId,
+                parentOrderId:  null,
+                offerListId: offerListId.value,
+                mangroveId: mangroveId.value,
+                takerId: takerId.value,
+                // takerWants: order.takerWants,
+                // takerWantsNumber: getNumber({
+                //   value: order.takerWants,
+                //   token: outboundToken,
+                // }),
+                // takerGives: order.takerGives,
+                // takerGivesNumber: getNumber({
+                //   value: order.takerGives,
+                //   token: inboundToken,
+                // }),
+                takerGot: "100",
+                takerGotNumber: 100,
+                takerGave: "50",
+                takerGaveNumber: 50,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                bounty: "0",
+                bountyNumber: 0,
+                // totalFee: order.feePaid,
+                // totalFeeNumber: getNumber({
+                //   value: order.feePaid,
+                //   token: outboundToken,
+                // }),
+              };
+            const offerId2 = new OfferId(mangroveId, offerListKey, 2);
+            await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
+            await offerOperations.addVersionedOffer( offerId2, "txId", (o) => o.deleted=true, { makerId: makerId}) // creates new version,
+            
+            const takenOffers:Omit<TakenOffer, "orderId">[] =[{
+                id: new TakenOfferId(newOrderId, offerId0.offerNumber).value,
+                offerVersionId: new OfferVersionId(offerId2, 0).value,  // points to old version, not the current version
+                takerGot: "50",
+                takerGotNumber: 50,
+                takerGave: "25",
+                takerGaveNumber: 25,
+                takerPaidPrice: 0.5,
+                makerPaidPrice: 2,
+                failReason: "failReasn",
+                posthookData: "posthookData" ,
+                posthookFailed: true,
+              }
+            ]
+            await assert.rejects( orderOperations.createOrder( newOrderId, newOrder, takenOffers) );
         })
     })
 })
