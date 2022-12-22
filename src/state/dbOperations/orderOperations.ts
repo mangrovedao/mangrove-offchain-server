@@ -23,10 +23,11 @@ export class OrderOperations extends DbOperations {
   public async undoOrder(mangroveId:MangroveId, offerList: mangroveSchema.core.OfferList, orderId:OrderId, order:{ takenOffers:{id:number}[]} ){
     await this.deleteOrder(orderId);
     for (const takenOffer of order.takenOffers) {
+      const offerId = new OfferId(mangroveId, offerList, takenOffer.id);
       await this.offerOperations.deleteLatestOfferVersion(
-        new OfferId(mangroveId, offerList, takenOffer.id)
+        offerId
       );
-      // FIXME: undo possible mangroveOrderVersion
+      await this.mangroveOrderOperations.deleteLatestMangroveOrderVersionUsingOfferId( offerId);
     }
   }
 

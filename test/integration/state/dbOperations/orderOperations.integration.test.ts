@@ -230,11 +230,16 @@ describe("Order Operations Integration test Suite", () => {
     })
 
     it("undoOrder", async () => {
+        await mangroveOrderOperations.addMangroveOrderVersion( mangroveOrderId, "txId", (m => m.filled=true));
         assert.strictEqual(await prisma.offer.count(), 2);
         assert.strictEqual(await prisma.offerVersion.count(), 4);
+        assert.strictEqual(await prisma.mangroveOrder.count(), 1);
+        assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
         await orderOperations.undoOrder(mangroveId, offerListKey, orderId, { takenOffers: [{ id: 0 }, { id: 1 }] });
         assert.strictEqual(await prisma.offer.count(), 2);
         assert.strictEqual(await prisma.offerVersion.count(), 2);
+        assert.strictEqual(await prisma.mangroveOrder.count(), 1);
+        assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
     })
 
 
