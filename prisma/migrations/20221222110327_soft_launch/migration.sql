@@ -10,8 +10,10 @@
   - You are about to drop the column `takerWants` on the `TakenOffer` table. All the data in the column will be lost.
   - You are about to drop the column `takerWantsNumber` on the `TakenOffer` table. All the data in the column will be lost.
   - You are about to drop the `OrderSummary` table. If the table is not empty, all the data it contains will be lost.
+  - Added the required column `offerNumber` to the `Offer` table without a default value. This is not possible if the table is not empty.
   - Added the required column `bounty` to the `Order` table without a default value. This is not possible if the table is not empty.
   - Added the required column `bountyNumber` to the `Order` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `proximaId` to the `Order` table without a default value. This is not possible if the table is not empty.
   - Added the required column `offerVersionId` to the `TakenOffer` table without a default value. This is not possible if the table is not empty.
   - Added the required column `takerGave` to the `TakenOffer` table without a default value. This is not possible if the table is not empty.
   - Added the required column `takerGaveNumber` to the `TakenOffer` table without a default value. This is not possible if the table is not empty.
@@ -20,7 +22,8 @@
 
 */
 -- AlterTable
-ALTER TABLE "Offer" DROP COLUMN "deleted";
+ALTER TABLE "Offer" DROP COLUMN "deleted",
+ADD COLUMN     "offerNumber" INTEGER NOT NULL;
 
 -- AlterTable
 ALTER TABLE "OfferVersion" ADD COLUMN     "deleted" BOOLEAN NOT NULL DEFAULT false;
@@ -28,7 +31,8 @@ ALTER TABLE "OfferVersion" ADD COLUMN     "deleted" BOOLEAN NOT NULL DEFAULT fal
 -- AlterTable
 ALTER TABLE "Order" DROP COLUMN "penalty",
 ADD COLUMN     "bounty" TEXT NOT NULL,
-ADD COLUMN     "bountyNumber" DOUBLE PRECISION NOT NULL;
+ADD COLUMN     "bountyNumber" DOUBLE PRECISION NOT NULL,
+ADD COLUMN     "proximaId" VARCHAR(255) NOT NULL;
 
 -- AlterTable
 ALTER TABLE "TakenOffer" DROP COLUMN "makerPaysPrice",
@@ -52,11 +56,11 @@ DROP TABLE "OrderSummary";
 -- CreateTable
 CREATE TABLE "MangroveOrder" (
     "id" VARCHAR(255) NOT NULL,
-    "txId" VARCHAR(255) NOT NULL,
     "mangroveId" VARCHAR(255) NOT NULL,
     "stratId" VARCHAR(255) NOT NULL,
     "offerListId" VARCHAR(255) NOT NULL,
     "takerId" VARCHAR(255) NOT NULL,
+    "proximaId" VARCHAR(255) NOT NULL,
     "restingOrderId" VARCHAR(255) NOT NULL,
     "restingOrder" BOOLEAN NOT NULL,
     "fillOrKill" BOOLEAN NOT NULL,
@@ -77,6 +81,7 @@ CREATE TABLE "MangroveOrder" (
 -- CreateTable
 CREATE TABLE "MangroveOrderVersion" (
     "id" VARCHAR(255) NOT NULL,
+    "txId" VARCHAR(255) NOT NULL,
     "mangroveOrderId" VARCHAR(255) NOT NULL,
     "filled" BOOLEAN NOT NULL,
     "cancelled" BOOLEAN NOT NULL DEFAULT false,

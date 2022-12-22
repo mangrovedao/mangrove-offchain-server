@@ -9,7 +9,7 @@ export class MangroveOperations extends DbOperations {
   public async addVersionedMangrove(params:{
     id: MangroveId,
     txId: string | null,
-    updateFunc?: (model: prisma.MangroveVersion) => void,
+    updateFunc?: (model: Omit< prisma.MangroveVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId">) => void,
     address?:string,
   }) {
     let mangrove: prisma.Mangrove | null = await this.tx.mangrove.findUnique({
@@ -17,14 +17,14 @@ export class MangroveOperations extends DbOperations {
     });
 
     if(mangrove && !params.updateFunc){
-      throw new Error( `You are trying to create a new version of an existing mangrove ${mangrove.id}, but gave no updateFunction`)
+      throw new Error( `You are trying to create a new version of an existing Mangrove ${mangrove.id}, but gave no updateFunction`)
     }
     
     let newVersion: prisma.MangroveVersion;
 
     if( mangrove === null){
       if(!params.address){
-        throw new Error( "Cant create Mangrove without an address");
+        throw new Error( "Can't create Mangrove without an address");
       }
       const newVersionId = new MangroveVersionId(params.id, 0);
       mangrove = {

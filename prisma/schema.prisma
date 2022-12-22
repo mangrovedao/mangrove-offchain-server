@@ -49,7 +49,7 @@ model Transaction {
   offerListVersions     OfferListVersion[]
   offerVersions         OfferVersion[]
   orders                Order[]
-  MangroveOrder         MangroveOrder[]
+  MangroveOrderVersion         MangroveOrderVersion[]
 }
 
 // probably have few tokens, so no extra index needed
@@ -261,6 +261,7 @@ model Offer {
   mangroveId       String @db.VarChar(255)
   offerListId      String @db.VarChar(255)
   makerId          String @db.VarChar(255) // index?
+  offerNumber      Int
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions or mark the offer as deleted, which makes undo easy.
   currentVersionId String @db.VarChar(255)
@@ -312,6 +313,7 @@ model Order {
   mangroveId      String  @db.VarChar(255)
   offerListId     String  @db.VarChar(255) // maybe index?
   takerId         String  @db.VarChar(255) // index?
+  proximaId       String  @db.VarChar(255)
   // takerWants       String
   // takerWantsNumber Float
   // takerGives       String
@@ -374,11 +376,12 @@ model TakenOffer {
 
 model MangroveOrder {
   id               String  @id @db.VarChar(255)
-  txId             String  @db.VarChar(255)
+  
   mangroveId       String  @db.VarChar(255)
   stratId          String  @db.VarChar(255)
   offerListId      String  @db.VarChar(255)
   takerId          String  @db.VarChar(255)
+  proximaId        String  @db.VarChar(255)
   // orderId          String  @db.VarChar(255)
   restingOrderId   String  @db.VarChar(255) // maybe index?
   restingOrder     Boolean
@@ -397,7 +400,7 @@ model MangroveOrder {
   // Instead, we create new versions which makes undo easy.
   currentVersionId String @db.VarChar(255)
 
-  tx                   Transaction            @relation(fields: [txId], references: [id])
+  
   strat                Strat                  @relation(fields: [stratId], references: [id])
   offerList            OfferList              @relation(fields: [offerListId], references: [id])
   taker                Account                @relation(fields: [takerId], references: [id])
@@ -408,6 +411,7 @@ model MangroveOrder {
 
 model MangroveOrderVersion {
   id              String   @id @db.VarChar(255)
+  txId            String  @db.VarChar(255)
   mangroveOrderId String   @db.VarChar(255)
   filled          Boolean
   cancelled       Boolean  @default(false)
@@ -423,6 +427,7 @@ model MangroveOrderVersion {
   expiryDate      DateTime @db.Timestamp
 
   mangroveOrder MangroveOrder @relation(fields: [mangroveOrderId], references: [id], onDelete: Cascade)
+  tx                   Transaction            @relation(fields: [txId], references: [id])
 
   // The following fields are bookkeeping to support undo of events.
   versionNumber Int

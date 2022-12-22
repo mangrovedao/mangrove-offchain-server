@@ -18,7 +18,8 @@ export class OfferEventsLogic {
     mangroveId: MangroveId,
     undo: boolean,
     e: mangroveSchema.events.OfferRetracted,
-    db: AllDbOperations
+    db: AllDbOperations,
+    txId: string,
   ) {
     const offerId = new OfferId(mangroveId, e.offerList, e.offerId);
     if (undo) {
@@ -30,6 +31,7 @@ export class OfferEventsLogic {
     }
     await db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
       offerId,
+      txId,
       (m) => (m.cancelled = true)
     );
     await db.offerOperations.markOfferAsDeleted(offerId);
@@ -81,6 +83,7 @@ export class OfferEventsLogic {
         mangroveId: mangroveId.value,
         offerListId: offerListId.value,
         makerId: maker,
+        offerNumber: offerId.offerNumber
       },
       {
         txId: transaction!.id,

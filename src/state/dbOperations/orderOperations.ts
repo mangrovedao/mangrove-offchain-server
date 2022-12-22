@@ -1,15 +1,13 @@
 import * as prismaModel from "@prisma/client";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
-import BigNumber from "bignumber.js";
-import { PrismaTransaction } from "common/prismaStateTransitionHandler";
 import { getBigNumber, getNumber, getPrice } from "../../state/handlers/handlerUtils";
+import { MangroveOrderEventsLogic } from "../../state/handlers/stratsHandler/mangroveOrderEventsLogic";
 import { AccountId, ChainId, MangroveId, OfferId, OfferListId, OrderId, TakenOfferId } from "../../state/model";
-import { AllDbOperations } from "./allDbOperations";
+import { AccountOperations } from "./accountOperations";
 import { DbOperations, PrismaTx } from "./dbOperations";
 import { MangroveOrderOperations } from "./mangroveOrderOperations";
-import { OfferOperations } from "./offerOperations";
 import { OfferListOperations } from "./offerListOperations";
-import { AccountOperations } from "./accountOperations";
+import { OfferOperations } from "./offerOperations";
 
 export class OrderOperations extends DbOperations {
 
@@ -17,6 +15,7 @@ export class OrderOperations extends DbOperations {
   private mangroveOrderOperations: MangroveOrderOperations;
   private offerListOperations: OfferListOperations;
   private accountOperations: AccountOperations;
+  private mangroveOrderEventsLogic: MangroveOrderEventsLogic = new MangroveOrderEventsLogic();
   public constructor(public readonly tx: PrismaTx) {
     super(tx);
     this.offerOperations = new OfferOperations(tx);
@@ -68,9 +67,10 @@ export class OrderOperations extends DbOperations {
     // will result in `OfferWritten` events that will be sent _after_ the
     // `OrderCompleted` event. We therefore remove all taken offers here.
     await this.offerOperations.markOfferAsDeleted(offerId);
+    let updateFunc = ( tokens: { outboundToken: prismaModel.Token; inboundToken: prismaModel.Token; }, mangroveOrder: prismaModel.MangroveOrder, newVersion: Omit<prismaModel.MangroveOrderVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId">) => this.mangroveOrderEventsLogic.updateMangroveOrderFromTakenOffer( takenOffer, tokens, mangroveOrder, newVersion);
     await this.mangroveOrderOperations.updateMangroveOrderFromTakenOffer(
-      takenOffer,
-      offerId
+      offerId,
+      updateFunc
     );
     return takenOffer;
   }
@@ -106,6 +106,7 @@ export class OrderOperations extends DbOperations {
       data: {
         id: orderId.value,
         txId: txId,
+        proximaId: orderId.proximaId,
         parentOrderId: parentOrderId?.value ?? null,
         offerListId: offerListId.value,
         mangroveId: mangroveId.value,

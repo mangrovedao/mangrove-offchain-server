@@ -1,7 +1,7 @@
 import { MangroveOrder } from "@prisma/client";
 
 export class Id<T extends string | number> {
-  public constructor(public readonly value: T) {}
+  public constructor(public readonly value: T) { }
 }
 
 export class AccountId extends Id<string> {
@@ -151,9 +151,9 @@ export class OrderId extends Id<string> {
   public constructor(
     public readonly mangroveId: MangroveId,
     public readonly offerListKey: OfferListKey,
-    public readonly order: string
+    public readonly proximaId: string
   ) {
-    super(`${mangroveId.value}-${offerListKeyShortStr(offerListKey)}-${order}`);
+    super(`${mangroveId.value}-${offerListKeyShortStr(offerListKey)}-${proximaId}`);
   }
 }
 
@@ -180,20 +180,12 @@ export interface OfferListKey {
 
 export class MangroveOrderId extends Id<string> {
   public constructor(
-    public readonly params:
-      | {
-          mangroveId: MangroveId;
-          offerListKey: OfferListKey;
-          mangroveOrderId: string;
-        }
-      | { mangroveOrder: MangroveOrder }
+    public readonly mangroveId: MangroveId,
+    public readonly offerListKey: OfferListKey,
+    public readonly proximaId: string,
   ) {
     super(
-      "mangroveId" in params
-        ? `${params.mangroveId.value}-${offerListKeyShortStr(
-            params.offerListKey
-          )}-${params.mangroveOrderId}`
-        : params.mangroveOrder.id
+      `${mangroveId.value}-${offerListKeyShortStr(offerListKey)}-${proximaId}`
     );
   }
 }
@@ -202,8 +194,8 @@ export class MangroveOrderVersionId extends Id<string> {
   public constructor(
     public readonly params: (
       | {
-          mangroveOrderId: MangroveOrderId;
-        }
+        mangroveOrderId: MangroveOrderId;
+      }
       | { mangroveOrder: MangroveOrder }
     ) & {
       versionNumber: number;
@@ -212,7 +204,7 @@ export class MangroveOrderVersionId extends Id<string> {
     super(
       "mangroveOrderId" in params
         ? `${params.mangroveOrderId.value}-${params.versionNumber}`
-        : params.mangroveOrder.id
+        : `${params.mangroveOrder.id}-${params.versionNumber}`
     );
   }
 }

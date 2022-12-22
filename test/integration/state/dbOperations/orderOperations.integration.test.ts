@@ -2,7 +2,7 @@ import { TakenOffer } from "@prisma/client";
 import assert from "assert";
 import { describe, it } from "mocha";
 import { OrderOperations } from "../../../../src/state/dbOperations/orderOperations";
-import { AccountId, ChainId, MangroveId, MangroveOrderId, MangroveOrderVersionId, OfferId, OfferListId, OfferListVersionId, OfferVersionId, OrderId, TakenOfferId, TokenId } from "../../../../src/state/model";
+import { AccountId, ChainId, MangroveId, MangroveOrderId, MangroveOrderVersionId, OfferId, OfferListId, OfferListVersionId, OfferVersionId, OrderId, StratId, TakenOfferId, TokenId } from "../../../../src/state/model";
 import { prisma } from "../../../../src/utils/test/mochaHooks";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import { MangroveOrderOperations } from "../../../../src/state/dbOperations/mangroveOrderOperations";
@@ -36,7 +36,7 @@ describe("Order Operations Integration test Suite", () => {
     const takenOfferId0 = new TakenOfferId(orderId, 0);
     const takenOfferId1 = new TakenOfferId(orderId, 1);
     const makerId = new AccountId(chainId, "makerAddress");
-    const mangroveOrderId = new MangroveOrderId({mangroveId, offerListKey, mangroveOrderId:"mangroveOrderId" });
+    const mangroveOrderId = new MangroveOrderId(mangroveId, offerListKey, "mangroveOrderId" );
     const mangroveOrderVersionId = new MangroveOrderVersionId( { mangroveOrderId, versionNumber: 0});
 
     beforeEach(async () => {
@@ -71,6 +71,7 @@ describe("Order Operations Integration test Suite", () => {
         await prisma.offer.create( { 
             data: {
                 id: offerId0.value,
+                offerNumber: offerId0.offerNumber,
                 mangroveId: mangroveId.value,
                 offerListId: offerListId.value,
                 makerId: makerId.value,
@@ -81,6 +82,7 @@ describe("Order Operations Integration test Suite", () => {
         await prisma.offer.create( { 
             data: {
                 id: offerId1.value,
+                offerNumber: offerId1.offerNumber,
                 mangroveId: mangroveId.value,
                 offerListId: offerListId.value,
                 makerId: makerId.value,
@@ -168,6 +170,7 @@ describe("Order Operations Integration test Suite", () => {
                 mangroveId: mangroveId.value,
                 offerListId: offerListId.value,
                 txId: "txId",
+                proximaId: orderId.proximaId,
                 takerId: takerId.value,
                 // takerWants: "100",
                 // takerWantsNumber: 100,
@@ -204,34 +207,22 @@ describe("Order Operations Integration test Suite", () => {
             }
         })
 
-        await mangroveOrderOperations.createNewMangroveOrderAndVersion({
-            id: mangroveOrderId.value,
-            address: "mangroveOrderAddress",
-            type: "OrderSummary",
-            outboundToken: offerListKey.outboundToken,
-            inboundToken: offerListKey.inboundToken,
-            taker: takerId.address,
-            mangroveId: mangroveId.value,
-            restingOrderId: offerId0.offerNumber,
-            expiryDate: 1671490800000, //Tue Dec 20 2022 00:00:00
+        await mangroveOrderOperations.addMangroveOrderVersion( mangroveOrderId, "txId", (m) => m , {
+            stratId: new StratId(chainId, "mangroveOrder").value,
+            takerId: takerId.value,
+            restingOrderId: offerId0.value,
             restingOrder: true,
             fillOrKill: false,
             fillWants: true,
             takerWants: "100",
+            takerWantsNumber: 100,
             takerGives: "50",
-            takerGot: "100",
-            takerGave: "50",
+            takerGivesNumber: 50,
             bounty: "0",
-            fee: "1",
-        }, {decimals:0},{decimals:0},mangroveOrderId, {
-            id: "txId",
-            chainId: chainId.value,
-            txHash: "txHash",
-            from: takerId.address,
-            blockNumber: 10,
-            blockHash: "hash",
-            time: new Date()
-        }, mangroveId, chainId, offerListId, offerId0);
+            bountyNumber:0,
+            totalFee: "1",
+            totalFeeNumber: 1
+        });
 
         
 

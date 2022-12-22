@@ -12,7 +12,7 @@ export class MakerBalanceOperations extends DbOperations {
   public async addVersionedMakerBalance(
     id: MakerBalanceId,
     txId: string,
-    updateFunc: (model: prisma.MakerBalanceVersion) => void
+    updateFunc: (model: Omit< prisma.MakerBalanceVersion, "id" | "makerBalanceId" | "versionNumber" | "prevVersionId">) => void
   ) {
     let makerBalance: prisma.MakerBalance | null =
       await this.tx.makerBalance.findUnique({

@@ -34,11 +34,11 @@ describe("Mangrove Order Operations Integration test suite", () => {
   const offerId = new OfferId(mangroveId, offerListKey, 1);
   const offerListId = new OfferListId(mangroveId, offerListKey);
   const offerListVersionId = new OfferListVersionId(offerListId, 0);
-  const mangroveOrderId = new MangroveOrderId({
-    mangroveId: mangroveId,
-    offerListKey: offerListKey,
-    mangroveOrderId: "mangroveOrderId",
-  });
+  const mangroveOrderId = new MangroveOrderId(
+    mangroveId,
+    offerListKey,
+    "mangroveOrderId",
+  );
   const mangroveOrderVersionId = new MangroveOrderVersionId({
     mangroveOrderId: mangroveOrderId,
     versionNumber: 0,
@@ -98,6 +98,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
       data: {
         id: orderId.value,
         txId: "txId",
+        proximaId: orderId.proximaId,
         mangroveId: mangroveId.value,
         offerListId: offerListId.value,
         takerId: takerId.value,
@@ -119,7 +120,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
     mangroveOrder = await prisma.mangroveOrder.create({
       data: {
         id: mangroveOrderId.value,
-        txId: "txId",
+        proximaId: mangroveOrderId.proximaId,
         mangroveId: mangroveId.value,
         stratId: "stratId",
         offerListId: offerListId.value,
@@ -144,6 +145,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
       data: {
         id: mangroveOrderVersionId.value,
         mangroveOrderId: mangroveOrderId.value,
+        txId: "txId",
         filled: false,
         cancelled: false,
         failed: false,
@@ -173,6 +175,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
         });
       await mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
         offerId,
+        "txId",
         (m) => (m.cancelled = true)
       );
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
@@ -210,107 +213,111 @@ describe("Mangrove Order Operations Integration test suite", () => {
     it("No MangroveOrder, with mangroveOrder", async () => {
       mangroveOrder.id = "noMatch";
       await assert.rejects(
-        mangroveOrderOperations.getCurrentMangroveOrderVersion({
+        mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrder,
-        })
+        )
       );
     });
 
     it("No current version, with mangroveOrder", async () => {
       await prisma.mangroveOrderVersion.deleteMany();
       await assert.rejects(
-        mangroveOrderOperations.getCurrentMangroveOrderVersion({
+        mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrder,
-        })
+        )
       );
     });
 
     it("Has current version, with mangroveOrder", async () => {
       const currentVersion =
-        await mangroveOrderOperations.getCurrentMangroveOrderVersion({
+        await mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrder,
-        });
+        );
       assert.strictEqual(currentVersion.id, mangroveOrder.currentVersionId);
       assert.strictEqual(currentVersion.mangroveOrderId, mangroveOrderId.value);
     });
 
     it("No MangroveOrder, with mangroveOrderId", async () => {
-      const noMatch = new MangroveOrderId({
-        mangroveId: mangroveId,
-        offerListKey: offerListKey,
-        mangroveOrderId: "noMatch",
-      });
+      const noMatch = new MangroveOrderId(
+        mangroveId,
+        offerListKey,
+        "noMatch",
+      );
       await assert.rejects(
-        mangroveOrderOperations.getCurrentMangroveOrderVersion({
-          mangroveOrderId: noMatch,
-        })
+        mangroveOrderOperations.getCurrentMangroveOrderVersion(
+          noMatch,
+        )
       );
     });
 
     it("No current version, with mangroveOrderId", async () => {
       await prisma.mangroveOrderVersion.deleteMany();
       await assert.rejects(
-        mangroveOrderOperations.getCurrentMangroveOrderVersion({
+        mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrderId,
-        })
+        )
       );
     });
 
     it("Has current version, with mangroveOrderId", async () => {
       const currentVersion =
-        await mangroveOrderOperations.getCurrentMangroveOrderVersion({
+        await mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrderId,
-        });
+        );
       assert.strictEqual(currentVersion.id, mangroveOrder.currentVersionId);
       assert.strictEqual(currentVersion.mangroveOrderId, mangroveOrderId.value);
     });
   });
 
   describe("addMangroveOrderVersion", () => {
-    it("MangroveOrder.id != id", async () => {
-      const manOrderId = new MangroveOrderId({
-        mangroveId: mangroveId,
-        offerListKey: offerListKey,
-        mangroveOrderId: "noMatch",
+
+    it("No MangroveOrder, missing initial values", async () => {
+      const mangroveOrderId2 = new MangroveOrderId(mangroveId, offerListKey, "mangroveOrder2");
+      assert.strictEqual(await prisma.mangroveOrder.count(), 1);
+      assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
+      await assert.rejects(mangroveOrderOperations.addMangroveOrderVersion(mangroveOrderId2, "txId", (m) => m));
+    })
+
+    it("No MangroveOrder, adds new and version", async () => {
+      const mangroveOrderId2 = new MangroveOrderId(mangroveId, offerListKey, "mangroveOrder2");
+      assert.strictEqual(await prisma.mangroveOrder.count(), 1);
+      assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
+      mangroveOrder.id = mangroveOrderId2.value;
+      await mangroveOrderOperations.addMangroveOrderVersion(mangroveOrderId2, "txId", (m) => m, mangroveOrder);
+      const newMangroveOrder = await prisma.mangroveOrder.findUnique({
+        where: { id: mangroveOrderId2.value },
       });
-      await assert.rejects(
-        mangroveOrderOperations.addMangroveOrderVersion(
-          manOrderId,
-          mangroveOrder,
-          mangroveOrderVersion
-        )
-      );
-    });
+      const newMangroveOrderVersion =
+        await prisma.mangroveOrderVersion.findUnique({
+          where: { id: newMangroveOrder?.currentVersionId },
+        });
 
-    it("MangroveOrder does not exist", async () => {
-      const manOrderId = new MangroveOrderId({
-        mangroveId: mangroveId,
-        offerListKey: offerListKey,
-        mangroveOrderId: "noMatch",
-      });
-      mangroveOrder.id = manOrderId.value;
-      await assert.rejects(
-        mangroveOrderOperations.addMangroveOrderVersion(
-          manOrderId,
-          mangroveOrder,
-          mangroveOrderVersion
-        )
-      );
-    });
+        mangroveOrder.offerListId = new OfferListId(mangroveOrderId2.mangroveId, mangroveOrderId2.offerListKey).value;
+        const newVersionId = new MangroveOrderVersionId({ mangroveOrderId: mangroveOrderId2, versionNumber: 0 });
+        mangroveOrder.mangroveId = mangroveOrderId2.mangroveId.value;
+        mangroveOrder.currentVersionId = newVersionId.value;
+        mangroveOrder.proximaId = mangroveOrderId2.proximaId;
+        assert.deepStrictEqual(newMangroveOrder, mangroveOrder);
+        assert.deepStrictEqual(newMangroveOrderVersion, {
+        id: newVersionId.value,
+        txId: "txId",
+        mangroveOrderId: mangroveOrderId2.value,
+        filled: false,
+        cancelled: false,
+        failed: false,
+        failedReason: null,
+        takerGot: "0",
+        takerGotNumber: 0,
+        takerGave: "0",
+        takerGaveNumber: 0,
+        price: 0,
+        expiryDate: new Date(1640991600000),
+        versionNumber: 0,
+        prevVersionId: null
+      })
+    })
 
-    it("MangroveOrderVersion does not exist", async () => {
-      await prisma.mangroveOrderVersion.deleteMany();
-      await assert.rejects(
-        mangroveOrderOperations.addMangroveOrderVersion(
-          mangroveOrderId,
-          mangroveOrder,
-          mangroveOrderVersion
-        )
-      );
-    });
-
-    it("MangroveOrderVersion does exist", async () => {
-      mangroveOrderVersion.cancelled = true;
+    it("Has version, creates new version", async () => {
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
       const oldMangroveOrder = await prisma.mangroveOrder.findUnique({
@@ -322,8 +329,8 @@ describe("Mangrove Order Operations Integration test suite", () => {
         });
       await mangroveOrderOperations.addMangroveOrderVersion(
         mangroveOrderId,
-        mangroveOrder,
-        mangroveOrderVersion
+        "txId",
+        (m) => m.cancelled = true
       );
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
@@ -368,11 +375,11 @@ describe("Mangrove Order Operations Integration test suite", () => {
 
   describe("deleteLatestVersionOfMangroveOrder", () => {
     it("MangroveOrder does not exist", async () => {
-      const mangroveOrderId2 = new MangroveOrderId({
-        mangroveId: mangroveId,
-        offerListKey: offerListKey,
-        mangroveOrderId: "noMatch",
-      });
+      const mangroveOrderId2 = new MangroveOrderId(
+        mangroveId,
+        offerListKey,
+        "noMatch",
+      );
       await assert.rejects(
         mangroveOrderOperations.deleteLatestVersionOfMangroveOrder(
           mangroveOrderId2
@@ -381,11 +388,10 @@ describe("Mangrove Order Operations Integration test suite", () => {
     });
 
     it("MangroveOrderVersion deleted", async () => {
-      mangroveOrderVersion.cancelled = true;
       await mangroveOrderOperations.addMangroveOrderVersion(
         mangroveOrderId,
-        mangroveOrder,
-        mangroveOrderVersion
+        "txId",
+        (m) => m.cancelled = true
       );
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
@@ -432,39 +438,28 @@ describe("Mangrove Order Operations Integration test suite", () => {
 
   describe("updateMangroveOrderFromTakenOffer", () => {
     it("Update with taken offer", async () => {
-      const takenOffer: Omit<prismaModel.TakenOffer, "orderId" | "offerVersionId"> =
-        {
-          id: "takenOffer",
-          takerGot: "50",
-          takerGotNumber: 50,
-          takerGave: "25",
-          takerGaveNumber: 25,
-          takerPaidPrice: 0.5,
-          makerPaidPrice: 2,
-          posthookFailed: true,
-          posthookData: "posthookData",
-          failReason: "failReason",
-        };
+
+
 
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
       await mangroveOrderOperations.updateMangroveOrderFromTakenOffer(
-        takenOffer,
-        offerId
+        offerId,
+        (t, m, v) => v.cancelled = true
       );
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
       const newVersion =
-        await mangroveOrderOperations.getCurrentMangroveOrderVersion({
+        await mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrder,
-        });
-      assert.strictEqual(newVersion.filled, true);
-      assert.strictEqual(newVersion.cancelled, mangroveOrderVersion.cancelled);
-      assert.strictEqual(newVersion.failed, true);
-      assert.strictEqual(newVersion.failedReason, takenOffer.failReason);
-      assert.strictEqual(newVersion.takerGot, "99.5");
-      assert.strictEqual(newVersion.takerGotNumber, 99.5);
-      assert.strictEqual(newVersion.takerGave, "50");
-      assert.strictEqual(newVersion.takerGaveNumber, 50);
-      assert.strictEqual(newVersion.price, 50 / 99.5);
+        );
+      assert.notStrictEqual(newVersion.cancelled, mangroveOrderVersion.cancelled);
+      assert.strictEqual(newVersion.cancelled, true);
+      assert.strictEqual(newVersion.failed, mangroveOrderVersion.failed);
+      assert.strictEqual(newVersion.failedReason, mangroveOrderVersion.failedReason);
+      assert.strictEqual(newVersion.takerGot, mangroveOrderVersion.takerGot);
+      assert.strictEqual(newVersion.takerGotNumber, mangroveOrderVersion.takerGotNumber);
+      assert.strictEqual(newVersion.takerGave, mangroveOrderVersion.takerGave);
+      assert.strictEqual(newVersion.takerGaveNumber, mangroveOrderVersion.takerGaveNumber);
+      assert.strictEqual(newVersion.price, mangroveOrderVersion.price);
       assert.deepStrictEqual(
         newVersion.expiryDate,
         mangroveOrderVersion.expiryDate

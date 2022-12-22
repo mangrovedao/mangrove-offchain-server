@@ -1,7 +1,7 @@
 import { TakenOffer } from "@proximaone/stream-schema-mangrove/dist/core";
 import { MangroveEvent } from "@proximaone/stream-schema-mangrove/dist/events";
 import { StrategyEvent } from "@proximaone/stream-schema-mangrove/dist/strategyEvents";
-import { NewToken } from "../../../../../src/state/handlers/tokensHandler/handler";
+import { NewToken } from "../../state/handlers/tokensHandler/handler";
 import { Offset, StreamEvent, Timestamp } from "@proximaone/stream-client-js";
 
 const chainName = "polygon-main";

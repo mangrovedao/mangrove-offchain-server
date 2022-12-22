@@ -39,6 +39,7 @@ describe("Offer Operations Integration test suite", () => {
     offer = await prisma.offer.create({
       data: {
         id: offerId.value,
+        offerNumber: offerId.offerNumber,
         offerListId: offerListId.value,
         makerId: makerId.value,
         mangroveId: mangroveId.value,
