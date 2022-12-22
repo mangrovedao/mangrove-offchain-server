@@ -49,7 +49,7 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
             );
       const txRef = payload.tx;
       
-      let transaction: prisma.Transaction | undefined;
+      let transaction: prisma.Transaction;
       if (txRef !== undefined) {
         const txId = new TransactionId(this.chainId, txRef.txHash);
         transaction = await allDbOperation.transactionOperations.ensureTransaction({

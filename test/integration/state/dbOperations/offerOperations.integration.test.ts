@@ -73,50 +73,19 @@ describe("Offer Operations Integration test suite", () => {
     })
   })
 
-  describe("markOfferAsDeleted", () => {
-    it("Cannot find offer", async () => {
-      const noMatch = new OfferId(mangroveId, offerListKey, 100);
-      await assert.rejects(offerOperations.markOfferAsDeleted(noMatch));
-    })
-    it("Cannot find current version", async () => {
-      await prisma.offerVersion.deleteMany()
-      await assert.rejects(offerOperations.markOfferAsDeleted(offerId));
-    })
-    it("Marks offer as deleted", async () => {
-      assert.strictEqual(await prisma.offerVersion.count(), 1);
-      await offerOperations.markOfferAsDeleted(offerId);
-      assert.strictEqual(await prisma.offerVersion.count(), 2);
-      const updatedOffer = await offerOperations.getOffer(offerId);
-      if (!updatedOffer) {
-        assert.fail();
-      }
-      const newVersion = await offerOperations.getVersionedOffer(updatedOffer.currentVersionId);
-      offerVersion.deleted = true;
-      offerVersion.versionNumber = 1;
-      offerVersion.prevVersionId = offerVersion.id;
-      offerVersion.id = new OfferVersionId(offerId, 1).value;
-      assert.deepStrictEqual(newVersion, offerVersion);
-
-    })
-  })
-
-  describe("getVersionedOffer", () => {
-    it("gets versioned offer", async () => {
-      const gottenOfferVersion = await offerOperations.getVersionedOffer(offerVersionId.value);
-      assert.deepStrictEqual(gottenOfferVersion, offerVersion);
-    })
-  })
 
   describe("addVersionedOffer", () => {
+
+    it("No initial value for creation", async () => {
+      const newOfferId = new OfferId(mangroveId, offerListKey, 10);
+      await assert.rejects( offerOperations.addVersionedOffer(newOfferId, "txId", (o) => o))
+    })
+
     it("Add new offer and offer version", async () => {
       const newOfferId = new OfferId(mangroveId, offerListKey, 10);
-      const toBeOffer = offer;
-      offer.id = newOfferId.value;
-      const toBeOfferVersion = offerVersion;
-      toBeOfferVersion.deleted = true;
       assert.strictEqual(await prisma.offer.count(), 1);
       assert.strictEqual(await prisma.offerVersion.count(), 1);
-      await offerOperations.addVersionedOffer(newOfferId, toBeOffer, toBeOfferVersion);
+      await offerOperations.addVersionedOffer( newOfferId, "txId", (o) => o.deleted = true, { makerId: makerId});
       assert.strictEqual(await prisma.offer.count(), 2);
       assert.strictEqual(await prisma.offerVersion.count(), 2);
       const newOffer = await prisma.offer.findUnique({
@@ -126,26 +95,44 @@ describe("Offer Operations Integration test suite", () => {
         await prisma.offerVersion.findUnique({
           where: { id: newOffer?.currentVersionId },
         });
-      assert.deepStrictEqual(toBeOffer, newOffer);
-      const newOfferVersionId = new OfferVersionId( newOfferId, 0 );
-      assert.strictEqual(
-        newOffer?.currentVersionId,
-        newOfferVersionId.value
-      );
-      assert.deepStrictEqual( newOfferVersion, toBeOfferVersion);
+
+      const newVersionId = new OfferVersionId(newOfferId, 0);
+      assert.deepStrictEqual(newOffer, {
+        id: newOfferId.value,
+        mangroveId: newOfferId.mangroveId.value,
+        offerListId: new OfferListId( newOfferId.mangroveId, newOfferId.offerListKey).value,
+        offerNumber: newOfferId.offerNumber,
+        makerId: makerId.value,
+        currentVersionId: newVersionId.value
+      });
+      assert.deepStrictEqual( newOfferVersion, {
+        id: newVersionId.value,
+        offerId: newOfferId.value,
+        txId: "txId",
+        parentOrderId: null,
+        prevOfferId: null,
+        deleted: true,
+        wants: "0",
+        wantsNumber: 0,
+        gives: "0",
+        givesNumber: 0,
+        takerPaysPrice: 0,
+        makerPaysPrice: 0,
+        gasprice: 0,
+        gasreq: 0,
+        live: false,
+        deprovisioned: false,
+        versionNumber: 0,
+        prevVersionId: null
+      });
     })
 
-    it("Cannot find current version", async () => {
-      await prisma.offerVersion.deleteMany();
-      await assert.rejects( offerOperations.addVersionedOffer( offerId, offer, offerVersion));
-    })
+
 
     it("Updates offer and adds new version", async () => {
-      const toBeOfferVersion = offerVersion;
-      toBeOfferVersion.deleted = true;
       assert.strictEqual(await prisma.offer.count(), 1);
       assert.strictEqual(await prisma.offerVersion.count(), 1);
-      await offerOperations.addVersionedOffer(offerId, offer, toBeOfferVersion);
+      await offerOperations.addVersionedOffer(offerId, "txId", (o) => o.deleted = true);
       assert.strictEqual(await prisma.offer.count(), 1);
       assert.strictEqual(await prisma.offerVersion.count(), 2);
       const updatedOffer = await prisma.offer.findUnique({
@@ -156,13 +143,8 @@ describe("Offer Operations Integration test suite", () => {
           where: { id: updatedOffer?.currentVersionId },
         });
       const newVersionOfferId = new OfferVersionId(offerId, 1);
-      toBeOfferVersion.id = newVersionOfferId.value;
-      toBeOfferVersion.versionNumber = 1;
-      toBeOfferVersion.prevVersionId = new OfferVersionId(offerId, 0).value;
-      assert.deepStrictEqual(newOfferVersion, toBeOfferVersion);
-      const toBeOffer = offer;
-      toBeOffer.currentVersionId = newVersionOfferId.value;
-      assert.deepStrictEqual(updatedOffer, toBeOffer);
+      assert.deepStrictEqual(newOfferVersion, { ...offerVersion, id: newVersionOfferId.value, versionNumber: 1, prevVersionId: new OfferVersionId(offerId, 0).value, deleted: true });
+      assert.deepStrictEqual(updatedOffer, { ...offer, currentVersionId: newVersionOfferId.value });
     })
   })
 
@@ -185,7 +167,7 @@ describe("Offer Operations Integration test suite", () => {
     })
 
     it("Has prevVersion, update offer and delete offerVersion", async () => {
-      await offerOperations.addVersionedOffer(offerId, offer, offerVersion);
+      await offerOperations.addVersionedOffer(offerId, "txId", (o) => o.gasreq=10);
       const offerToBeUpdated = await prisma.offer.findUnique({where: { id: offerId.value}});
       assert.strictEqual(await prisma.offer.count(), 1);
       assert.strictEqual(await prisma.offerVersion.count(), 2);

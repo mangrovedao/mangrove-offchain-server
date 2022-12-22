@@ -66,7 +66,7 @@ export class OrderOperations extends DbOperations {
     // Taken offers have been removed from the book. Any offers that are reposted
     // will result in `OfferWritten` events that will be sent _after_ the
     // `OrderCompleted` event. We therefore remove all taken offers here.
-    await this.offerOperations.markOfferAsDeleted(offerId);
+    await this.offerOperations.addVersionedOffer(offerId, "txId", (m) => m.deleted = true); //FIXME: no txId
     let updateFunc = ( tokens: { outboundToken: prismaModel.Token; inboundToken: prismaModel.Token; }, mangroveOrder: prismaModel.MangroveOrder, newVersion: Omit<prismaModel.MangroveOrderVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId">) => this.mangroveOrderEventsLogic.updateMangroveOrderFromTakenOffer( takenOffer, tokens, mangroveOrder, newVersion);
     await this.mangroveOrderOperations.updateMangroveOrderFromTakenOffer(
       offerId,

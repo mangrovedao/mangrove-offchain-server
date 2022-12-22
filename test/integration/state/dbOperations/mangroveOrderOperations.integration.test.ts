@@ -282,7 +282,6 @@ describe("Mangrove Order Operations Integration test suite", () => {
       const mangroveOrderId2 = new MangroveOrderId(mangroveId, offerListKey, "mangroveOrder2");
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
-      mangroveOrder.id = mangroveOrderId2.value;
       await mangroveOrderOperations.addMangroveOrderVersion(mangroveOrderId2, "txId", (m) => m, mangroveOrder);
       const newMangroveOrder = await prisma.mangroveOrder.findUnique({
         where: { id: mangroveOrderId2.value },
@@ -292,12 +291,8 @@ describe("Mangrove Order Operations Integration test suite", () => {
           where: { id: newMangroveOrder?.currentVersionId },
         });
 
-        mangroveOrder.offerListId = new OfferListId(mangroveOrderId2.mangroveId, mangroveOrderId2.offerListKey).value;
         const newVersionId = new MangroveOrderVersionId({ mangroveOrderId: mangroveOrderId2, versionNumber: 0 });
-        mangroveOrder.mangroveId = mangroveOrderId2.mangroveId.value;
-        mangroveOrder.currentVersionId = newVersionId.value;
-        mangroveOrder.proximaId = mangroveOrderId2.proximaId;
-        assert.deepStrictEqual(newMangroveOrder, mangroveOrder);
+        assert.deepStrictEqual(newMangroveOrder, { ...mangroveOrder, id: mangroveOrderId2.value, mangroveId: mangroveOrderId2.mangroveId.value, currentVersionId: newVersionId.value, proximaId:  mangroveOrderId2.proximaId, offerListId: new OfferListId(mangroveOrderId2.mangroveId, mangroveOrderId2.offerListKey).value });
         assert.deepStrictEqual(newMangroveOrderVersion, {
         id: newVersionId.value,
         txId: "txId",

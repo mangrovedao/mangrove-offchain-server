@@ -12,6 +12,7 @@ import {
   OfferListId,
   OrderId,
 } from "../../model";
+import { initial } from "lodash";
 
 export class OfferEventsLogic {
   async handleOfferRetracted(
@@ -34,7 +35,7 @@ export class OfferEventsLogic {
       txId,
       (m) => (m.cancelled = true)
     );
-    await db.offerOperations.markOfferAsDeleted(offerId);
+    await db.offerOperations.addVersionedOffer(offerId, txId, (m) => m.deleted =true);
   }
 
   async handleOfferWritten(
@@ -45,7 +46,7 @@ export class OfferEventsLogic {
     offerList: mangroveSchema.core.OfferList,
     maker: string,
     offer: mangroveSchema.core.Offer,
-    transaction: prisma.Transaction | undefined,
+    transaction: prisma.Transaction,
     db: AllDbOperations,
     parentOrderId: OrderId | undefined
   ) {
@@ -76,34 +77,34 @@ export class OfferEventsLogic {
       -inboundToken.decimals
     );
 
+    let updateFunc = (offerVersion: Omit< prisma.OfferVersion, "id" | "offerId" | "versionNumber" | "prevVersionId" >) => {
+      offerVersion.txId= transaction!.id;
+      offerVersion.parentOrderId= parentOrderId?.value ?? null;
+      offerVersion.deleted= false;
+      offerVersion.gasprice= offer.gasprice;
+      offerVersion.gives= offer.gives;
+      offerVersion.givesNumber= givesBigNumber.toNumber();
+      offerVersion.wants= offer.wants;
+      offerVersion.wantsNumber= wantsBigNumber.toNumber();
+      offerVersion.takerPaysPrice= givesBigNumber.gt(0)
+        ? wantsBigNumber.div(givesBigNumber).toNumber()
+        : null;
+      offerVersion.makerPaysPrice= wantsBigNumber.gt(0)
+        ? givesBigNumber.div(wantsBigNumber).toNumber()
+        : null;
+      offerVersion.gasreq= offer.gasreq;
+      offerVersion.live= new BigNumber(offer.gives).isPositive();
+      offerVersion.deprovisioned= offer.gasprice == 0;
+      offerVersion.prevOfferId= prevOfferId ? prevOfferId.value : null;
+    };
+
     await db.offerOperations.addVersionedOffer(
       offerId,
+      transaction?.id,
+      updateFunc,
       {
-        id: offerId.value,
-        mangroveId: mangroveId.value,
-        offerListId: offerListId.value,
-        makerId: maker,
-        offerNumber: offerId.offerNumber
-      },
-      {
-        txId: transaction!.id,
-        parentOrderId: parentOrderId?.value ?? null,
-        deleted: false,
-        gasprice: offer.gasprice,
-        gives: offer.gives,
-        givesNumber: givesBigNumber.toNumber(),
-        wants: offer.wants,
-        wantsNumber: wantsBigNumber.toNumber(),
-        takerPaysPrice: givesBigNumber.gt(0)
-          ? wantsBigNumber.div(givesBigNumber).toNumber()
-          : null,
-        makerPaysPrice: wantsBigNumber.gt(0)
-          ? givesBigNumber.div(wantsBigNumber).toNumber()
-          : null,
-        gasreq: offer.gasreq,
-        live: new BigNumber(offer.gives).isPositive(),
-        deprovisioned: offer.gasprice == 0,
-        prevOfferId: prevOfferId ? prevOfferId.value : null,
+        makerId: accountId,
+        parentOrderId
       }
     );
   }

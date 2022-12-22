@@ -1,7 +1,8 @@
 import * as prisma from "@prisma/client";
-import { OfferId, OfferVersionId } from "../../state/model";
+import { AccountId, OfferId, OfferListId, OfferVersionId, OrderId } from "../../state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 import * as _ from "lodash";
+import { Offer } from "@prisma/client";
 
 export class OfferOperations extends DbOperations {
 
@@ -9,66 +10,98 @@ export class OfferOperations extends DbOperations {
     return await this.tx.offer.findUnique({ where: { id: id.value } });
   }
 
-  public async markOfferAsDeleted(id: OfferId) {
-    const offer = await this.getOffer(id);
-    if (!offer) {
-      throw Error(`Could not find offer for offerId: ${id}`);
-    }
-    const newVersion = await this.tx.offerVersion.findUnique({
-      where: { id: offer.currentVersionId },
-    });
-    if (!newVersion) {
-      throw Error(`Could not find current offer version of offerId: ${id}`);
-    }
-    newVersion.deleted = true;
-    await this.addVersionedOffer(id, offer, newVersion);
-  }
-
-  public async getVersionedOffer(offerVersionId: string) {
-    return this.tx.offerVersion.findUnique({ where: { id: offerVersionId } });
-  }
 
   // Add a new OfferVersion to a (possibly new) Offer
   public async addVersionedOffer(
     id: OfferId,
-    offer: Omit<prisma.Offer, "currentVersionId">,
-    version: Omit<
-      prisma.OfferVersion,
-      "id" | "offerId" | "versionNumber" | "prevVersionId"
-    >
+    txId: string,
+    updateFunc: (version: Omit< prisma.OfferVersion, "id" | "offerId" | "versionNumber" | "prevVersionId" > ) => void,
+    initial?: {
+      makerId:AccountId,
+      parentOrderId?: OrderId,
+    }
   ) {
-    const oldVersionId = (await this.getOffer(id))?.currentVersionId;
-
-    let oldVersion: prisma.OfferVersion | null = null;
-    if (oldVersionId !== undefined) {
-      oldVersion = await this.tx.offerVersion.findUnique({
-        where: { id: oldVersionId },
-      });
-      if (oldVersion === null) {
-        throw new Error(`Old OfferVersion not found, id: ${oldVersion}`);
+    let offer = (await this.getOffer(id));
+    let newVersion:prisma.OfferVersion;
+    if (offer === null) {
+      if(!initial){
+        throw new Error( "Can't create Offer without initial values for creation");
+      }
+      const newVersionId = new OfferVersionId(id, 0);
+      offer = {
+        id: id.value,
+        mangroveId: id.mangroveId.value,
+        offerListId: new OfferListId( id.mangroveId, id.offerListKey).value,
+        offerNumber: id.offerNumber,
+        makerId: initial.makerId.value,
+        currentVersionId: newVersionId.value
+      };
+      newVersion = {
+        id: newVersionId.value,
+        offerId: id.value,
+        txId: txId,
+        parentOrderId: initial.parentOrderId ? initial.parentOrderId.value : null,
+        prevOfferId: null,
+        deleted: false,
+        wants: "0",
+        wantsNumber: 0,
+        gives: "0",
+        givesNumber: 0,
+        takerPaysPrice: 0,
+        makerPaysPrice: 0,
+        gasprice: 0,
+        gasreq: 0,
+        live: false,
+        deprovisioned: false,
+        versionNumber: 0,
+        prevVersionId: null
       }
     }
+    else {
 
-    const newVersionNumber =
-      oldVersion === null ? 0 : oldVersion.versionNumber + 1;
-    const newVersionId = new OfferVersionId(id, newVersionNumber);
+      const oldVersion = await this.getCurrentOfferVersion(id);
+      const newVersionNumber =
+        oldVersion === null ? 0 : oldVersion.versionNumber + 1;
+      const newVersionId = new OfferVersionId(id, newVersionNumber);
+      newVersion = _.merge(oldVersion, {
+        id: newVersionId.value,
+        txId: txId,
+        versionNumber: newVersionNumber,
+        prevVersionId: oldVersion.id,
+      });
+
+    }
+
+
+    updateFunc(newVersion);
+
 
     await this.tx.offer.upsert(
-      toUpsert<prisma.Offer>(
+      toUpsert(
         _.merge(offer, {
-          currentVersionId: newVersionId.value,
+          currentVersionId: newVersion.id,
         })
       )
     );
 
-    await this.tx.offerVersion.create({
-      data: _.merge(version, {
-        id: newVersionId.value,
-        offerId: offer.id,
-        versionNumber: newVersionNumber,
-        prevVersionId: oldVersionId,
-      }),
+    await this.tx.offerVersion.create({ data: newVersion });
+  }
+
+
+  private async getCurrentOfferVersion(idOrOffer: OfferId | prisma.Offer) {
+    const id = "id" in idOrOffer ? idOrOffer.id :  (idOrOffer as OfferId).value;
+
+    const offer = await this.tx.offer.findUnique({
+      where: { id: id },
     });
+    if ( !offer ) {
+      throw new Error(`Could not find offer from, id: ${id}`);
+    }
+    const offerVersion = await this.tx.offerVersion.findUnique({ where: { id : offer.currentVersionId}})
+    if(!offerVersion){
+      throw new Error(`Could not find offerVersion from id: ${offer.currentVersionId}`)
+    }
+    return offerVersion;
   }
 
   public async deleteLatestOfferVersion(id: OfferId) {
