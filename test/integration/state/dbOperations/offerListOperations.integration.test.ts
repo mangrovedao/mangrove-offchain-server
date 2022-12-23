@@ -5,7 +5,6 @@ import { OfferListOperations } from "../../../../src/state/dbOperations/offerLis
 import {
   ChainId,
   MangroveId,
-  OfferId,
   OfferListId,
   OfferListKey,
   OfferListVersionId,
@@ -27,7 +26,6 @@ describe("OfferList Operations Integration test suite", () => {
     outboundToken: outboundTokenId.tokenAddress,
     inboundToken: inboundTokenId.tokenAddress,
   };
-  const offerId = new OfferId(mangroveId, offerListKey, 1);
   const offerListId = new OfferListId(mangroveId, offerListKey);
   const offerListVersionId = new OfferListVersionId(offerListId, 0);
   let offerList: prismaModel.OfferList;
@@ -238,5 +236,22 @@ describe("OfferList Operations Integration test suite", () => {
       assert.deepStrictEqual(currentVersion, offerList);
     });
   });
+
+  describe("getCurrentOfferListVersion", async () => {
+    it("Cant find offerList", async () => {
+      const newOfferListId = new OfferListId(mangroveId, { ...offerListKey, inboundToken:"noMatch" })
+      await assert.rejects( offerListOperations.getCurrentOfferListVersion(newOfferListId))
+    })
+
+    it("Cant find offerListVersion", async () => {
+      await prisma.offerListVersion.deleteMany();
+      await assert.rejects( offerListOperations.getCurrentOfferListVersion(offerListId))
+    })
+
+    it("Found current offerList version", async () => {
+      const found = await offerListOperations.getCurrentOfferListVersion(offerListId);
+      assert.deepStrictEqual(found, offerListVersion);
+    })
+  })
 
 });

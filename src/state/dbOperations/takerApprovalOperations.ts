@@ -75,6 +75,22 @@ export class TakerApprovalOperations extends DbOperations {
     await this.tx.takerApprovalVersion.create({ data: newVersion });
   }
 
+
+  async getCurrentTakerApprovalVersion(idOrTakerApproval: TakerApprovalId | prisma.TakerApproval) {
+    const id = "id" in idOrTakerApproval ? idOrTakerApproval.id :  (idOrTakerApproval as TakerApprovalId).value;
+    const takerApproval = await this.tx.takerApproval.findUnique({
+      where: { id: id },
+    });
+    if ( !takerApproval ) {
+      throw new Error(`Could not find takerApproval from, id: ${id}`);
+    }
+    const takerApprovalVersion = await this.tx.takerApprovalVersion.findUnique({ where: { id : takerApproval.currentVersionId}})
+    if(!takerApprovalVersion){
+      throw new Error(`Could not find takerApprovalVersion from id: ${takerApproval.currentVersionId}`)
+    }
+    return takerApprovalVersion;
+  }
+
   public async deleteLatestTakerApprovalVersion(id: TakerApprovalId) {
     const takerApproval = await this.tx.takerApproval.findUnique({
       where: { id: id.value },

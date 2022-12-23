@@ -76,15 +76,23 @@ export class MangroveOperations extends DbOperations {
     await this.tx.mangroveVersion.create({ data: newVersion });
   }
 
-  private async getCurrentMangroveVersion(mangrove: prisma.Mangrove) {
-    const oldVersionId = mangrove.currentVersionId;
-    const oldVersion = await this.tx.mangroveVersion.findUnique({
-      where: { id: oldVersionId },
-    });
-    if (oldVersion === null) {
-      throw new Error(`Old MangroveVersion not found, id: ${oldVersionId}`);
+  async getCurrentMangroveVersion(idOrMangrove: MangroveId | prisma.Mangrove) {
+    const id = this.getId(idOrMangrove);
+    const mangrove = await this.tx.mangrove.findUnique({where: { id: id}})
+    if(!mangrove){
+      throw new Error(`Could not find mangrove from id: ${id}`);
     }
-    return oldVersion;
+    const currentVersion = await this.tx.mangroveVersion.findUnique({
+      where: { id: mangrove.currentVersionId },
+    });
+    if (currentVersion === null) {
+      throw new Error(`Current MangroveVersion not found, currentVersionId: ${currentVersion}`);
+    }
+    return currentVersion;
+  }
+
+  getId(idOrMangrove: MangroveId | prisma.Mangrove) {
+    return "id" in idOrMangrove ? idOrMangrove.id : (idOrMangrove as MangroveId).value;
   }
 
   public async deleteLatestMangroveVersion(id: MangroveId) {

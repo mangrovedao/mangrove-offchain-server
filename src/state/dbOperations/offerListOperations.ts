@@ -83,19 +83,13 @@ export class OfferListOperations extends DbOperations {
         fee: null,
       };
     } else {
-      const oldVersionId = offerList.currentVersionId;
-      const oldVersion = await this.tx.offerListVersion.findUnique({
-        where: { id: oldVersionId },
-      });
-      if (oldVersion === null) {
-        throw new Error(`Old OfferListVersion not found, id: ${oldVersionId}`);
-      }
+      const oldVersion = await this.getCurrentOfferListVersion(offerList);
       const newVersionNumber = oldVersion.versionNumber + 1;
       const newVersionId = new OfferListVersionId(id, newVersionNumber);
       newVersion = _.merge(oldVersion, {
         id: newVersionId.value,
         versionNumber: newVersionNumber,
-        prevVersionId: oldVersionId,
+        prevVersionId: oldVersion.id,
       });
     }
 
@@ -108,8 +102,22 @@ export class OfferListOperations extends DbOperations {
         })
       )
     );
-
     await this.tx.offerListVersion.create({ data: newVersion });
+  }
+
+  async getCurrentOfferListVersion(idOrofferList: OfferListId | prisma.OfferList) {
+    const id = "id" in idOrofferList ? idOrofferList.id : (idOrofferList as OfferListId).value;
+    const offerList = await this.tx.offerList.findUnique({where: {id: id}})
+    if(!offerList) {
+      throw new Error(`Could not find offerList form id: ${id}`)
+    }
+    const currentVersion = await this.tx.offerListVersion.findUnique({
+      where: { id: offerList.currentVersionId },
+    });
+    if (currentVersion === null) {
+      throw new Error(`Could not find Current offer list version, id: ${currentVersion}`);
+    }
+    return currentVersion;
   }
 
   public async deleteLatestOfferListVersion(id: OfferListId) {

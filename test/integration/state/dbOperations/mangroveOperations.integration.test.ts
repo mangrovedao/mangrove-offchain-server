@@ -7,6 +7,7 @@ import {
   MangroveVersionId,
 } from "../../../../src/state/model";
 import { prisma } from "../../../../src/utils/test/mochaHooks";
+import { Mangrove, MangroveVersion } from "@prisma/client";
 
 describe("Mangrove Operations Integration test suite", () => {
   let mangroveOperations: MangroveOperations;
@@ -14,19 +15,25 @@ describe("Mangrove Operations Integration test suite", () => {
     mangroveOperations = new MangroveOperations(prisma);
   });
 
+  const chainId = new ChainId(123);
+  const mangroveId = new MangroveId(chainId, "mangroveId");
+  const mangroveVersionId = new MangroveVersionId(mangroveId, 0);
+  let mangrove:Mangrove;
+  let mangroveVersion:MangroveVersion;
+
   beforeEach(async () => {
-    await prisma.mangrove.create({
+    mangrove = await prisma.mangrove.create({
       data: {
-        id: "mangroveId",
-        chainId: 10,
+        id: mangroveId.value,
+        chainId: chainId.value,
         address: "address",
         currentVersionId: "mangroveId-0",
       },
     });
-    await prisma.mangroveVersion.create({
+    mangroveVersion = await prisma.mangroveVersion.create({
       data: {
-        id: "mangroveId-0",
-        mangroveId: "mangroveId",
+        id: mangroveVersionId.value,
+        mangroveId: mangroveId.value,
         txId: "txId",
         governance: "gov",
         monitor: "mon",
@@ -46,42 +53,40 @@ describe("Mangrove Operations Integration test suite", () => {
   describe("addVersionedMangrove", () => {
 
     it("Does not exit, missing address", async () =>{
-      const chainId = new ChainId(10);
-      const mangroveId = new MangroveId(chainId, "mangroveId2");
+      const newMangroveId = new MangroveId(chainId, "10");
       await assert.rejects( mangroveOperations.addVersionedMangrove({
-        id:mangroveId,
+        id:newMangroveId,
         txId:"txId"
     }) );
     })
 
     it("Does not exist, will be created", async () => {
-      const chainId = new ChainId(10);
-      const mangroveId = new MangroveId(chainId, "mangroveId2");
+      const newMangroveId = new MangroveId(chainId, "10");
       assert.strictEqual(await prisma.mangrove.count(), 1);
       assert.strictEqual(await prisma.mangroveVersion.count(), 1);
       await mangroveOperations.addVersionedMangrove({
-        id:mangroveId,
+        id:newMangroveId,
         address:"address",
         txId:"txId"
     });
       assert.strictEqual(await prisma.mangrove.count(), 2);
       assert.strictEqual(await prisma.mangroveVersion.count(), 2);
-      const mangrove = await prisma.mangrove.findUnique({
-        where: { id: mangroveId.value },
+      const newMangrove = await prisma.mangrove.findUnique({
+        where: { id: newMangroveId.value },
       });
-      const mangroveVersionId = new MangroveVersionId(mangroveId, 0);
-      assert.deepStrictEqual(mangrove, {
-        id: mangroveId.value,
+      const newMangroveVersionId = new MangroveVersionId(newMangroveId,0);
+      assert.deepStrictEqual(newMangrove, {
+        id: newMangroveId.value,
         chainId: chainId.value,
         address: "address",
-        currentVersionId: mangroveVersionId.value,
+        currentVersionId: newMangroveVersionId.value,
       });
-      const mangroveVersion = await prisma.mangroveVersion.findUnique({
-        where: { id: mangrove.currentVersionId },
+      const newMangroveVersion = await prisma.mangroveVersion.findUnique({
+        where: { id: newMangrove.currentVersionId },
       });
-      assert.deepStrictEqual(mangroveVersion, {
-        id: mangroveVersionId.value,
-        mangroveId: mangroveId.value,
+      assert.deepStrictEqual(newMangroveVersion, {
+        id: newMangroveVersionId.value,
+        mangroveId: newMangroveId.value,
         txId: "txId",
         versionNumber: 0,
         prevVersionId: null,
@@ -96,9 +101,7 @@ describe("Mangrove Operations Integration test suite", () => {
       });
     });
 
-    it("Mangrove exists, np update function given", async () => {
-      const chainId = new ChainId(10);
-      const mangroveId = new MangroveId(chainId, "mangroveId");
+    it("Mangrove exists, no update function given", async () => {
       await assert.rejects( mangroveOperations.addVersionedMangrove({
         id:mangroveId,
         txId:"txId",
@@ -106,8 +109,6 @@ describe("Mangrove Operations Integration test suite", () => {
     })
 
     it("Mangrove current version does not exist", async () => {
-      const chainId = new ChainId(10);
-      const mangroveId = new MangroveId(chainId, "mangroveId");
       await prisma.mangroveVersion.deleteMany();
       await assert.rejects(
         mangroveOperations.addVersionedMangrove({
@@ -119,8 +120,6 @@ describe("Mangrove Operations Integration test suite", () => {
     });
 
     it("Updates Mangrove and Mangrove version", async () => {
-      const chainId = new ChainId(10);
-      const mangroveId = new MangroveId(chainId, "mangroveId");
       assert.strictEqual(await prisma.mangrove.count(), 1);
       assert.strictEqual(await prisma.mangroveVersion.count(), 1);
       const oldMangrove = await prisma.mangrove.findUnique({
@@ -150,6 +149,23 @@ describe("Mangrove Operations Integration test suite", () => {
       assert.strictEqual(newMangroveVersion?.dead, true);
     });
   });
+
+  describe("getCurrentMangroveVersion", () => {
+    it("Cant find mangrove", async () => {
+      const newMangroveId = new MangroveId(chainId, "2");
+      await assert.rejects( mangroveOperations.getCurrentMangroveVersion(newMangroveId));
+    })
+
+    it("Cant find current version", async () => {
+        await prisma.mangroveVersion.deleteMany();
+        await assert.rejects( mangroveOperations.getCurrentMangroveVersion(mangrove));
+    })
+
+    it("Finds current version", async () => {
+      const found = await mangroveOperations.getCurrentMangroveVersion(mangroveId);
+      assert.deepStrictEqual( found, mangroveVersion);
+    })
+  })
 
   describe("deleteLatestMangroveVersion", () => {
     it("Mangrove does not exist", async () => {

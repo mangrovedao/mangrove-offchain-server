@@ -464,22 +464,6 @@ describe("Mangrove Order Operations Integration test suite", () => {
     });
   });
 
-  // describe("createMangroveOrder", () => {
-  //   it("creates mangroveOrder", async () => {
-  //     mangroveOrder.id = "newId";
-  //     assert.strictEqual(await prisma.mangroveOrder.count(), 1);
-  //     await mangroveOrderOperations.createMangroveOrder(mangroveOrder);
-  //     assert.strictEqual(await prisma.mangroveOrder.count(), 2);
-  //     const newMangroveOrder = await prisma.mangroveOrder.findUnique({
-  //       where: { id: mangroveOrder.id },
-  //     });
-  //     if (!newMangroveOrder) {
-  //       assert.fail();
-  //     }
-  //     assert.deepStrictEqual(newMangroveOrder, mangroveOrder);
-  //   });
-  // });
-
   describe("deleteMangroveOrder", () => {
     it("deletes mangroveOrder", async () => {
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
@@ -489,24 +473,5 @@ describe("Mangrove Order Operations Integration test suite", () => {
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 0);
     });
   });
-
-  // describe("createMangroveOrderVersion", () => {
-  //   it("creates mangroveOrderVersion", async () => {
-  //     mangroveOrderVersion.id = "newId";
-  //     assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
-  //     await mangroveOrderOperations.createMangroveOrderVersion(
-  //       mangroveOrderVersion
-  //     );
-  //     assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
-  //     const newMangroveOrderVersion =
-  //       await prisma.mangroveOrderVersion.findUnique({
-  //         where: { id: mangroveOrderVersion.id },
-  //       });
-  //     if (!newMangroveOrderVersion) {
-  //       assert.fail();
-  //     }
-  //     assert.deepStrictEqual(newMangroveOrderVersion, mangroveOrderVersion);
-  //   });
-  // });
 
 });

@@ -183,4 +183,21 @@ describe("Offer Operations Integration test suite", () => {
 
   })
 
+  describe("getCurrentOfferVersion", async () => {
+    it("Cant find offer", async () => {
+      const newOfferId = new OfferId(mangroveId, offerListKey, 100)
+      await assert.rejects( offerOperations.getCurrentOfferVersion(newOfferId))
+    })
+
+    it("Cant find offerVersion", async () => {
+      await prisma.offerVersion.deleteMany();
+      await assert.rejects( offerOperations.getCurrentOfferVersion(offerId))
+    })
+
+    it("Found current offer version", async () => {
+      const found = await offerOperations.getCurrentOfferVersion(offerId);
+      assert.deepStrictEqual(found, offerVersion);
+    })
+  })
+
 });

@@ -147,11 +147,7 @@ export class MangroveOrderOperations extends DbOperations {
         prevVersionId: oldVersion.id,
       });
     }
-
-
     updateFunc(newVersion);
-
-
     await this.tx.mangroveOrder.upsert(
       toUpsert(
         _.merge(mangroveOrder, {
@@ -159,7 +155,6 @@ export class MangroveOrderOperations extends DbOperations {
         })
       )
     );
-
     await this.tx.mangroveOrderVersion.create({ data: newVersion });
   }
 

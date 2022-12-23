@@ -13,6 +13,7 @@ import {
   TokenId
 } from "../../../../src/state/model";
 import { prisma } from "../../../../src/utils/test/mochaHooks";
+import { TakerApproval, TakerApprovalVersion } from "@prisma/client";
 
 describe("Taker Approval Operations Integration test suite", () => {
   let takerApprovalOperations: TakerApprovalOperations;
@@ -34,9 +35,11 @@ describe("Taker Approval Operations Integration test suite", () => {
   const orderId = new OrderId(mangroveId, offerListKey, "order");
   const takerApprovalId = new TakerApprovalId(mangroveId, offerListKey, ownerId.address, spenderId.address)
   const takerApprovalVersionId = new TakerApprovalVersionId(takerApprovalId, 0);
+  let takerApproval:TakerApproval;
+  let takerApprovalVersion:TakerApprovalVersion;
 
   beforeEach(async () => {
-    await prisma.takerApproval.create({
+    takerApproval = await prisma.takerApproval.create({
       data: {
         id: takerApprovalId.value,
         mangroveId: mangroveId.value,
@@ -46,7 +49,7 @@ describe("Taker Approval Operations Integration test suite", () => {
         currentVersionId: takerApprovalVersionId.value,
       },
     });
-    await prisma.takerApprovalVersion.create({
+    takerApprovalVersion = await prisma.takerApprovalVersion.create({
       data: {
         id: takerApprovalVersionId.value,
         takerApprovalId: takerApprovalId.value,
@@ -176,6 +179,24 @@ describe("Taker Approval Operations Integration test suite", () => {
       oldTakerApproval.currentVersionId = new TakerApprovalVersionId( takerApprovalId, 0).value;
       assert.deepStrictEqual( updatedTakerApproval, oldTakerApproval);
 
+    })
+  })
+
+
+  describe("getCurrentTakerApprovalVersion", async () => {
+    it("Cant find offer", async () => {
+      const newTakerApprovalId = new TakerApprovalId(mangroveId, offerListKey, ownerId.address, "noMatch");
+      await assert.rejects( takerApprovalOperations.getCurrentTakerApprovalVersion(newTakerApprovalId))
+    })
+
+    it("Cant find takerApprovalVersion", async () => {
+      await prisma.takerApprovalVersion.deleteMany();
+      await assert.rejects( takerApprovalOperations.getCurrentTakerApprovalVersion(takerApprovalId))
+    })
+
+    it("Found current takerApproval version", async () => {
+      const found = await takerApprovalOperations.getCurrentTakerApprovalVersion(takerApprovalId);
+      assert.deepStrictEqual(found, takerApprovalVersion);
     })
   })
 

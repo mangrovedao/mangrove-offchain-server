@@ -90,7 +90,6 @@ export class OfferOperations extends DbOperations {
 
   async getCurrentOfferVersion(idOrOffer: OfferId | prisma.Offer) {
     const id = "id" in idOrOffer ? idOrOffer.id :  (idOrOffer as OfferId).value;
-
     const offer = await this.tx.offer.findUnique({
       where: { id: id },
     });
