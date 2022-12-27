@@ -32,46 +32,51 @@ export class OrderEventLogic {
 
     if (undo) {
       await db.orderOperations.undoOrder(mangroveId, offerList, orderId, order);
-      
+
       return;
     }
+    const takerAccountId = new AccountId(chainId, order.taker);
+    await db.accountOperations.ensureAccount(takerAccountId);
 
-    await this.createOrder(mangroveId, offerList, order, chainId, orderId, transaction!.id, db, parentOrderId);
-  }
-
-  async createOrder(
-    mangroveId: MangroveId, 
-    offerList: mangroveSchema.core.OfferList, 
-    order: mangroveSchema.core.Order, 
-    chainId: ChainId, 
-    orderId: OrderId, 
-    txId: string, 
-    db: AllDbOperations,
-    parentOrderId?: OrderId,
-  ){
     const offerListId = new OfferListId(mangroveId, offerList);
-  
-    const { outboundToken, inboundToken } = await db.offerListOperations.getOfferListTokens({
+
+    const tokens = await db.offerListOperations.getOfferListTokens({
       id: offerListId,
     });
+    const prismaOrder = this.createOrder(mangroveId, offerListId, tokens, order, takerAccountId, orderId, transaction!.id, parentOrderId);
+    const takenOffers: Omit<prisma.TakenOffer, "orderId">[] = await Promise.all(order.takenOffers.map((value) => this.mapTakenOffer(orderId, value, tokens, (o) => db.offerOperations.getOffer(o))));
+
+    await db.orderOperations.createOrder(orderId, prismaOrder, takenOffers);
+  }
+
+  createOrder(
+    mangroveId: MangroveId,
+    offerListId: OfferListId,
+    tokens: { inboundToken: { decimals: number }, outboundToken: { decimals: number } },
+    order: Omit<mangroveSchema.core.Order, "takenOffers" | "taker">,
+    takerId: AccountId,
+    orderId: OrderId,
+    txId: string,
+    parentOrderId?: OrderId,
+  ) {
+
     const takerGotBigNumber = getBigNumber({
       value: order.takerGot,
-      token: outboundToken,
+      token: tokens.outboundToken,
     });
     const takerGaveBigNumber = getBigNumber({
       value: order.takerGave,
-      token: inboundToken,
+      token: tokens.inboundToken,
     });
-    const takerAccountId = new AccountId(chainId, order.taker);
-    await db.accountOperations.ensureAccount(takerAccountId);
-    const prismaOrder:prisma.Order ={
+
+    const prismaOrder: prisma.Order = {
       id: orderId.value,
       txId: txId,
       proximaId: orderId.proximaId,
       parentOrderId: parentOrderId?.value ?? null,
       offerListId: offerListId.value,
       mangroveId: mangroveId.value,
-      takerId: takerAccountId.value,
+      takerId: takerId.value,
       // takerWants: order.takerWants,
       // takerWantsNumber: getNumber({
       //   value: order.takerWants,
@@ -96,47 +101,41 @@ export class OrderEventLogic {
       //   token: outboundToken,
       // }),
     }
-    const takenOffers:Omit<prisma.TakenOffer, "orderId">[] = await Promise.all( order.takenOffers.map( (value) => this.mapTakenOffer( orderId, value, inboundToken, outboundToken, db)) );
 
-    await db.orderOperations.createOrder( orderId, prismaOrder, takenOffers );
+    return prismaOrder;
   }
 
   public async mapTakenOffer(
     orderId: OrderId,
     takenOfferEvent: mangroveSchema.core.TakenOffer,
-    inboundToken: {decimals: number},
-    outboundToken: {decimals: number},
-    db:AllDbOperations,
+    tokens: { inboundToken: { decimals: number }, outboundToken: { decimals: number } },
+    getOffer: (offerId: OfferId) => Promise< { currentVersionId:string }| null>,
   ) {
-    const takerGotBigNumber = getBigNumber({ value: takenOfferEvent.takerWants, token: outboundToken} );
-    const takerGaveBigNumber = getBigNumber({ value: takenOfferEvent.takerGives, token: inboundToken} );
+    const takerGotBigNumber = getBigNumber({ value: takenOfferEvent.takerWants, token: tokens.outboundToken });
+    const takerGaveBigNumber = getBigNumber({ value: takenOfferEvent.takerGives, token: tokens.inboundToken });
     const offerId = new OfferId(orderId.mangroveId, orderId.offerListKey, takenOfferEvent.id);
-    const offer = await db.offerOperations.getOffer(offerId);
+    const offer = await getOffer(offerId);
 
     assert(offer);
 
-    const takenOffer:Omit<prisma.TakenOffer, "orderId"> = {
+    const takenOffer: Omit<prisma.TakenOffer, "orderId"> = {
       id: new TakenOfferId(orderId, takenOfferEvent.id).value,
       offerVersionId: offer.currentVersionId,
       takerGot: takenOfferEvent.takerWants,
       takerGotNumber: takerGotBigNumber.toNumber(),
       takerGave: takenOfferEvent.takerGives,
       takerGaveNumber: takerGaveBigNumber.toNumber(),
-      takerPaidPrice: getPrice({ over: takerGaveBigNumber, under: takerGotBigNumber}),
-      makerPaidPrice: getPrice({ over: takerGotBigNumber, under: takerGaveBigNumber}),
+      takerPaidPrice: getPrice({ over: takerGaveBigNumber, under: takerGotBigNumber }),
+      makerPaidPrice: getPrice({ over: takerGotBigNumber, under: takerGaveBigNumber }),
       failReason: takenOfferEvent.failReason ?? null,
-      posthookData: takenOfferEvent.posthookData ?? null ,
+      posthookData: takenOfferEvent.posthookData ?? null,
       posthookFailed: takenOfferEvent.posthookFailed ?? false,
     };
-
-    // Taken offers have been removed from the book. Any offers that are reposted
-    // will result in `OfferWritten` events that will be sent _after_ the
-    // `OrderCompleted` event. We therefore remove all taken offers here.
 
     return takenOffer;
   }
 
-  
+
 
 
 }

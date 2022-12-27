@@ -17,8 +17,7 @@ export class OfferOperations extends DbOperations {
     txId: string,
     updateFunc: (version: Omit< prisma.OfferVersion, "id" | "offerId" | "versionNumber" | "prevVersionId" > ) => void,
     initial?: {
-      makerId:AccountId,
-      parentOrderId?: OrderId,
+      makerId:AccountId
     }
   ) {
     let offer = (await this.getOffer(id));
@@ -40,7 +39,7 @@ export class OfferOperations extends DbOperations {
         id: newVersionId.value,
         offerId: id.value,
         txId: txId,
-        parentOrderId: initial.parentOrderId ? initial.parentOrderId.value : null,
+        parentOrderId: null,
         prevOfferId: null,
         deleted: false,
         wants: "0",

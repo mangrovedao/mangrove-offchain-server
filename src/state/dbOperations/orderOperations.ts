@@ -17,7 +17,7 @@ export class OrderOperations extends DbOperations {
     this.mangroveOrderOperations = new MangroveOrderOperations(tx);
   }
   public async deleteOrder(id: OrderId) {
-    await this.tx.order.deleteMany({ where: { id: id.value } });
+    await this.tx.order.delete({ where: { id: id.value } });
   }
 
   public async undoOrder(mangroveId:MangroveId, offerList: mangroveSchema.core.OfferList, orderId:OrderId, order:{ takenOffers:{id:number}[]} ){
@@ -63,7 +63,7 @@ export class OrderOperations extends DbOperations {
              inboundToken: prismaModel.Token; }, 
           mangroveOrder: prismaModel.MangroveOrder, 
           newVersion: Omit<prismaModel.MangroveOrderVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId">) =>
-           this.mangroveOrderEventsLogic.updateMangroveOrderFromTakenOffer( takenOffer, tokens, mangroveOrder, newVersion);
+           this.mangroveOrderEventsLogic.newVersionOfMangroveOrderFromTakenOffer( takenOffer, tokens, mangroveOrder, newVersion);
         await this.mangroveOrderOperations.updateMangroveOrderFromTakenOffer(
           new OfferId(orderId.mangroveId, orderId.offerListKey, offer.offerNumber),
           updateFunc

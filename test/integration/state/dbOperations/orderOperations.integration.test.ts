@@ -510,5 +510,12 @@ describe("Order Operations Integration test Suite", () => {
             await assert.rejects( orderOperations.createOrder( newOrderId, newOrder, takenOffers) );
         })
     })
+
+    it("deleteOrder", async () => {
+        assert.strictEqual(1, await prisma.order.count());
+        await orderOperations.deleteOrder(orderId);
+        assert.strictEqual(0, await prisma.order.count());
+    })
+
 })
 
