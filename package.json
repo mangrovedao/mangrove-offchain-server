@@ -16,7 +16,7 @@
     "prepare": "yarn gen",
     "precommit": "lint-staged",
     "prebuild": "yarn clean && yarn format && yarn lint && echo Using TypeScript && tsc --version",
-    "build": "yarn gen && tsc --project tsconfig.build.json --pretty",
+    "build": "yarn gen && tsc --project tsconfig.build.json --pretty && tspath -f",
     "start:server": "dotenv -e .env.development -- ts-node -r tsconfig-paths/register src/cmd/server.ts",
     "start:test:server": "dotenv -e .env.test -- ts-node -r tsconfig-paths/register src/cmd/server.ts",
     "start:consumer": "dotenv -e .env.development -- ts-node -r tsconfig-paths/register src/cmd/consumer.ts",
