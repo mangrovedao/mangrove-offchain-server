@@ -1,0 +1,28 @@
+{
+  "chains": [
+    {
+      "id": "137",
+      "streams": {
+        "mangrove": [
+          "proxima.mangrove.polygon-main.domain-events.0_1"
+        ],
+        "strats": [],
+        "tokens": []
+      }
+    },
+    {
+      "id": "80001",
+      "streams": {
+        "mangrove": [
+          "proxima.mangrove.polygon-mumbai.domain-events.0_3"
+        ],
+        "strats": [
+          "proxima.mangrove.polygon-mumbai.strategies.0_2"
+        ],
+        "tokens": [
+          "proxima.mangrove.polygon-mumbai.tokens.0_1"
+        ]
+      }
+    }
+  ]
+}

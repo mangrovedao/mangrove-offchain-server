@@ -1154,6 +1154,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/config@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@types/config@npm:3.3.0"
+  checksum: d9485041cfa05864d3b8095cf7b44fae910887f6782dc43ab1ba4ea78d9cdf4a8c9d697557318ede2b4b63a05b7f91e8571b8dbe048ad024e709d9e51e0487d8
+  languageName: node
+  linkType: hard
+
 "@types/connect@npm:*":
   version: 3.4.35
   resolution: "@types/connect@npm:3.4.35"
@@ -1185,6 +1192,13 @@ __metadata:
   dependencies:
     "@types/ms": "*"
   checksum: 0a7b89d8ed72526858f0b61c6fd81f477853e8c4415bb97f48b1b5545248d2ae389931680b94b393b993a7cfe893537a200647d93defe6d87159b96812305adc
+  languageName: node
+  linkType: hard
+
+"@types/dotenv-flow@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "@types/dotenv-flow@npm:3.2.0"
+  checksum: ff11155349578fe76f0b69556f3e22e13115b17a7684cef1dec9f5d7fdaa1bfc1848b1337e3d08093687a3e372cf1b4b0fd0c9900a2db62031a3ee02ffabe3e6
   languageName: node
   linkType: hard
 
@@ -2306,6 +2320,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"config@npm:^3.3.8":
+  version: 3.3.8
+  resolution: "config@npm:3.3.8"
+  dependencies:
+    json5: ^2.2.1
+  checksum: 8ae3b1a073eb32b8b8e8079f4f8874d170bed291df6e3d50d0333ef1524714e6fe051593298de565daa603dc11abda21dd480c9134dbf977caddb9821816c439
+  languageName: node
+  linkType: hard
+
 "console-control-strings@npm:^1.1.0":
   version: 1.1.0
   resolution: "console-control-strings@npm:1.1.0"
@@ -2606,10 +2629,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-flow@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "dotenv-flow@npm:3.2.0"
+  dependencies:
+    dotenv: ^8.0.0
+  checksum: 8e34ea8f5cb216acb0f9cc602752dceef6e1c0b52c39045d6b92fadbefcbfecaf0cc868d3e115c9764860293d62d0bb31d46cfa41d29cb9fc7039797e20de03e
+  languageName: node
+  linkType: hard
+
 "dotenv@npm:16.0.3, dotenv@npm:^16.0.0":
   version: 16.0.3
   resolution: "dotenv@npm:16.0.3"
   checksum: afcf03f373d7a6d62c7e9afea6328e62851d627a4e73f2e12d0a8deae1cd375892004f3021883f8aec85932cd2834b091f568ced92b4774625b321db83b827f8
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^8.0.0":
+  version: 8.6.0
+  resolution: "dotenv@npm:8.6.0"
+  checksum: 38e902c80b0666ab59e9310a3d24ed237029a7ce34d976796349765ac96b8d769f6df19090f1f471b77a25ca391971efde8a1ea63bb83111bd8bec8e5cc9b2cd
   languageName: node
   linkType: hard
 
@@ -4452,7 +4491,9 @@ __metadata:
     "@proximaone/stream-schema-mangrove": ^0.3.1
     "@types/async-retry": ^1.4.3
     "@types/commander": ^2.12.2
+    "@types/config": ^3.3.0
     "@types/cors": ^2.8.12
+    "@types/dotenv-flow": ^3.2.0
     "@types/graphql-fields": ^1.3.4
     "@types/lodash": ^4.14.178
     "@types/mocha": ^9.1.1
@@ -4464,9 +4505,11 @@ __metadata:
     body-parser: ^1.20.1
     class-validator: ^0.13.2
     commander: ^9.2.0
+    config: ^3.3.8
     cors: ^2.8.5
     cross-env: ^7.0.3
     dotenv-cli: ^6.0.0
+    dotenv-flow: ^3.2.0
     eslint: ^8.6.0
     eslint-config-prettier: ^8.5.0
     express: ^4.18.2

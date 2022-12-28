@@ -1,18 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  ProximaStreamClient,
   BufferedStreamReader,
+  ProximaStreamClient,
 } from "@proximaone/stream-client-js";
-import { Subscription } from "rxjs";
 import retry from "async-retry";
+import { Subscription } from "rxjs";
 import { StreamEventHandler } from "src/common";
 import {
   MangroveEventHandler,
-  TokenEventHandler,
   IOrderLogicEventHandler as TakerStratEventHandler,
+  TokenEventHandler,
 } from "src/state";
 import { ChainId } from "src/state/model";
-import { defaultConfig } from "./config";
+import { ChainConfig } from "src/utils/config/ChainConfig";
+import config from "src/utils/config/config";
+import { getChainConfigsOrThrow } from "src/utils/config/configUtils";
 
 const retries = parseInt(process.env["CONSUMER_RETRIES"] ?? "100");
 const retryFactor = parseFloat(process.env["CONSUMER_RETRY_FACTOR"] ?? "1.2");
@@ -27,25 +29,23 @@ let subscription: Subscription;
 
 async function main() {
   // todo: read config from file or env var, etc
-  const config = defaultConfig;
   const streamEventHandlers: StreamEventHandler[] = [];
+  for (const chain of getChainConfigsOrThrow<ChainConfig>(config)) {
+    console.log(`consuming chain ${chain.id} using following steams`, chain.streams);
 
-  for (const [chain, streamSchemas] of Object.entries(config.chains)) {
-    console.log(`consuming chain ${chain} using following steams`, streamSchemas);
-
-    const chainId = new ChainId(parseInt(chain));
+    const chainId = new ChainId(parseInt( chain.id) );
     streamEventHandlers.push(
-      ...(streamSchemas.mangrove ?? []).map(
+      ...(chain.streams?.mangrove ?? []).map(
         (s) => new MangroveEventHandler(prisma, s, chainId)
       )
     );
     streamEventHandlers.push(
-      ...(streamSchemas.tokens ?? []).map(
+      ...(chain.streams?.tokens ?? []).map(
         (s) => new TokenEventHandler(prisma, s, chainId)
       )
     );
     streamEventHandlers.push(
-      ...(streamSchemas.strats ?? []).map(
+      ...(chain.streams?.strats ?? []).map(
         (s) => new TakerStratEventHandler(prisma, s, chainId)
       )
     );
