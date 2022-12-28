@@ -16,13 +16,13 @@
     "prepare": "yarn gen",
     "precommit": "lint-staged",
     "prebuild": "yarn clean && yarn format && yarn lint && echo Using TypeScript && tsc --version",
-    "build": "yarn gen && tsc --project tsconfig.build.json --pretty && tspath -f",
+    "build": "yarn gen && tsc --project tsconfig.build.json --pretty",
     "start:server": "dotenv -e .env.development -- ts-node -r tsconfig-paths/register src/cmd/server.ts",
     "start:test:server": "dotenv -e .env.test -- ts-node -r tsconfig-paths/register src/cmd/server.ts",
     "start:consumer": "dotenv -e .env.development -- ts-node -r tsconfig-paths/register src/cmd/consumer.ts",
     "dev": "ts-node -r tsconfig-paths/register src/cmd/dev.ts",
-    "start:dist:server": "node dist/cmd/server.js",
-    "start:dist:consumer": "node dist/cmd/consumer.js",
+    "start:dist:server": "ts-node -r tsconfig-paths/register dist/cmd/server.js",
+    "start:dist:consumer": "ts-node -r tsconfig-paths/register dist/cmd/consumer.js",
     "watch": "yarn build -- --watch",
     "docker:env": "dotenv -e .env.development -- docker-compose -f deploy/docker-compose.env.yml up",
     "docker:env:down": "dotenv -e .env.development -- docker-compose -f deploy/docker-compose.env.yml down",
@@ -75,7 +75,6 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.5.5",
     "tslib": "^2.4.1",
-    "tspath": "^2.6.8",
     "type-graphql": "2.0.0-beta.1",
     "typegraphql-prisma": "^0.23.0"
   },
@@ -91,7 +90,7 @@
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
     "ts-node": "^10.4.0",
-    "tsconfig-paths": "^3.12.0",
+    "tsconfig-paths": "^4.1.1",
     "typescript": "^4.9.3"
   },
   "engines": {
