@@ -24,24 +24,28 @@ export class MangroveOrderEventsLogic {
     chainId: ChainId,
     txId: string,
     params: {
-      mangroveId: string;
+      address: string;
       offerId: number;
-      expiry: Timestamp;
+      date: number;
       outboundToken: string;
       inboundToken: string;
     }
   ) {
+    const stratId =  new StratId(chainId, params.address);
+    const mangroveId = await db.mangroveOrderOperations.getMangroveIdByStratId(stratId);
+    if(!mangroveId){
+      throw new Error(`Cannot find match mangroveId, from mangroveOrder address: ${params.address}`);
+    }
     const offerListKey = {
       inboundToken: params.inboundToken,
       outboundToken: params.outboundToken,
     };
-    const mangroveId = new MangroveId(chainId, params.mangroveId);
     const offerId = new OfferId( mangroveId, offerListKey, params.offerId );
 
     db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
       offerId,
       txId,
-      (m) => (m.expiryDate = new Date(params.expiry.epochMs))
+      (m) => (m.expiryDate = new Date(params.date))
     );
   }
 

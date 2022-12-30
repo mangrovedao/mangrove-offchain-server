@@ -28,7 +28,6 @@ let stopped = false;
 let subscription: Subscription;
 
 async function main() {
-  // todo: read config from file or env var, etc
   const streamEventHandlers: StreamEventHandler[] = [];
   for (const chain of getChainConfigsOrThrow<ChainConfig>(config)) {
     console.log(`consuming chain ${chain.id} using following steams`, chain.streams);

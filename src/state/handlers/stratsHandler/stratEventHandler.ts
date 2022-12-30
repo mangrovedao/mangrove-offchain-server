@@ -36,6 +36,15 @@ export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSc
 
       const txRef = payload.tx;
       const txId = new TransactionId(chainId, txRef.txHash);
+      let ready = false;
+      const delay = (ms:number) => new Promise(res => setTimeout(res, ms));
+
+      while(!ready){
+        ready = await allDbOperation.transactionOperations.checkBlockNumber(txRef.blockNumber, chainId);
+        if(!ready){
+          await delay(5000)
+        } 
+      }
       const transaction = await allDbOperation.transactionOperations.ensureTransaction({
         id: txId,
         txHash: txRef.txHash,
@@ -49,8 +58,11 @@ export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSc
         LogIncident: async (e) => {},
         NewOwnedOffer: async (e) => {},
         OrderSummary: async (e) => {
-          this.mangroveOrderEventsLogic.handleOrderSummary(allDbOperation, chainId, e, event, txRef.txHash, undo, transaction)
+          await this.mangroveOrderEventsLogic.handleOrderSummary(allDbOperation, chainId, e, event, txRef.txHash, undo, transaction)
         },
+        SetExpiry: async (e) => {
+          await this.mangroveOrderEventsLogic.handleSetExpiry(allDbOperation, chainId, transaction.id, e )
+        }
       })(payload);
     }
   }

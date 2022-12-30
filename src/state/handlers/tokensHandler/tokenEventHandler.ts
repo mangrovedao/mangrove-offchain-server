@@ -23,7 +23,7 @@ export class TokenEventHandler extends PrismaStreamEventHandler<NewToken> {
     const commands: Promise<any>[] = [];
     // ensure all chains exist
     for (const [chainName, chainId] of Object.entries(chains)) {
-      tx.chain.upsert({
+      await tx.chain.upsert({
         where: { id: chainId },
         create: { id: chainId, name: chainName },
         update: { id: chainId, name: chainName },

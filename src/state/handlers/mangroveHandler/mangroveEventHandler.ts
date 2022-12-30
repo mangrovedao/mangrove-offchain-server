@@ -48,7 +48,6 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
               payload.parentOrder.id
             );
       const txRef = payload.tx;
-      
       let transaction: prisma.Transaction;
       if (txRef !== undefined) {
         const txId = new TransactionId(this.chainId, txRef.txHash);
@@ -88,7 +87,7 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
         OfferRetracted: async (e) =>
           this.offerEventsLogic.handleOfferRetracted(mangroveId, undo, e, allDbOperation, transaction!.id),
         OfferWritten: async ({ offer, maker, offerList }) =>
-          this.offerEventsLogic.handleOfferWritten(
+          await this.offerEventsLogic.handleOfferWritten(
             txRef,
             undo,
             this.chainId,
@@ -101,7 +100,7 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
             parentOrderId
           ),
         OfferListParamsUpdated: async ({ offerList, params }) =>
-          this.mangroveEventsLogic.handleOfferListParamsUpdated(
+          await this.mangroveEventsLogic.handleOfferListParamsUpdated(
             this.chainId,
             offerList,
             mangroveId,
@@ -111,7 +110,7 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
             transaction
           ),
         MakerBalanceUpdated: async ({ maker, amountChange }) =>
-          this.mangroveEventsLogic.handleMakerBalanceUpdated(
+          await this.mangroveEventsLogic.handleMakerBalanceUpdated(
             mangroveId,
             maker,
             undo,
@@ -120,7 +119,7 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
             transaction
           ),
         TakerApprovalUpdated: async ({ offerList, amount, spender, owner }) =>
-          this.mangroveEventsLogic.handleTakerApprovalUpdated(
+           await this.mangroveEventsLogic.handleTakerApprovalUpdated(
             mangroveId,
             offerList,
             owner,
@@ -133,7 +132,7 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
             allDbOperation
           ),
         OrderCompleted: async ({ id, order, offerList }) =>
-          this.orderEventLogic.handleOrderCompleted(
+          await this.orderEventLogic.handleOrderCompleted(
             txRef,
             order,
             offerList,

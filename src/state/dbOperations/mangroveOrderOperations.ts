@@ -2,10 +2,13 @@ import * as prisma from "@prisma/client";
 import { MangroveOrder } from "@prisma/client";
 import * as _ from "lodash";
 import {
+  ChainId,
+  MangroveId,
   MangroveOrderId,
   MangroveOrderVersionId,
   OfferId,
-  OfferListId
+  OfferListId,
+  StratId
 } from "src/state/model";
 import { DbOperations, PrismaTx, toUpsert } from "./dbOperations";
 import { OfferListOperations } from "./offerListOperations";
@@ -213,6 +216,14 @@ export class MangroveOrderOperations extends DbOperations {
 
   public async deleteMangroveOrder(id: MangroveOrderId) {
     await this.tx.mangroveOrder.delete({ where: { id: id.value } });
+  }
+
+  public async getMangroveIdByStratId(stratId:StratId){
+    const mangroveOrder = await this.tx.mangroveOrder.findFirst({where: {stratId: stratId.value}});
+    if( mangroveOrder){
+      return new MangroveId(stratId.chainId, mangroveOrder.mangroveId);
+    }
+    return null;
   }
 
 }
