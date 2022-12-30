@@ -95,8 +95,8 @@ export class OrderEventLogic {
       makerPaidPrice: getPrice({ over: takerGotBigNumber, under: takerGaveBigNumber }),
       bounty: order.penalty,
       bountyNumber: getNumber({ value: order.penalty, decimals: 18 }),
-      totalFee: order.feePaid,
-      totalFeeNumber: getNumber({
+      totalFee: order.feePaid.length == 0 ? "0" : order.feePaid,
+      totalFeeNumber: order.feePaid.length == 0 ? 0 : getNumber({
         value: order.feePaid,
         token: tokens.outboundToken,
       }),
