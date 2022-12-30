@@ -5,7 +5,7 @@ import { NewToken } from "src/state/handlers/tokensHandler/tokenEventHandler";
 import { Offset, StreamEvent, Timestamp } from "@proximaone/stream-client-js";
 
 const chainName = "polygon-main";
-const chainId = 137;
+export const chainId = 137;
 
 
 function toStreamEvent(json:string):StreamEvent{
@@ -226,7 +226,7 @@ export function getOrderSummaryEvent(): StreamEvent {
         mangroveId: "mangroveId",
         outboundToken: "outboundAddress",
         inboundToken: "inboundAddress",
-        // orderId: "orderId", // should match the created order
+        orderId: "orderId", // should match the created order
         fillWants: true,
         fillOrKill: false,
         restingOrder: true,
@@ -243,27 +243,27 @@ export function getOrderSummaryEvent(): StreamEvent {
     return toStreamEvent( JSON.stringify( event ) );
 }
 
-// export function getSetExpiryEvent(expiryDate: Timestamp){
-//     const event:StrategyEvent= {
-//         tx: {
-//             chain: chainName,
-//             blockHash: "hash",
-//             blockNumber: 1,
-//             sender: "sender",
-//             txHash: "txHash"
-//         },
-//         id: "MangroveOrderId",
-//         chainId: chainId,
-//         address: "MangroveOrderAddress",
-//         type: "SetExpiry",
-//         mangroveId: "mangroveId",
-//         outboundToken: "outboundAddress",
-//         inboundToken: "inboundAddress",
-//         offerId: 11,
-//         expiry: expiryDate.date
-//     }
-//     return toStreamEvent( JSON.stringify( event ) );;
-// }
+export function getSetExpiryEvent(expiryDate: number){
+    const event:StrategyEvent= {
+        tx: {
+            chain: chainName,
+            blockHash: "hash",
+            blockNumber: 1,
+            sender: "sender",
+            txHash: "txHash"
+        },
+        id: "MangroveOrderId",
+        chainId: chainId,
+        address: "MangroveOrderAddress",
+        type: "SetExpiry",
+        mangroveId: "mangroveId",
+        outboundToken: "outboundAddress",
+        inboundToken: "inboundAddress",
+        offerId: 11,
+        date: expiryDate
+    }
+    return toStreamEvent( JSON.stringify( event ) );;
+}
 
 export function getOfferRetracted():StreamEvent{
     const event: MangroveEvent = {

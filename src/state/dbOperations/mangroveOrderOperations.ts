@@ -2,7 +2,6 @@ import * as prisma from "@prisma/client";
 import { MangroveOrder } from "@prisma/client";
 import * as _ from "lodash";
 import {
-  ChainId,
   MangroveId,
   MangroveOrderId,
   MangroveOrderVersionId,

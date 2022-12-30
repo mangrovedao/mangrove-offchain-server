@@ -13,6 +13,7 @@ import {
   OfferListKey,
   OfferListVersionId,
   OrderId,
+  StratId,
   TokenId
 } from "src/state/model";
 import { prisma } from "utils/test/mochaHooks";
@@ -39,6 +40,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
     offerListKey,
     "mangroveOrderId",
   );
+  const stratId = new StratId(chainId, "stratId");
   const mangroveOrderVersionId = new MangroveOrderVersionId({
     mangroveOrderId: mangroveOrderId,
     versionNumber: 0,
@@ -122,7 +124,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
         id: mangroveOrderId.value,
         proximaId: mangroveOrderId.proximaId,
         mangroveId: mangroveId.value,
-        stratId: "stratId",
+        stratId: stratId.value,
         offerListId: offerListId.value,
         takerId: takerId.value,
         // orderId: orderId.value,
@@ -473,5 +475,14 @@ describe("Mangrove Order Operations Integration test suite", () => {
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 0);
     });
   });
+
+  describe("getMangroveIdByStratId", () => {
+    it("finds MangroveOrder", async () => {
+      assert.strictEqual((await mangroveOrderOperations.getMangroveIdByStratId(stratId))?.value, mangroveId.value);
+    })
+    it("does not find MangroveOrder", async () => {
+      assert.strictEqual( await mangroveOrderOperations.getMangroveIdByStratId(new StratId(chainId, "noMatch")), null);
+    })
+  })
 
 });

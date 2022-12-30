@@ -36,7 +36,7 @@ export class TransactionOperations extends DbOperations {
     const count = await this.tx.transaction.count({
       where: {
         blockNumber: {
-          gt: blockNumber
+          gte: blockNumber
         },
         chainId: {
           equals: chainId.value
