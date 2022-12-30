@@ -1060,22 +1060,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@proximaone/stream-schema-base@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@proximaone/stream-schema-base@npm:0.2.0"
+"@proximaone/stream-schema-base@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "@proximaone/stream-schema-base@npm:0.3.2"
   dependencies:
-    bignumber.js: ^9.0.1
-    long: ^4.0.0
-  checksum: 9eb7a2c9c41c57244379f64b62e0832af1deb1d9a4a49b629ca95de2111ea60025ee30e0b447599cb2c766bd296ec9284be5a7f5a278c0984deffef678f45da5
+    long: ^5.2.1
+  checksum: 40db17544617685b293e76a0ab31e4661f6fbf175e8bdad197cb48a76e368f9aa47ab3236fcf129e1e325e086bdb2d80728d8b7f26c3307603d47b90899963dd
   languageName: node
   linkType: hard
 
-"@proximaone/stream-schema-mangrove@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "@proximaone/stream-schema-mangrove@npm:0.3.1"
+"@proximaone/stream-schema-mangrove@npm:^0.3.6":
+  version: 0.3.6
+  resolution: "@proximaone/stream-schema-mangrove@npm:0.3.6"
   dependencies:
-    "@proximaone/stream-schema-base": ^0.2.0
-  checksum: 510cfb934e9835a4111c4460471ed82f1a5e0bc511ab570e22beb16211f1c0c4ca122f34e3ccb48a900f5f66f2d3a557ad6b54535bc5b1d480b42beda1f099c7
+    "@proximaone/stream-schema-base": ^0.3.2
+  checksum: 3bf7509dcd717426190623dc213a1120b62c555ab216fad4eb4b3bfc838aec43aa9d80d5be9629a7d752bcea9b1aed564bdb46eba349e62392d0dcf4c8c1049f
   languageName: node
   linkType: hard
 
@@ -1811,7 +1810,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bignumber.js@npm:^9.0.1, bignumber.js@npm:^9.0.2":
+"bignumber.js@npm:^9.0.2":
   version: 9.0.2
   resolution: "bignumber.js@npm:9.0.2"
   checksum: 8637b71d0a99104b20413c47578953970006fec6b4df796b9dcfd9835ea9c402ea0e727eba9a5ca9f9a393c1d88b6168c5bbe0887598b708d4f8b4870ad62e1f
@@ -4424,6 +4423,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"long@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "long@npm:5.2.1"
+  checksum: 9264da12d1b7df67e5aa6da4498144293caf1ad12e7f092efe4e9a2d32c53f0bbf7334f7cef997080a2a3af061142558ab366efa71698d98b1cdb883477445a7
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^6.0.0":
   version: 6.0.0
   resolution: "lru-cache@npm:6.0.0"
@@ -4488,7 +4494,7 @@ __metadata:
     "@espendk/json-file-reporter": ^1.4.2
     "@prisma/client": ^4.6.1
     "@proximaone/stream-client-js": ^1.2.1
-    "@proximaone/stream-schema-mangrove": ^0.3.1
+    "@proximaone/stream-schema-mangrove": ^0.3.6
     "@types/async-retry": ^1.4.3
     "@types/commander": ^2.12.2
     "@types/config": ^3.3.0

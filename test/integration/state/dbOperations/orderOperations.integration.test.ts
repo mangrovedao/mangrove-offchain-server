@@ -181,8 +181,8 @@ describe("Order Operations Integration test Suite", () => {
                 takerGotNumber: 100,
                 takerGave: "50",
                 takerGaveNumber: 50,
-                // totalFee: "1",
-                // totalFeeNumber: 1,
+                totalFee: "1",
+                totalFeeNumber: 1,
                 bounty: "0",
                 bountyNumber: 0,
                 takenOffers: {
@@ -273,11 +273,8 @@ describe("Order Operations Integration test Suite", () => {
                 makerPaidPrice: 2,
                 bounty: "0",
                 bountyNumber: 0,
-                // totalFee: order.feePaid,
-                // totalFeeNumber: getNumber({
-                //   value: order.feePaid,
-                //   token: outboundToken,
-                // }),
+                totalFee: "1",
+                totalFeeNumber: 1,
               };
             const offerId2 = new OfferId(mangroveId, offerListKey, 2);
             await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
@@ -373,11 +370,8 @@ describe("Order Operations Integration test Suite", () => {
                 makerPaidPrice: 2,
                 bounty: "0",
                 bountyNumber: 0,
-                // totalFee: order.feePaid,
-                // totalFeeNumber: getNumber({
-                //   value: order.feePaid,
-                //   token: outboundToken,
-                // }),
+                totalFee: "1",
+                totalFeeNumber: 1,
               };
             const offerId2 = new OfferId(mangroveId, offerListKey, 2);
             await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
@@ -428,11 +422,8 @@ describe("Order Operations Integration test Suite", () => {
                 makerPaidPrice: 2,
                 bounty: "0",
                 bountyNumber: 0,
-                // totalFee: order.feePaid,
-                // totalFeeNumber: getNumber({
-                //   value: order.feePaid,
-                //   token: outboundToken,
-                // }),
+                totalFee: "1",
+                totalFeeNumber: 1,
               };
             const offerId2 = new OfferId(mangroveId, offerListKey, 2);
             await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
@@ -483,11 +474,8 @@ describe("Order Operations Integration test Suite", () => {
                 makerPaidPrice: 2,
                 bounty: "0",
                 bountyNumber: 0,
-                // totalFee: order.feePaid,
-                // totalFeeNumber: getNumber({
-                //   value: order.feePaid,
-                //   token: outboundToken,
-                // }),
+                totalFee: "1",
+                totalFeeNumber: 1,
               };
             const offerId2 = new OfferId(mangroveId, offerListKey, 2);
             await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})

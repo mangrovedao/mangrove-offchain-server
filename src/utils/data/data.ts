@@ -194,8 +194,8 @@ export function getOrderCompletedEvent(): StreamEvent {
             takerGave: "500",
             // takerWants: "2000",
             // takerGives: "1000",
-            // feePaid: "10",
             penalty: "0",
+            feePaid: "0",
             takenOffers:  Array.from(Array(10).keys()).flatMap((value) => getTakenOffer(value))
         }
     };
@@ -256,7 +256,6 @@ export function getSetExpiryEvent(expiryDate: number){
         chainId: chainId,
         address: "MangroveOrderAddress",
         type: "SetExpiry",
-        mangroveId: "mangroveId",
         outboundToken: "outboundAddress",
         inboundToken: "inboundAddress",
         offerId: 11,

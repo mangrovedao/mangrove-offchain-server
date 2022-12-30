@@ -324,8 +324,8 @@ model Order {
   takerGaveNumber Float
   takerPaidPrice  Float?
   makerPaidPrice  Float?
-  // totalFee         String
-  // totalFeeNumber   Float
+  totalFee         String
+  totalFeeNumber   Float
   bounty          String
   bountyNumber    Float
 

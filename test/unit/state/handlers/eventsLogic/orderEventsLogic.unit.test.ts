@@ -24,6 +24,7 @@ describe("Order Events Logic Unit Test Suite", () => {
                 takerGave: "100",
                 takerGot: "50",
                 penalty:"0",
+                feePaid: "0"
             }
     
             const orderToCreate = orderEventsLogic.createOrder(mangroveId, offerListId, tokens, order, takerId, orderId, "txId", parantOrderId)
@@ -44,6 +45,8 @@ describe("Order Events Logic Unit Test Suite", () => {
                 makerPaidPrice: 0.5,
                 bounty: order.penalty,
                 bountyNumber: 0,
+                totalFee: order.feePaid,
+                totalFeeNumber: 0
             })
         })
 
@@ -52,6 +55,7 @@ describe("Order Events Logic Unit Test Suite", () => {
                 takerGave: "100",
                 takerGot: "50",
                 penalty:"0",
+                feePaid: "0"
             }
     
             const orderToCreate = orderEventsLogic.createOrder(mangroveId, offerListId, tokens, order, takerId, orderId, "txId")
@@ -72,6 +76,8 @@ describe("Order Events Logic Unit Test Suite", () => {
                 makerPaidPrice: 0.5,
                 bounty: order.penalty,
                 bountyNumber: 0,
+                totalFee: order.feePaid,
+                totalFeeNumber: 0
             })
 
         })
