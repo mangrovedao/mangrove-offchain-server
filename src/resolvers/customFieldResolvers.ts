@@ -16,10 +16,13 @@ import {
   Token,
 } from "@generated/type-graphql";
 import { PrismaClient } from "@prisma/client";
-import { Ctx, FieldResolver, Resolver, Root } from "type-graphql";
+import { Arg, Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 
 // At most re-fetch once per 1000 ms for each token
 import { fetchBuilder, MemoryCache } from "node-fetch-cache";
+import { OrderBookUtils } from "src/state/dbOperations/orderBookUtils";
+import { ChainId, MangroveId, OfferListId } from "src/state/model";
+import { mangrove } from "@proximaone/stream-schema-mangrove/dist/streams";
 const fetch = fetchBuilder.withCache(new MemoryCache({ ttl: 1000 }));
 async function fetchTokenPriceInUsd(token: Token) {
   return (await fetch(
@@ -83,6 +86,25 @@ export class CustomOfferListFieldsResolver {
     return await ctx.prisma.offerListVersion.findUnique({
       where: { id: offerList.currentVersionId },
     });
+  }
+
+  @FieldResolver((type) => [OfferVersion], { nullable: true })
+  async orderBook(
+    @Arg("time") time:number,
+    @Root() offerList: OfferList,
+    @Ctx() ctx: Context
+  ): Promise<OfferVersion[] | null> {
+    const mangrove = await ctx.prisma.mangrove.findUnique({where: {id: offerList.mangroveId}})
+    const inboundToken = await ctx.prisma.token.findUnique({where: {id: offerList.inboundTokenId}})
+    const outboundToken = await ctx.prisma.token.findUnique({where: {id: offerList.outboundTokenId}})
+    if(!mangrove || !inboundToken || !outboundToken){
+      return null;
+    }
+    const chainId = new ChainId( mangrove.chainId );
+    const mangroveId = new MangroveId(chainId, offerList.mangroveId);
+    const offerListId =  new OfferListId(mangroveId, { inboundToken: inboundToken.address, outboundToken: outboundToken.address } )
+    return await new OrderBookUtils(ctx.prisma).getMatchingOfferFromOfferListId(offerListId, time);
+
   }
 }
 
