@@ -1,4 +1,5 @@
 {
+  "logLevel": "debug",
   "chains": [
     {
       "id": "137",

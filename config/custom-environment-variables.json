@@ -1,4 +1,5 @@
 {
+  "logLevel": "LOG_LEVEL",
   "chains": {
     "__name": "CHAINS",
     "__format": "json"

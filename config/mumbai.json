@@ -1,4 +1,5 @@
 {
+  "logLevel": "info",
   "chains": [
     {
       "id": "80001",

@@ -45,6 +45,7 @@
   "dependencies": {
     "@apollo/server": "^4.2.2",
     "@espendk/json-file-reporter": "^1.4.2",
+    "@mangrovedao/commonlib.js": "^1.0.0",
     "@prisma/client": "^4.6.1",
     "@proximaone/stream-client-js": "^1.2.1",
     "@proximaone/stream-schema-mangrove": "^0.3.6",

@@ -29,6 +29,7 @@ import {
   CustomTokenFieldsResolver,
 } from "src/resolvers/customFieldResolvers";
 import { AddressInfo } from "net";
+import logger from "src/utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -211,7 +212,7 @@ async function main() {
   }
 
   // await new Promise((resolve) => httpServer.listen({ port: PORT }));
-  console.log(`🚀 Server ready at ${url}`);
+  logger.info(`🚀 Server ready at ${url}`);
 }
 
 main()

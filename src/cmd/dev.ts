@@ -9,6 +9,7 @@ import {
 } from "@proximaone/stream-client-js";
 import { filter, map, takeWhile, tap } from "rxjs";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
+import logger from "src/utils/logger";
 
 dotenv.config();
 const orderId =
@@ -25,7 +26,7 @@ async function main() {
     .command("filter-order <orderId>")
     .option("-s, --stream", "stream", defaultStream)
     .action(async (orderId, options) => {
-      console.log(`looking for order ${orderId} in ${options.stream}`);
+      logger.info(`looking for order ${orderId} in ${options.stream}`);
       const $stream = await proximaClient.streamEvents(
         options.stream,
         Offset.zero
@@ -51,7 +52,7 @@ async function main() {
     .option("-f, --from <from>", "offset from", Offset.zero.toString())
     .option("-f, --to <to>", "offset to", "")
     .action(async (options) => {
-      console.log(`dumping stream ${options.stream} from ${options.from}`);
+      logger.info(`dumping stream ${options.stream} from ${options.from}`);
       const $stream = await proximaClient.streamEvents(
         options.stream,
         Offset.fromString(options.from)
@@ -90,7 +91,7 @@ function deserializeMangroveEvent(event: StreamEvent) {
 let lastNotified = 0;
 function notifyProgress(event: StreamEvent) {
   if (new Date().getTime() - lastNotified < 5000) return;
-  console.log(`progress: ${event.offset.toString()}`);
+  logger.info(`progress: ${event.offset.toString()}`);
   lastNotified = new Date().getTime();
 }
 
