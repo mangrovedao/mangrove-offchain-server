@@ -5,7 +5,7 @@ import {
   AccountId,
   ChainId,
   MangroveId,
-  OfferListId,
+  OfferListingId,
   OfferListKey,
   OrderId,
   TakerApprovalId,
@@ -29,7 +29,7 @@ describe("Taker Approval Operations Integration test suite", () => {
     outboundToken: outboundTokenId.tokenAddress,
     inboundToken: inboundTokenId.tokenAddress,
   };
-  const offerListId = new OfferListId(mangroveId, offerListKey);
+  const offerListingId = new OfferListingId(mangroveId, offerListKey);
   const ownerId = new AccountId(chainId, "ownerAddress");
   const spenderId = new AccountId(chainId, "spenderAddress");
   const orderId = new OrderId(mangroveId, offerListKey, "order");
@@ -45,7 +45,7 @@ describe("Taker Approval Operations Integration test suite", () => {
         mangroveId: mangroveId.value,
         ownerId: ownerId.value,
         spenderId: spenderId.value,
-        offerListId: offerListId.value,
+        offerListingId: offerListingId.value,
         currentVersionId: takerApprovalVersionId.value,
       },
     });
@@ -78,7 +78,7 @@ describe("Taker Approval Operations Integration test suite", () => {
         ownerId: new AccountId(newTakerApprovalId.mangroveId.chainId, newTakerApprovalId.ownerAddress).value,
         spenderId: new AccountId(newTakerApprovalId.mangroveId.chainId, newTakerApprovalId.spenderAddress)
           .value,
-        offerListId: new OfferListId(newTakerApprovalId.mangroveId, newTakerApprovalId.offerListKey).value,
+        offerListingId: new OfferListingId(newTakerApprovalId.mangroveId, newTakerApprovalId.offerListKey).value,
         currentVersionId: newTakerApprovalVersionId.value,
       });
       const newTakerApprovalVersion =  await prisma.takerApprovalVersion.findUnique({where: {id: newTakerApproval.currentVersionId}})
@@ -108,7 +108,7 @@ describe("Taker Approval Operations Integration test suite", () => {
         ownerId: new AccountId(newTakerApprovalId.mangroveId.chainId, newTakerApprovalId.ownerAddress).value,
         spenderId: new AccountId(newTakerApprovalId.mangroveId.chainId, newTakerApprovalId.spenderAddress)
           .value,
-        offerListId: new OfferListId(newTakerApprovalId.mangroveId, newTakerApprovalId.offerListKey).value,
+        offerListingId: new OfferListingId(newTakerApprovalId.mangroveId, newTakerApprovalId.offerListKey).value,
         currentVersionId: newTakerApprovalVersionId.value,
       });
       const newTakerApprovalVersion =  await prisma.takerApprovalVersion.findUnique({where: {id: newTakerApproval.currentVersionId}})

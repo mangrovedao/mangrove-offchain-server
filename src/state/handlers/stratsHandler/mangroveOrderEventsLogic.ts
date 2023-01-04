@@ -9,7 +9,7 @@ import {
   MangroveId,
   MangroveOrderId,
   OfferId,
-  OfferListId,
+  OfferListingId,
   StratId,
   TokenId
 } from "src/state/model";
@@ -69,7 +69,7 @@ export class MangroveOrderEventsLogic {
       new TokenId(chainId, offerList.inboundToken)
     );
     const mangroveId = new MangroveId(chainId, e.mangroveId);
-    const offerListId = new OfferListId(mangroveId, offerList);
+    const offerListId = new OfferListingId(mangroveId, offerList);
     const mangroveOrderId = new MangroveOrderId(
       mangroveId,
       offerList,

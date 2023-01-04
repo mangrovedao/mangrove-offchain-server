@@ -1,6 +1,6 @@
 import {
   AccountId,
-  OfferListId,
+  OfferListingId,
   OrderId,
   TakerApprovalId,
   TakerApprovalVersionId,
@@ -31,7 +31,7 @@ export class TakerApprovalOperations extends DbOperations {
         ownerId: new AccountId(id.mangroveId.chainId, id.ownerAddress).value,
         spenderId: new AccountId(id.mangroveId.chainId, id.spenderAddress)
           .value,
-        offerListId: new OfferListId(id.mangroveId, id.offerListKey).value,
+        offerListingId: new OfferListingId(id.mangroveId, id.offerListKey).value,
         currentVersionId: newVersionId.value,
       };
       newVersion = {

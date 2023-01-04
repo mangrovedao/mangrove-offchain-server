@@ -7,7 +7,7 @@ import {
   ChainId,
   MangroveId,
   OfferId,
-  OfferListId,
+  OfferListingId,
   OfferListKey,
   OfferVersionId,
   TokenId
@@ -30,7 +30,7 @@ describe("Offer Operations Integration test suite", () => {
   };
   const offerId = new OfferId(mangroveId, offerListKey, 1);
   const offerVersionId = new OfferVersionId(offerId, 0);
-  const offerListId = new OfferListId(mangroveId, offerListKey);
+  const offerListingId = new OfferListingId(mangroveId, offerListKey);
   const makerId = new AccountId(chainId, "makerAddress");
   let offer: prismaModel.Offer;
   let offerVersion: prismaModel.OfferVersion;
@@ -40,7 +40,7 @@ describe("Offer Operations Integration test suite", () => {
       data: {
         id: offerId.value,
         offerNumber: offerId.offerNumber,
-        offerListId: offerListId.value,
+        offerListingId: offerListingId.value,
         makerId: makerId.value,
         mangroveId: mangroveId.value,
         currentVersionId: offerVersionId.value
@@ -100,7 +100,7 @@ describe("Offer Operations Integration test suite", () => {
       assert.deepStrictEqual(newOffer, {
         id: newOfferId.value,
         mangroveId: newOfferId.mangroveId.value,
-        offerListId: new OfferListId( newOfferId.mangroveId, newOfferId.offerListKey).value,
+        offerListingId: new OfferListingId( newOfferId.mangroveId, newOfferId.offerListKey).value,
         offerNumber: newOfferId.offerNumber,
         makerId: makerId.value,
         currentVersionId: newVersionId.value

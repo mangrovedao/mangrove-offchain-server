@@ -1,5 +1,5 @@
 import { describe } from "mocha";
-import { AccountId, ChainId, MangroveId, OfferListId, OrderId, TakenOfferId } from "src/state/model";
+import { AccountId, ChainId, MangroveId, OfferListingId, OrderId, TakenOfferId } from "src/state/model";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import { OrderEventLogic } from "src/state/handlers/mangroveHandler/orderEventsLogic";
 import assert from "assert";
@@ -10,7 +10,7 @@ describe("Order Events Logic Unit Test Suite", () => {
     const mangroveId = new MangroveId(chainId, "mangroveID");
     const tokens = { inboundToken: { name: "inbound", decimals: 0 }, outboundToken: { name: "outbound", decimals:0 }};
     const offerListKey = { inboundToken: tokens.inboundToken.name, outboundToken: tokens.outboundToken.name };
-    const offerListId = new OfferListId(mangroveId, offerListKey);
+    const offerListingId = new OfferListingId(mangroveId, offerListKey);
     const takerId = new AccountId(chainId, "takerId");
     const orderId = new OrderId(mangroveId, offerListKey, "proximaId" );
     const parantOrderId = new OrderId(mangroveId, offerListKey, "parantOrder" );
@@ -27,14 +27,14 @@ describe("Order Events Logic Unit Test Suite", () => {
                 feePaid: "0"
             }
     
-            const orderToCreate = orderEventsLogic.createOrder(mangroveId, offerListId, tokens, order, takerId, orderId, "txId", parantOrderId)
+            const orderToCreate = orderEventsLogic.createOrder(mangroveId, offerListingId, tokens, order, takerId, orderId, "txId", parantOrderId)
 
             assert.deepStrictEqual(orderToCreate, {
                 id: orderId.value,
                 txId: "txId",
                 proximaId: orderId.proximaId,
                 parentOrderId: parantOrderId.value,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 mangroveId: mangroveId.value,
                 takerId: takerId.value,
                 takerGot: order.takerGot,
@@ -58,14 +58,14 @@ describe("Order Events Logic Unit Test Suite", () => {
                 feePaid: "0"
             }
     
-            const orderToCreate = orderEventsLogic.createOrder(mangroveId, offerListId, tokens, order, takerId, orderId, "txId")
+            const orderToCreate = orderEventsLogic.createOrder(mangroveId, offerListingId, tokens, order, takerId, orderId, "txId")
 
             assert.deepStrictEqual(orderToCreate, {
                 id: orderId.value,
                 txId: "txId",
                 proximaId: orderId.proximaId,
                 parentOrderId: null,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 mangroveId: mangroveId.value,
                 takerId: takerId.value,
                 takerGot: order.takerGot,

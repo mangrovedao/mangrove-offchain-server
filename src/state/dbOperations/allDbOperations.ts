@@ -4,7 +4,7 @@ import { PrismaTx } from "./dbOperations";
 import { MakerBalanceOperations } from "./makerBalanceOperations";
 import { MangroveOperations } from "./mangroveOperations";
 import { MangroveOrderOperations } from "./mangroveOrderOperations";
-import { OfferListOperations } from "./offerListOperations";
+import { OfferListingOperations } from "./offerListOperations";
 import { OfferOperations } from "./offerOperations";
 import { OrderOperations } from "./orderOperations";
 import { TokenOperations } from "./tokenOperations";
@@ -17,7 +17,7 @@ export type AllDbOperations = {
   makerBalanceOperations: MakerBalanceOperations;
   mangroveOperation: MangroveOperations;
   mangroveOrderOperations: MangroveOrderOperations;
-  offerListOperations: OfferListOperations;
+  offerListOperations: OfferListingOperations;
   offerOperations: OfferOperations;
   orderOperations: OrderOperations;
   takerApprovalOperations: TakerApprovalOperations;
@@ -32,7 +32,7 @@ export function allDbOperations(tx: PrismaTx): AllDbOperations {
     makerBalanceOperations: new MakerBalanceOperations(tx),
     mangroveOperation: new MangroveOperations(tx),
     mangroveOrderOperations: new MangroveOrderOperations(tx),
-    offerListOperations: new OfferListOperations(tx),
+    offerListOperations: new OfferListingOperations(tx),
     offerOperations: new OfferOperations(tx),
     orderOperations: new OrderOperations(tx),
     takerApprovalOperations: new TakerApprovalOperations(tx),

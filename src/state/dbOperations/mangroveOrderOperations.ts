@@ -6,11 +6,11 @@ import {
   MangroveOrderId,
   MangroveOrderVersionId,
   OfferId,
-  OfferListId,
+  OfferListingId,
   StratId
 } from "src/state/model";
 import { DbOperations, PrismaTx, toUpsert } from "./dbOperations";
-import { OfferListOperations } from "./offerListOperations";
+import { OfferListingOperations } from "./offerListOperations";
 
 export type MangroveOrderIds = {
   mangroveOrderId: string;
@@ -24,10 +24,10 @@ export type MangroveOrderIds = {
 };
 
 export class MangroveOrderOperations extends DbOperations {
-  private offerListOperations: OfferListOperations;
+  private offerListingOperations: OfferListingOperations;
   public constructor(public readonly tx: PrismaTx) {
     super(tx);
-    this.offerListOperations = new OfferListOperations(tx);
+    this.offerListingOperations = new OfferListingOperations(tx);
   }
 
   public async addMangroveOrderVersionFromOfferId(
@@ -82,7 +82,7 @@ export class MangroveOrderOperations extends DbOperations {
     id: MangroveOrderId,
     txId: string,
     updateFunc:(model: Omit< prisma.MangroveOrderVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId" >) => void,
-    initial?: Omit<prisma.MangroveOrder,"id" | "mangroveId" | "offerListId" | "proximaId" |  "currentVersionId" >
+    initial?: Omit<prisma.MangroveOrder,"id" | "mangroveId" | "offerListingId" | "proximaId" |  "currentVersionId" >
     ) {
       
     let mangroveOrder = await this.tx.mangroveOrder.findUnique({
@@ -101,7 +101,7 @@ export class MangroveOrderOperations extends DbOperations {
         ...{
         id: id.value,
         mangroveId:  id.mangroveId.value,
-        offerListId: new OfferListId( id.mangroveId, id.offerListKey ).value,
+        offerListingId: new OfferListingId( id.mangroveId, id.offerListKey ).value,
         currentVersionId: newVersionId.value,
         proximaId: id.proximaId
       }};
@@ -201,7 +201,7 @@ export class MangroveOrderOperations extends DbOperations {
       where: { restingOrderId: offerId.value },
     });
     for (const mangroveOrder of mangroveOrders) {
-      const tokens = await this.offerListOperations.getOfferListTokens({
+      const tokens = await this.offerListingOperations.getOfferListTokens({
         mangroveOrder,
       });
       await this.addMangroveOrderVersion(

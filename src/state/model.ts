@@ -90,7 +90,7 @@ export class OfferVersionId extends Id<string> {
   }
 }
 
-export class OfferListId extends Id<string> {
+export class OfferListingId extends Id<string> {
   public constructor(
     public readonly mangroveId: MangroveId,
     public readonly offerListKey: OfferListKey
@@ -99,9 +99,9 @@ export class OfferListId extends Id<string> {
   }
 }
 
-export class OfferListVersionId extends Id<string> {
+export class OfferListingVersionId extends Id<string> {
   public constructor(
-    public readonly offerListId: OfferListId,
+    public readonly offerListId: OfferListingId,
     public readonly versionNumber: number
   ) {
     super(`${offerListId.value}-${versionNumber}`);

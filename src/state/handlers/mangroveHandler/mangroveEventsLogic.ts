@@ -12,7 +12,7 @@ import {
   ChainId,
   MakerBalanceId,
   MangroveId,
-  OfferListId,
+  OfferListingId,
   OrderId,
   TakerApprovalId,
   TokenId,
@@ -55,10 +55,10 @@ export class MangroveEventsLogic {
     await db.tokenOperations.assertTokenExists(inboundTokenId);
     const outboundTokenId = new TokenId(chainId, offerList.outboundToken);
     await db.tokenOperations.assertTokenExists(outboundTokenId);
-    const id = new OfferListId(mangroveId, offerList);
+    const id = new OfferListingId(mangroveId, offerList);
 
     if (undo) {
-      await db.offerListOperations.deleteLatestOfferListVersion(id);
+      await db.offerListOperations.deleteLatestOfferListingVersion(id);
       return;
     }
 

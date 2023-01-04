@@ -9,7 +9,7 @@ import {
   ChainId,
   MangroveId,
   OfferId,
-  OfferListId,
+  OfferListingId,
   OfferListKey,
   OrderId,
 } from "src/state/model";
@@ -62,7 +62,7 @@ export class OfferEventsLogic {
     const accountId = new AccountId(chainId, maker);
     await db.accountOperations.ensureAccount(accountId);
     const tokens = await db.offerListOperations.getOfferListTokens({
-      id: new OfferListId(mangroveId, offerList),
+      id: new OfferListingId(mangroveId, offerList),
     });
 
     await db.offerOperations.addVersionedOffer(

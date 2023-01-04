@@ -2,69 +2,69 @@ import * as prisma from "@prisma/client";
 import _ from "lodash";
 import {
   ChainId,
-  OfferListId,
-  OfferListVersionId,
+  OfferListingId,
+  OfferListingVersionId,
   TokenId,
 } from "src/state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 
-export class OfferListOperations extends DbOperations {
+export class OfferListingOperations extends DbOperations {
   public async getOfferListTokens(
     params:
       | {
-          id: OfferListId;
+          id: OfferListingId;
         }
       | {
-          mangroveOrder: { offerListId: string };
+          mangroveOrder: { offerListingId: string };
         }
   ): Promise<{ outboundToken: prisma.Token; inboundToken: prisma.Token }> {
-    const offerList = await this.tx.offerList.findUnique({
+    const offerListing = await this.tx.offerListing.findUnique({
       where: {
-        id: "id" in params ? params.id.value : params.mangroveOrder.offerListId,
+        id: "id" in params ? params.id.value : params.mangroveOrder.offerListingId,
       },
       include: {
         outboundToken: true,
         inboundToken: true,
       },
     });
-    if (offerList === null) {
+    if (offerListing === null) {
       if ("id" in params) {
         throw new Error(
           `offer list ${params.id.value} doesn't exist - chainId=${params.id.mangroveId.chainId.value}, mangroveId=${params.id.mangroveId.value}, outboundToken=${params.id.offerListKey.outboundToken},  inboundToken=${params.id.offerListKey.inboundToken}`
         );
       } else {
         throw new Error(
-          `offer list ${params.mangroveOrder.offerListId} doesn't exist `
+          `offer list ${params.mangroveOrder.offerListingId} doesn't exist `
         );
       }
     }
     return {
-      outboundToken: offerList!.outboundToken,
-      inboundToken: offerList!.inboundToken,
+      outboundToken: offerListing!.outboundToken,
+      inboundToken: offerListing!.inboundToken,
     };
   }
   // Add a new OfferListVersion to a (possibly new) OfferList
   public async addVersionedOfferList(
-    id: OfferListId,
+    id: OfferListingId,
     txId: string,
-    updateFunc: (model: prisma.OfferListVersion) => void
+    updateFunc: (model: prisma.OfferListingVersion) => void
   ) {
-    let offerList: prisma.OfferList | null = await this.tx.offerList.findUnique(
+    let offerListing: prisma.OfferListing | null = await this.tx.offerListing.findUnique(
       {
         where: { id: id.value },
       }
     );
-    let newVersion: prisma.OfferListVersion;
+    let newVersion: prisma.OfferListingVersion;
 
-    if (offerList === null) {
+    if (offerListing === null) {
       const chainId = id.mangroveId.chainId;
       const inboundTokenId = new TokenId(chainId, id.offerListKey.inboundToken);
       const outboundTokenId = new TokenId(
         chainId,
         id.offerListKey.outboundToken
       );
-      const newVersionId = new OfferListVersionId(id, 0);
-      offerList = {
+      const newVersionId = new OfferListingVersionId(id, 0);
+      offerListing = {
         id: id.value,
         mangroveId: id.mangroveId.value,
         outboundTokenId: outboundTokenId.value,
@@ -73,7 +73,7 @@ export class OfferListOperations extends DbOperations {
       };
       newVersion = {
         id: newVersionId.value,
-        offerListId: id.value,
+        offerListingId: id.value,
         txId: txId,
         versionNumber: 0,
         prevVersionId: null,
@@ -83,9 +83,9 @@ export class OfferListOperations extends DbOperations {
         fee: null,
       };
     } else {
-      const oldVersion = await this.getCurrentOfferListVersion(offerList);
+      const oldVersion = await this.getCurrentOfferListVersion(offerListing);
       const newVersionNumber = oldVersion.versionNumber + 1;
-      const newVersionId = new OfferListVersionId(id, newVersionNumber);
+      const newVersionId = new OfferListingVersionId(id, newVersionNumber);
       newVersion = _.merge(oldVersion, {
         id: newVersionId.value,
         versionNumber: newVersionNumber,
@@ -95,52 +95,52 @@ export class OfferListOperations extends DbOperations {
 
     updateFunc(newVersion);
 
-    await this.tx.offerList.upsert(
+    await this.tx.offerListing.upsert(
       toUpsert(
-        _.merge(offerList, {
+        _.merge(offerListing, {
           currentVersionId: newVersion.id,
         })
       )
     );
-    await this.tx.offerListVersion.create({ data: newVersion });
+    await this.tx.offerListingVersion.create({ data: newVersion });
   }
 
-  async getCurrentOfferListVersion(idOrofferList: OfferListId | prisma.OfferList) {
-    const id = "id" in idOrofferList ? idOrofferList.id : (idOrofferList as OfferListId).value;
-    const offerList = await this.tx.offerList.findUnique({where: {id: id}})
+  async getCurrentOfferListVersion(idOrOfferListing: OfferListingId | prisma.OfferListing) {
+    const id = "id" in idOrOfferListing ? idOrOfferListing.id : (idOrOfferListing as OfferListingId).value;
+    const offerList = await this.tx.offerListing.findUnique({where: {id: id}})
     if(!offerList) {
       throw new Error(`Could not find offerList form id: ${id}`)
     }
-    const currentVersion = await this.tx.offerListVersion.findUnique({
+    const currentVersion = await this.tx.offerListingVersion.findUnique({
       where: { id: offerList.currentVersionId },
     });
     if (currentVersion === null) {
-      throw new Error(`Could not find Current offer list version, id: ${currentVersion}`);
+      throw new Error(`Could not find Current offer listing version, id: ${currentVersion}`);
     }
     return currentVersion;
   }
 
-  public async deleteLatestOfferListVersion(id: OfferListId) {
-    const offerList = await this.tx.offerList.findUnique({
+  public async deleteLatestOfferListingVersion(id: OfferListingId) {
+    const offerListing = await this.tx.offerListing.findUnique({
       where: { id: id.value },
     });
-    if (offerList === null)
-      throw Error(`OfferList not found - id: ${id.value}`);
+    if (offerListing === null)
+      throw Error(`OfferListing not found - id: ${id.value}`);
 
-    const offerListVersion = await this.tx.offerListVersion.findUnique({
-      where: { id: offerList.currentVersionId },
+    const offerListVersion = await this.tx.offerListingVersion.findUnique({
+      where: { id: offerListing.currentVersionId },
     });
-    await this.tx.offerListVersion.delete({
-      where: { id: offerList.currentVersionId },
+    await this.tx.offerListingVersion.delete({
+      where: { id: offerListing.currentVersionId },
     });
 
     if (offerListVersion!.prevVersionId === null) {
-      await this.tx.offerList.delete({ where: { id: id.value } });
+      await this.tx.offerListing.delete({ where: { id: id.value } });
     } else {
-      offerList.currentVersionId = offerListVersion!.prevVersionId;
-      await this.tx.offerList.update({
+      offerListing.currentVersionId = offerListVersion!.prevVersionId;
+      await this.tx.offerListing.update({
         where: { id: id.value },
-        data: offerList,
+        data: offerListing,
       });
     }
   }

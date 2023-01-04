@@ -1,6 +1,6 @@
 import { Offer, OfferVersion, PrismaClient } from "@prisma/client";
-import { OfferId, OfferListId, OfferVersionId } from "src/state/model";
-import { OfferListOperations } from "./offerListOperations";
+import { OfferId, OfferListingId, OfferVersionId } from "src/state/model";
+import { OfferListingOperations } from "./offerListOperations";
 import { OfferOperations } from "./offerOperations";
 import { TokenOperations } from "./tokenOperations";
 
@@ -12,18 +12,18 @@ type Context = {
 export class OrderBookUtils {
 
     tokenOperations: TokenOperations;
-    offerListOperations: OfferListOperations;
+    offerListOperations: OfferListingOperations;
     offerOperations: OfferOperations;
 
     constructor(private prisma: PrismaClient) {
         this.tokenOperations = new TokenOperations(prisma)
-        this.offerListOperations = new OfferListOperations(prisma);
+        this.offerListOperations = new OfferListingOperations(prisma);
         this.offerOperations = new OfferOperations(prisma);
     }
 
 
-    public async getMatchingOfferFromOfferListId(offerListId: OfferListId, time: number) {
-        const offers = await this.prisma.offer.findMany({ where: { offerListId: offerListId.value } });
+    public async getMatchingOfferFromOfferListId(offerListId: OfferListingId, time: number) {
+        const offers = await this.prisma.offer.findMany({ where: { offerListingId: offerListId.value } });
         const matchingOffers: OfferVersion[] = [];
         for (const index in offers) {
             const offer = offers[index];

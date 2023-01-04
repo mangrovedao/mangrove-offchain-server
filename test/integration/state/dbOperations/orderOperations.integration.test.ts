@@ -3,7 +3,7 @@ import assert from "assert";
 import { describe, it } from "mocha";
 import { MangroveOrderOperations } from "src/state/dbOperations/mangroveOrderOperations";
 import { OrderOperations } from "src/state/dbOperations/orderOperations";
-import { AccountId, ChainId, MangroveId, MangroveOrderId, MangroveOrderVersionId, OfferId, OfferListId, OfferListVersionId, OfferVersionId, OrderId, StratId, TakenOfferId, TokenId } from "src/state/model";
+import { AccountId, ChainId, MangroveId, MangroveOrderId, MangroveOrderVersionId, OfferId, OfferListingId, OfferListingVersionId, OfferVersionId, OrderId, StratId, TakenOfferId, TokenId } from "src/state/model";
 import { prisma } from "utils/test/mochaHooks";
 import { OfferListParams } from "@proximaone/stream-schema-mangrove/dist/core";
 import { OfferOperations } from "src/state/dbOperations/offerOperations";
@@ -25,8 +25,8 @@ describe("Order Operations Integration test Suite", () => {
     const offerListKey = { inboundToken: "inboundAddress", outboundToken: "outboundAddress" };
     const outboundTokenId= new TokenId(chainId, offerListKey.outboundToken);
     const inboundTokenId= new TokenId(chainId, offerListKey.inboundToken);
-    const offerListId = new OfferListId(mangroveId, offerListKey);
-    const offerListVersionId = new OfferListVersionId(offerListId, 0);
+    const offerListingId = new OfferListingId(mangroveId, offerListKey);
+    const offerListingVersionId = new OfferListingVersionId(offerListingId, 0);
     const takerId = new AccountId(chainId, "takerAddress");
     const orderId = new OrderId(mangroveId, offerListKey, "1");
     const offerId0 = new OfferId(mangroveId, offerListKey, 0);
@@ -60,12 +60,12 @@ describe("Order Operations Integration test Suite", () => {
             decimals: 0
         }})
 
-        await prisma.offerList.create( { data: {
-            id: offerListId.value,
+        await prisma.offerListing.create( { data: {
+            id: offerListingId.value,
             mangroveId: mangroveId.value,
             outboundTokenId: outboundTokenId.value,
             inboundTokenId: inboundTokenId.value,
-            currentVersionId: offerListVersionId.value,
+            currentVersionId: offerListingVersionId.value,
 
         }})
 
@@ -74,7 +74,7 @@ describe("Order Operations Integration test Suite", () => {
                 id: offerId0.value,
                 offerNumber: offerId0.offerNumber,
                 mangroveId: mangroveId.value,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 makerId: makerId.value,
                 currentVersionId: offer0VersionId1.value
             }
@@ -85,7 +85,7 @@ describe("Order Operations Integration test Suite", () => {
                 id: offerId1.value,
                 offerNumber: offerId1.offerNumber,
                 mangroveId: mangroveId.value,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 makerId: makerId.value,
                 currentVersionId: offer1VersionId1.value
             }
@@ -169,7 +169,7 @@ describe("Order Operations Integration test Suite", () => {
             data: {
                 id: orderId.value,
                 mangroveId: mangroveId.value,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 txId: "txId",
                 proximaId: orderId.proximaId,
                 takerId: takerId.value,
@@ -252,7 +252,7 @@ describe("Order Operations Integration test Suite", () => {
                 txId: "txId",
                 proximaId: newOrderId.proximaId,
                 parentOrderId:  null,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 mangroveId: mangroveId.value,
                 takerId: takerId.value,
                 // takerWants: order.takerWants,
@@ -349,7 +349,7 @@ describe("Order Operations Integration test Suite", () => {
                 txId: "txId",
                 proximaId: newOrderId.proximaId,
                 parentOrderId:  null,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 mangroveId: mangroveId.value,
                 takerId: takerId.value,
                 // takerWants: order.takerWants,
@@ -401,7 +401,7 @@ describe("Order Operations Integration test Suite", () => {
                 txId: "txId",
                 proximaId: newOrderId.proximaId,
                 parentOrderId:  null,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 mangroveId: mangroveId.value,
                 takerId: takerId.value,
                 // takerWants: order.takerWants,
@@ -453,7 +453,7 @@ describe("Order Operations Integration test Suite", () => {
                 txId: "txId",
                 proximaId: newOrderId.proximaId,
                 parentOrderId:  null,
-                offerListId: offerListId.value,
+                offerListingId: offerListingId.value,
                 mangroveId: mangroveId.value,
                 takerId: takerId.value,
                 // takerWants: order.takerWants,

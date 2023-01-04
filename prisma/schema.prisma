@@ -46,7 +46,7 @@ model Transaction {
   mangroveVersions      MangroveVersion[]
   takerApprovalVersions TakerApprovalVersion[]
   makerBalanceVersions  MakerBalanceVersion[]
-  offerListVersions     OfferListVersion[]
+  offerListingVersions     OfferListingVersion[]
   offerVersions         OfferVersion[]
   orders                Order[]
   MangroveOrderVersion         MangroveOrderVersion[]
@@ -63,8 +63,8 @@ model Token {
   decimals Int
 
   chain                   Chain       @relation(fields: [chainId], references: [id])
-  offerListsWhereInbound  OfferList[] @relation("OfferListsByInboundToken")
-  offerListsWhereOutbound OfferList[] @relation("OfferListsByOutboundToken")
+  offerListingsWhereInbound  OfferListing[] @relation("OfferListingsByInboundToken")
+  offerListingsWhereOutbound OfferListing[] @relation("OfferListingsByOutboundToken")
 }
 
 // Few mangrove instances, no extra index needed
@@ -75,7 +75,7 @@ model Mangrove {
   address String @default("") @db.VarChar(80)
 
   chain          Chain           @relation(fields: [chainId], references: [id])
-  offerLists     OfferList[]
+  offerListings     OfferListing[]
   offers         Offer[]
   orders         Order[]
   makerBalances  MakerBalance[]
@@ -145,12 +145,12 @@ model Strat {
 model TakerApproval {
   id          String @id @db.VarChar(255)
   mangroveId  String @db.VarChar(255)
-  offerListId String @db.VarChar(255)
+  offerListingId String @db.VarChar(255)
   ownerId     String @db.VarChar(255) // index?
   spenderId   String @db.VarChar(255) // index?
 
   mangrove  Mangrove  @relation(fields: [mangroveId], references: [id])
-  offerList OfferList @relation(fields: [offerListId], references: [id])
+  offerListing OfferListing @relation(fields: [offerListingId], references: [id])
   owner     Account   @relation("OwnerApprovals", fields: [ownerId], references: [id])
   spender   Account   @relation("SpenderApprovals", fields: [spenderId], references: [id])
 
@@ -213,16 +213,16 @@ model MakerBalanceVersion {
 }
 
 // probably very few offerlists, no extra indexes needed
-
-model OfferList {
+/// The name should be "OfferList" but Prisma will generate wrong queries if the name ends with "List"
+model OfferListing {
   id              String @id @db.VarChar(255)
   mangroveId      String @db.VarChar(255)
   inboundTokenId  String @db.VarChar(255)
   outboundTokenId String @db.VarChar(255)
 
   mangrove       Mangrove        @relation(fields: [mangroveId], references: [id])
-  inboundToken   Token           @relation(name: "OfferListsByInboundToken", fields: [inboundTokenId], references: [id])
-  outboundToken  Token           @relation(name: "OfferListsByOutboundToken", fields: [outboundTokenId], references: [id])
+  inboundToken   Token           @relation(name: "OfferListingsByInboundToken", fields: [inboundTokenId], references: [id])
+  outboundToken  Token           @relation(name: "OfferListingsByOutboundToken", fields: [outboundTokenId], references: [id])
   offers         Offer[]
   takerApprovals TakerApproval[]
   orders         Order[]
@@ -230,15 +230,15 @@ model OfferList {
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
   currentVersionId  String             @db.VarChar(255)
-  offerListVersions OfferListVersion[]
+  offerListingVersions OfferListingVersion[]
   MangroveOrder     MangroveOrder[]
 }
 
 // few offerlist, will have some versions, but not enough for it to need extra indexes
 
-model OfferListVersion {
+model OfferListingVersion {
   id          String   @id @db.VarChar(255)
-  offerListId String   @db.VarChar(255)
+  offerListingId String   @db.VarChar(255)
   txId        String   @db.VarChar(255)
   active      Boolean?
   fee         String?  @db.VarChar(80)
@@ -251,7 +251,7 @@ model OfferListVersion {
   versionNumber Int
   prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
 
-  offerList OfferList @relation(fields: [offerListId], references: [id])
+  offerListing OfferListing @relation(fields: [offerListingId], references: [id])
 }
 
 // Could potentially have many offers, maybe extra indexes are needed.
@@ -259,7 +259,7 @@ model OfferListVersion {
 model Offer {
   id               String @id @db.VarChar(255)
   mangroveId       String @db.VarChar(255)
-  offerListId      String @db.VarChar(255)
+  offerListingId      String @db.VarChar(255)
   makerId          String @db.VarChar(255) // index?
   offerNumber      Int
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
@@ -267,7 +267,7 @@ model Offer {
   currentVersionId String @db.VarChar(255)
 
   mangrove      Mangrove        @relation(fields: [mangroveId], references: [id])
-  offerList     OfferList       @relation(fields: [offerListId], references: [id])
+  offerListing     OfferListing       @relation(fields: [offerListingId], references: [id])
   maker         Account         @relation(fields: [makerId], references: [id])
   offerVersions OfferVersion[]
   MangroveOrder MangroveOrder[]
@@ -311,7 +311,7 @@ model Order {
   txId            String  @db.VarChar(255) // index?
   parentOrderId   String? @db.VarChar(255)
   mangroveId      String  @db.VarChar(255)
-  offerListId     String  @db.VarChar(255) // maybe index?
+  offerListingId     String  @db.VarChar(255) // maybe index?
   takerId         String  @db.VarChar(255) // index?
   proximaId       String  @db.VarChar(255)
   // takerWants       String
@@ -334,7 +334,7 @@ model Order {
 
   takenOffers                TakenOffer[]
   mangrove                   Mangrove               @relation(fields: [mangroveId], references: [id])
-  offerList                  OfferList              @relation(fields: [offerListId], references: [id])
+  offerListing                  OfferListing              @relation(fields: [offerListingId], references: [id])
   taker                      Account                @relation(fields: [takerId], references: [id])
   childOrders                Order[]                @relation("ParentOrders")
   childTakerApprovalVersions TakerApprovalVersion[]
@@ -379,7 +379,7 @@ model MangroveOrder {
   
   mangroveId       String  @db.VarChar(255)
   stratId          String  @db.VarChar(255)
-  offerListId      String  @db.VarChar(255)
+  offerListingId      String  @db.VarChar(255)
   takerId          String  @db.VarChar(255)
   proximaId        String  @db.VarChar(255)
   // orderId          String  @db.VarChar(255)
@@ -402,7 +402,7 @@ model MangroveOrder {
 
   
   strat                Strat                  @relation(fields: [stratId], references: [id])
-  offerList            OfferList              @relation(fields: [offerListId], references: [id])
+  offerListing            OfferListing              @relation(fields: [offerListingId], references: [id])
   taker                Account                @relation(fields: [takerId], references: [id])
   // order                Order                  @relation(fields: [orderId], references: [id])
   offer                Offer                  @relation(fields: [restingOrderId], references: [id])

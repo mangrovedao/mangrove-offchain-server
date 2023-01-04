@@ -10,9 +10,9 @@ import {
   ChainId,
   MangroveId,
   OfferId,
-  OfferListId,
+  OfferListingId,
   OfferListKey,
-  OfferListVersionId,
+  OfferListingVersionId,
   TokenId,
   TransactionId
 } from "src/state/model";
@@ -37,8 +37,8 @@ describe("OfferList Operations Integration test suite", () => {
     inboundToken: inboundTokenId.tokenAddress,
   };
   const makerId = new AccountId(chainId, "makerID");
-  const offerListId = new OfferListId(mangroveId, offerListKey);
-  const offerListVersionId = new OfferListVersionId(offerListId, 0);
+  const offerListingId = new OfferListingId(mangroveId, offerListKey);
+  const offerListingVersionId = new OfferListingVersionId(offerListingId, 0);
   const offerId1 = new OfferId(mangroveId, offerListKey, 1);
   const offerId2 = new OfferId(mangroveId, offerListKey, 2);
   const offerId3 = new OfferId(mangroveId, offerListKey, 3);
@@ -48,8 +48,8 @@ describe("OfferList Operations Integration test suite", () => {
   const txId2 = new TransactionId(chainId, "txHash2")
   const txId3 = new TransactionId(chainId, "txHash3")
   
-  let offerList: prismaModel.OfferList;
-  let offerListVersion: prismaModel.OfferListVersion;
+  let offerListing: prismaModel.OfferListing;
+  let offerListingVersion: prismaModel.OfferListingVersion;
   let outboundToken: prismaModel.Token;
   let inboundToken: prismaModel.Token;
 
@@ -74,25 +74,25 @@ describe("OfferList Operations Integration test suite", () => {
         chainId: chainId.value,
       },
     });
-    offerList = await prisma.offerList.create({
+    offerListing = await prisma.offerListing.create({
       data: {
-        id: offerListId.value,
+        id: offerListingId.value,
         mangroveId: mangroveId.value,
         inboundTokenId: inboundTokenId.value,
         outboundTokenId: outboundTokenId.value,
-        currentVersionId: offerListVersionId.value,
+        currentVersionId: offerListingVersionId.value,
       },
     });
-    offerListVersion = await prisma.offerListVersion.create({
+    offerListingVersion = await prisma.offerListingVersion.create({
       data: {
-        id: offerListVersionId.value,
-        offerListId: offerListId.value,
+        id: offerListingVersionId.value,
+        offerListingId: offerListingId.value,
         txId: txId1.value,
         active: true,
         fee: "100",
         gasbase: 10,
         density: "10",
-        versionNumber: offerListVersionId.versionNumber,
+        versionNumber: offerListingVersionId.versionNumber,
       },
     });
     
@@ -115,13 +115,13 @@ describe("OfferList Operations Integration test suite", () => {
 
   it("orderBook", async () => {
     //This sould only return version 0 of offer1
-    let orderBook = await orderBookUtils.getMatchingOfferFromOfferListId(offerListId,1672462800000 ) // Sat Dec 31 2022 06:00:00
+    let orderBook = await orderBookUtils.getMatchingOfferFromOfferListId(offerListingId,1672462800000 ) // Sat Dec 31 2022 06:00:00
     assert.strictEqual(orderBook.length, 1);
     assert.strictEqual(orderBook[0].offerId, offerId1.value)
     assert.strictEqual(orderBook[0].versionNumber, 0)
 
     //This sould only return version 1 of offer1 and version 0 of offer5
-    orderBook = await orderBookUtils.getMatchingOfferFromOfferListId(offerListId,1672506000000 ) // Sat Dec 31 2022 18:00:00
+    orderBook = await orderBookUtils.getMatchingOfferFromOfferListId(offerListingId,1672506000000 ) // Sat Dec 31 2022 18:00:00
     assert.strictEqual(orderBook.length, 2);
     assert.strictEqual(orderBook[0].offerId, offerId1.value)
     assert.strictEqual(orderBook[0].versionNumber, 1)
@@ -129,7 +129,7 @@ describe("OfferList Operations Integration test suite", () => {
     assert.strictEqual(orderBook[1].versionNumber, 0)
 
     //This sould only return version 2 of offer1 and version 0 of offer5
-    orderBook = await orderBookUtils.getMatchingOfferFromOfferListId(offerListId,1672614000000 ) // Mon Jan 02 2023 00:00:00
+    orderBook = await orderBookUtils.getMatchingOfferFromOfferListId(offerListingId,1672614000000 ) // Mon Jan 02 2023 00:00:00
     assert.strictEqual(orderBook.length, 2);
     assert.strictEqual(orderBook[0].offerId, offerId1.value)
     assert.strictEqual(orderBook[0].versionNumber, 2)

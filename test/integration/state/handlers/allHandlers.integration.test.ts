@@ -38,8 +38,8 @@ describe( "All Handlers Integration Test Suite" ,() => {
         
         assert.strictEqual(await prisma.mangrove.count() , 1);
         assert.strictEqual(await prisma.mangroveVersion.count() , 2);
-        assert.strictEqual( await prisma.offerList.count(), 1)
-        assert.strictEqual( await prisma.offerListVersion.count(), 1)
+        assert.strictEqual( await prisma.offerListing.count(), 1)
+        assert.strictEqual( await prisma.offerListingVersion.count(), 1)
         assert.strictEqual( await prisma.makerBalance.count(), 1)
         assert.strictEqual( await prisma.makerBalanceVersion.count(), 1)
         assert.strictEqual( await prisma.takerApproval.count(), 1)

@@ -1,6 +1,6 @@
 import * as prisma from "@prisma/client";
 import * as _ from "lodash";
-import { AccountId, OfferId, OfferListId, OfferVersionId } from "src/state/model";
+import { AccountId, OfferId, OfferListingId, OfferVersionId } from "src/state/model";
 import { DbOperations, toUpsert } from "./dbOperations";
 
 export class OfferOperations extends DbOperations {
@@ -29,7 +29,7 @@ export class OfferOperations extends DbOperations {
       offer = {
         id: id.value,
         mangroveId: id.mangroveId.value,
-        offerListId: new OfferListId( id.mangroveId, id.offerListKey).value,
+        offerListingId: new OfferListingId( id.mangroveId, id.offerListKey).value,
         offerNumber: id.offerNumber,
         makerId: initial.makerId.value,
         currentVersionId: newVersionId.value

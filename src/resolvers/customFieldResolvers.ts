@@ -6,8 +6,8 @@ import {
   MangroveOrderVersion,
   MangroveVersion,
   Offer,
-  OfferList,
-  OfferListVersion,
+  OfferListing,
+  OfferListingVersion,
   OfferVersion,
   Order,
   TakenOffer,
@@ -21,7 +21,7 @@ import { Arg, Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 // At most re-fetch once per 1000 ms for each token
 import { fetchBuilder, MemoryCache } from "node-fetch-cache";
 import { OrderBookUtils } from "src/state/dbOperations/orderBookUtils";
-import { ChainId, MangroveId, OfferListId } from "src/state/model";
+import { ChainId, MangroveId, OfferListingId } from "src/state/model";
 import { mangrove } from "@proximaone/stream-schema-mangrove/dist/streams";
 const fetch = fetchBuilder.withCache(new MemoryCache({ ttl: 1000 }));
 async function fetchTokenPriceInUsd(token: Token) {
@@ -76,22 +76,22 @@ export class CustomMakerBalanceFieldsResolver {
   }
 }
 
-@Resolver((of) => OfferList)
-export class CustomOfferListFieldsResolver {
-  @FieldResolver((type) => OfferListVersion, { nullable: true })
+@Resolver((of) => OfferListing)
+export class CustomOfferListingFieldsResolver {
+  @FieldResolver((type) => OfferListingVersion, { nullable: true })
   async currentVersion(
-    @Root() offerList: OfferList,
+    @Root() offerList: OfferListing,
     @Ctx() ctx: Context
-  ): Promise<OfferListVersion | null> {
-    return await ctx.prisma.offerListVersion.findUnique({
+  ): Promise<OfferListingVersion | null> {
+    return await ctx.prisma.offerListingVersion.findUnique({
       where: { id: offerList.currentVersionId },
     });
   }
 
   @FieldResolver((type) => [OfferVersion], { nullable: true })
-  async orderBook(
+  async offers(
     @Arg("time") time:number,
-    @Root() offerList: OfferList,
+    @Root() offerList: OfferListing,
     @Ctx() ctx: Context
   ): Promise<OfferVersion[] | null> {
     const mangrove = await ctx.prisma.mangrove.findUnique({where: {id: offerList.mangroveId}})
@@ -102,7 +102,7 @@ export class CustomOfferListFieldsResolver {
     }
     const chainId = new ChainId( mangrove.chainId );
     const mangroveId = new MangroveId(chainId, offerList.mangroveId);
-    const offerListId =  new OfferListId(mangroveId, { inboundToken: inboundToken.address, outboundToken: outboundToken.address } )
+    const offerListId =  new OfferListingId(mangroveId, { inboundToken: inboundToken.address, outboundToken: outboundToken.address } )
     return await new OrderBookUtils(ctx.prisma).getMatchingOfferFromOfferListId(offerListId, time);
 
   }
@@ -417,7 +417,7 @@ async function findOutboundTokenFromOfferVersionOrFail(
     .findUnique({
       where: { id: offerVersion.offerId },
     })
-    .offerList()
+    .offerListing()
     .outboundToken();
   if (!outboundToken)
     throw Error(`Cannot find outbound token from offer '${offerVersion.id}'`);
@@ -432,7 +432,7 @@ async function findInboundTokenFromOfferVersionOrFail(
     .findUnique({
       where: { id: offerVersion.offerId },
     })
-    .offerList()
+    .offerListing()
     .inboundToken();
   if (!inboundToken)
     throw Error(`Cannot find inbound token from offer '${offerVersion.id}'`);
@@ -447,7 +447,7 @@ async function findOutboundTokenFromOrderOrFail(
     .findUnique({
       where: { id: order.id },
     })
-    .offerList()
+    .offerListing()
     .outboundToken();
   if (!outboundToken)
     throw Error(`Cannot find outbound token from order '${order.id}'`);
@@ -462,7 +462,7 @@ async function findInboundTokenFromOrderOrFail(
     .findUnique({
       where: { id: order.id },
     })
-    .offerList()
+    .offerListing()
     .inboundToken();
   if (!inboundToken)
     throw Error(`Cannot find inbound token from order '${order.id}'`);
@@ -478,7 +478,7 @@ async function findOutboundTokenFromTakenOfferOrFail(
       where: { id: takenOffer.id },
     })
     .order()
-    .offerList()
+    .offerListing()
     .outboundToken();
   if (!outboundToken)
     throw Error(
@@ -496,7 +496,7 @@ async function findInboundTokenFromTakenOfferOrFail(
       where: { id: takenOffer.id },
     })
     .order()
-    .offerList()
+    .offerListing()
     .inboundToken();
   if (!inboundToken)
     throw Error(`Cannot find inbound token from takenOffer '${takenOffer.id}'`);
@@ -511,7 +511,7 @@ async function findOutboundTokenFromMangroveOrderOrFail(
     .findUnique({
       where: { id: mangroveOrder.id },
     })
-    .offerList()
+    .offerListing()
     .outboundToken();
   if (!outboundToken)
     throw Error(
@@ -528,7 +528,7 @@ async function findInboundTokenFromMangroveOrderOrFail(
     .findUnique({
       where: { id: mangroveOrder.id },
     })
-    .offerList()
+    .offerListing()
     .inboundToken();
   if (!inboundToken)
     throw Error(
