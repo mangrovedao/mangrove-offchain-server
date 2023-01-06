@@ -104,7 +104,7 @@ export class MangroveOrderEventsLogic {
       version.takerGave = e.takerGave;
       version.takerGaveNumber = takerGaveNumber;
       version.price = getPrice({ over: takerGaveNumber, under: takerGotNumber }) ?? 0;
-      version.expiryDate = new Date(e.expiryDate);
+      version.expiryDate = new Date(e.expiryDate*1000);
     }
 
 
