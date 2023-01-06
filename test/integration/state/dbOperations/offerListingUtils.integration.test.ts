@@ -114,7 +114,7 @@ describe("OfferList Operations Integration test suite", () => {
     // await prisma.offerVersion.deleteMany({where:{ offerId: offerId4.value, versionNumber:0}}) // deletes offer 4's previous version
     await prisma.offer.update({
       where: { id: offerId2.value },
-      data: { currentVersionId: "noMatch"},
+      data: { currentVersionId: "noMatch2"},
     });
     // await prisma.offerVersion.deleteMany({where:{ offerId: offerId2.value, versionNumber:0}}) // deletes offer 2's current version
 
