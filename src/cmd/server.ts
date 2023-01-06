@@ -24,7 +24,6 @@ import {
   CustomMangroveOrderFieldsResolver,
   CustomMangroveOrderVersionFieldsResolver,
   CustomTakenOfferFieldsResolver,
-  CustomTakerApprovalFieldsResolver,
   CustomTokenFieldsResolver,
 } from "src/resolvers/customFieldResolvers";
 import { AddressInfo } from "net";
@@ -143,7 +142,6 @@ async function main() {
       CustomMangroveOrderFieldsResolver,
       CustomMangroveOrderVersionFieldsResolver,
       CustomTakenOfferFieldsResolver,
-      CustomTakerApprovalFieldsResolver,
       CustomTokenFieldsResolver,
     ],
     validate: false,

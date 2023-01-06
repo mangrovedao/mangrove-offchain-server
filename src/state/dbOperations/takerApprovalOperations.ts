@@ -102,17 +102,25 @@ export class TakerApprovalOperations extends DbOperations {
     });
     if (currentVersion === null) throw Error(`TakerApprovalVersion not found - id: ${id.value}`);
 
-    await this.tx.takerApprovalVersion.delete({
-      where: { id: takerApproval.currentVersionId },
-    });
-
+    
     if (currentVersion!.prevVersionId === null) {
-      await this.tx.takerApproval.delete({ where: { id: id.value } });
-    } else {
-      takerApproval.currentVersionId = currentVersion!.prevVersionId;
       await this.tx.takerApproval.update({
         where: { id: id.value },
-        data: takerApproval,
+        data: { 
+          currentVersionId: "",
+         }, 
+      });
+      await this.tx.takerApprovalVersion.delete({
+        where: { id: takerApproval.currentVersionId },
+      });
+      await this.tx.takerApproval.delete({ where: { id: id.value } });
+    } else {
+      await this.tx.takerApproval.update({
+        where: { id: id.value },
+        data: { currentVersionId : currentVersion!.prevVersionId},
+      });
+      await this.tx.takerApprovalVersion.delete({
+        where: { id: takerApproval.currentVersionId },
       });
     }
   }

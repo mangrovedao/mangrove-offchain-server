@@ -145,7 +145,12 @@ describe("Taker Approval Operations Integration test suite", () => {
     });
 
     it("Cannot find current version", async () => {
-      await prisma.takerApprovalVersion.deleteMany();
+      await prisma.takerApproval.update({
+        where: { id: takerApprovalId.value },
+        data: { 
+          currentVersionId: "noMatch",
+         }, 
+      });
       await assert.rejects( takerApprovalOperations.addVersionedTakerApproval(takerApprovalId, "txId", (t) => t.value = "10", orderId) );
     })
   })
@@ -154,8 +159,13 @@ describe("Taker Approval Operations Integration test suite", () => {
     it("Cannot find takerApproval", async () => {
       await assert.rejects( takerApprovalOperations.deleteLatestTakerApprovalVersion( new TakerApprovalId( mangroveId, offerListKey, "noMatch", "noMatch")));
     })
-    it("Cannot find takerApproval", async () => {
-      await prisma.takerApprovalVersion.deleteMany()
+    it("Cannot find takerApprovalVersion", async () => {
+      await prisma.takerApproval.update({
+        where: { id: takerApprovalId.value },
+        data: { 
+          currentVersionId: "noMatch",
+         }, 
+      });
       await assert.rejects( takerApprovalOperations.deleteLatestTakerApprovalVersion( takerApprovalId));
     })
     it("No prevVersion, delete both takerApproval and version", async () => {
@@ -190,7 +200,12 @@ describe("Taker Approval Operations Integration test suite", () => {
     })
 
     it("Cant find takerApprovalVersion", async () => {
-      await prisma.takerApprovalVersion.deleteMany();
+      await prisma.takerApproval.update({
+        where: { id: takerApprovalId.value },
+        data: { 
+          currentVersionId: "noMatch",
+         }, 
+      });
       await assert.rejects( takerApprovalOperations.getCurrentTakerApprovalVersion(takerApprovalId))
     })
 

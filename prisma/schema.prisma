@@ -160,8 +160,10 @@ model TakerApproval {
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId      String                 @db.VarChar(255)
-  takerApprovalVersions TakerApprovalVersion[]
+  currentVersionId      String    @unique @db.VarChar(255)
+  currentVersion TakerApprovalVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+
+  takerApprovalVersions TakerApprovalVersion[] @relation("takerApprovalVersion")
 }
 
 // could potentially have many approvals, extra indexes might be needed.
@@ -178,9 +180,11 @@ model TakerApprovalVersion {
 
   // The following fields are bookkeeping to support undo of events.
   versionNumber Int
-  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
-
-  takerApproval TakerApproval @relation(fields: [takerApprovalId], references: [id])
+  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion TakerApprovalVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion TakerApprovalVersion? @relation("prevVersion")
+  currentVersion TakerApproval? @relation("currentVersion")
+  takerApproval TakerApproval @relation( "takerApprovalVersion", fields: [takerApprovalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // could potentially have many makers, but extra indexes probably not needed

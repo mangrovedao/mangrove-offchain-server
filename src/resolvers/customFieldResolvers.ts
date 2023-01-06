@@ -1,28 +1,23 @@
 import {
   MakerBalance,
   MakerBalanceVersion,
-  Mangrove,
   MangroveOrder,
   MangroveOrderVersion,
-  MangroveVersion,
   Offer,
   OfferListing,
   OfferListingVersion,
   OfferVersion,
   Order,
   TakenOffer,
-  TakerApproval,
-  TakerApprovalVersion,
-  Token,
+  Token
 } from "@generated/type-graphql";
 import { PrismaClient } from "@prisma/client";
 import { Arg, Ctx, FieldResolver, Resolver, Root } from "type-graphql";
 
 // At most re-fetch once per 1000 ms for each token
-import { fetchBuilder, MemoryCache } from "node-fetch-cache";
+import { MemoryCache, fetchBuilder } from "node-fetch-cache";
 import { OfferListingUtils } from "src/state/dbOperations/offerListingUtils";
 import { ChainId, MangroveId, OfferListingId } from "src/state/model";
-import { mangrove } from "@proximaone/stream-schema-mangrove/dist/streams";
 const fetch = fetchBuilder.withCache(new MemoryCache({ ttl: 1000 }));
 async function fetchTokenPriceInUsd(token: Token) {
   return (await fetch(
@@ -37,19 +32,6 @@ type Context = {
   prisma: PrismaClient;
 };
 
-
-@Resolver((of) => TakerApproval)
-export class CustomTakerApprovalFieldsResolver {
-  @FieldResolver((type) => TakerApprovalVersion, { nullable: true })
-  async currentVersion(
-    @Root() takerApproval: TakerApproval,
-    @Ctx() ctx: Context
-  ): Promise<TakerApprovalVersion | null> {
-    return await ctx.prisma.takerApprovalVersion.findUnique({
-      where: { id: takerApproval.currentVersionId },
-    });
-  }
-}
 
 @Resolver((of) => MakerBalance)
 export class CustomMakerBalanceFieldsResolver {
