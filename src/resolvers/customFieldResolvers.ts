@@ -35,15 +35,6 @@ type Context = {
 
 @Resolver((of) => OfferListing)
 export class CustomOfferListingFieldsResolver {
-  @FieldResolver((type) => OfferListingVersion, { nullable: true })
-  async currentVersion(
-    @Root() offerListing: OfferListing,
-    @Ctx() ctx: Context
-  ): Promise<OfferListingVersion | null> {
-    return await ctx.prisma.offerListingVersion.findUnique({
-      where: { id: offerListing.currentVersionId },
-    });
-  }
 
   @FieldResolver((type) => [OfferVersion], { nullable: true })
   async offersAtTime(

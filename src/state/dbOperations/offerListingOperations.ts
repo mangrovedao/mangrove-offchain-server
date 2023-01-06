@@ -130,17 +130,23 @@ export class OfferListingOperations extends DbOperations {
     const offerListVersion = await this.tx.offerListingVersion.findUnique({
       where: { id: offerListing.currentVersionId },
     });
-    await this.tx.offerListingVersion.delete({
-      where: { id: offerListing.currentVersionId },
-    });
-
+    
     if (offerListVersion!.prevVersionId === null) {
-      await this.tx.offerListing.delete({ where: { id: id.value } });
-    } else {
-      offerListing.currentVersionId = offerListVersion!.prevVersionId;
       await this.tx.offerListing.update({
         where: { id: id.value },
-        data: offerListing,
+        data: { currentVersionId: ""},
+      });
+      await this.tx.offerListingVersion.delete({
+        where: { id: offerListing.currentVersionId },
+      });
+      await this.tx.offerListing.delete({ where: { id: id.value } });
+    } else {
+      await this.tx.offerListing.update({
+        where: { id: id.value },
+        data: { currentVersionId: offerListVersion!.prevVersionId},
+      });
+      await this.tx.offerListingVersion.delete({
+        where: { id: offerListing.currentVersionId },
       });
     }
   }

@@ -183,9 +183,12 @@ describe("OfferList Operations Integration test suite", () => {
     });
 
     it("Cant find current version", async () => {
-      await prisma.offerListingVersion.deleteMany();
-      assert.strictEqual(await prisma.offerListing.count(), 1);
-      assert.strictEqual(await prisma.offerListingVersion.count(), 0);
+      await prisma.offerListing.update({
+        where: { id: offerListingId.value },
+        data: { 
+          currentVersionId: "noMatch",
+         }, 
+      });
       await assert.rejects(
         offerListingOperations.addVersionedOfferList(
           offerListingId,
@@ -193,8 +196,6 @@ describe("OfferList Operations Integration test suite", () => {
           (o) => (o.active = false)
         )
       );
-      assert.strictEqual(await prisma.offerListing.count(), 1);
-      assert.strictEqual(await prisma.offerListingVersion.count(), 0);
     });
   });
 
@@ -244,7 +245,12 @@ describe("OfferList Operations Integration test suite", () => {
     })
 
     it("Cant find offerListingVersion", async () => {
-      await prisma.offerListingVersion.deleteMany();
+      await prisma.offerListing.update({
+        where: { id: offerListingId.value },
+        data: { 
+          currentVersionId: "noMatch",
+         }, 
+      });
       await assert.rejects( offerListingOperations.getCurrentOfferListVersion(offerListingId))
     })
 
