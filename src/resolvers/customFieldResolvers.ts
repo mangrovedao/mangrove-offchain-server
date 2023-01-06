@@ -33,19 +33,6 @@ type Context = {
 };
 
 
-@Resolver((of) => MakerBalance)
-export class CustomMakerBalanceFieldsResolver {
-  @FieldResolver((type) => MakerBalanceVersion, { nullable: true })
-  async currentVersion(
-    @Root() makerBalance: MakerBalance,
-    @Ctx() ctx: Context
-  ): Promise<MakerBalanceVersion | null> {
-    return await ctx.prisma.makerBalanceVersion.findUnique({
-      where: { id: makerBalance.currentVersionId },
-    });
-  }
-}
-
 @Resolver((of) => OfferListing)
 export class CustomOfferListingFieldsResolver {
   @FieldResolver((type) => OfferListingVersion, { nullable: true })

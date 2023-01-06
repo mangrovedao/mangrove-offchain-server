@@ -85,17 +85,23 @@ export class MakerBalanceOperations extends DbOperations {
     const currentVersion = await this.tx.makerBalanceVersion.findUnique({
       where: { id: makerBalance.currentVersionId },
     });
-    await this.tx.makerBalanceVersion.delete({
-      where: { id: makerBalance.currentVersionId },
-    });
-
+    
     if (currentVersion!.prevVersionId === null) {
-      await this.tx.makerBalance.delete({ where: { id: id.value } });
-    } else {
-      makerBalance.currentVersionId = currentVersion!.prevVersionId;
       await this.tx.makerBalance.update({
         where: { id: id.value },
-        data: makerBalance,
+        data: { currentVersionId: ""},
+      });
+      await this.tx.makerBalanceVersion.delete({
+        where: { id: makerBalance.currentVersionId },
+      });
+      await this.tx.makerBalance.delete({ where: { id: id.value } });
+    } else {
+      await this.tx.makerBalance.update({
+        where: { id: id.value },
+        data: { currentVersionId: currentVersion!.prevVersionId},
+      });
+      await this.tx.makerBalanceVersion.delete({
+        where: { id: makerBalance.currentVersionId },
       });
     }
   }

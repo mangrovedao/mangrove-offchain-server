@@ -199,8 +199,10 @@ model MakerBalance {
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId     String                @db.VarChar(255)
-  makerBalanceVersions MakerBalanceVersion[]
+  currentVersionId     String     @unique @db.VarChar(255)
+  currentVersion MakerBalanceVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+
+  makerBalanceVersions MakerBalanceVersion[] @relation("makerBalanceVersion")
 }
 
 // Many makers with many versions, could need extra indexes.
@@ -215,9 +217,11 @@ model MakerBalanceVersion {
 
   // The following fields are bookkeeping to support undo of events.
   versionNumber Int
-  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
-
-  makerBalance MakerBalance @relation(fields: [makerBalanceId], references: [id])
+  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion MakerBalanceVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion MakerBalanceVersion? @relation("prevVersion")
+  currentVersion MakerBalance? @relation("currentVersion")
+  makerBalance MakerBalance @relation( "makerBalanceVersion", fields: [makerBalanceId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // probably very few offerlists, no extra indexes needed
