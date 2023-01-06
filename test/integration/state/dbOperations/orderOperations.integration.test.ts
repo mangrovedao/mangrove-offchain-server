@@ -427,7 +427,7 @@ describe("Order Operations Integration test Suite", () => {
               };
             const offerId2 = new OfferId(mangroveId, offerListKey, 2);
             await offerOperations.addVersionedOffer( offerId2, "txId", (o) => {}, { makerId: makerId})
-            await prisma.offer.delete({where: {id: offerId2.value}})
+            await prisma.offerVersion.update({where: {id: new OfferVersionId(offerId2, 0).value},  data: { offerId: "noMatch" }})
             
             const takenOffers:Omit<TakenOffer, "orderId">[] =[{
                 id: new TakenOfferId(newOrderId, offerId0.offerNumber).value,

@@ -279,13 +279,15 @@ model Offer {
   offerNumber      Int
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions or mark the offer as deleted, which makes undo easy.
-  currentVersionId String @db.VarChar(255)
 
   mangrove      Mangrove        @relation(fields: [mangroveId], references: [id])
+  MangroveOrder MangroveOrder[]
   offerListing     OfferListing       @relation(fields: [offerListingId], references: [id])
   maker         Account         @relation(fields: [makerId], references: [id])
-  offerVersions OfferVersion[]
-  MangroveOrder MangroveOrder[]
+  
+  currentVersionId String @unique @db.VarChar(255)
+  currentVersion OfferVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+  offerVersions OfferVersion[]@relation ( "offerVersion" )
 }
 
 // Many offers, each having many version, we probably need indexes here.
@@ -313,9 +315,12 @@ model OfferVersion {
 
   // The following fields are bookkeeping to support undo of events.
   versionNumber Int
-  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion OfferVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion OfferVersion? @relation("prevVersion")
+  currentVersion Offer? @relation("currentVersion")
+  offer Offer @relation( "offerVersion", fields: [offerId], references: [id], onDelete: Restrict, onUpdate: Restrict) // This points to the older version that this version replaces, if any
 
-  offer      Offer        @relation(fields: [offerId], references: [id])
   TakenOffer TakenOffer[]
 }
 

@@ -110,15 +110,30 @@ export class OfferOperations extends DbOperations {
     });
     if (version === null) throw Error(`OfferVersion not found - id: ${id.value}, currentVersionId: ${offer.currentVersionId}`);
 
-    await this.tx.offerVersion.delete({
-      where: { id: offer.currentVersionId },
-    });
-
+    
     if (version.prevVersionId === null) {
+      await this.tx.offer.update({
+        where: { id: id.value },
+        data: { 
+          currentVersionId: "",
+        }, 
+      });
+      await this.tx.offerVersion.delete({
+        where: { id: offer.currentVersionId },
+      });
       await this.tx.offer.delete({ where: { id: id.value } });
     } else {
-      offer.currentVersionId = version!.prevVersionId;
-      await this.tx.offer.update({ where: { id: id.value }, data: offer });
+      await this.tx.offer.update({ 
+        where: { 
+          id: id.value 
+        }, 
+        data: { 
+          currentVersionId : version!.prevVersionId
+        } 
+      });
+      await this.tx.offerVersion.delete({
+        where: { id: offer.currentVersionId },
+      });
     }
   }
 }

@@ -154,7 +154,10 @@ describe("Offer Operations Integration test suite", () => {
       await assert.rejects( offerOperations.deleteLatestOfferVersion(noMatch));
     } );
     it("Cannot find offerVersion", async () => {
-      await prisma.offerVersion.deleteMany();
+      await prisma.offer.update({
+        where: { id: offerId.value },
+        data: { currentVersionId: "noMatch"},
+      });
       await assert.rejects( offerOperations.deleteLatestOfferVersion(offerId));
     } );
 
@@ -190,7 +193,10 @@ describe("Offer Operations Integration test suite", () => {
     })
 
     it("Cant find offerVersion", async () => {
-      await prisma.offerVersion.deleteMany();
+      await prisma.offer.update({
+        where: { id: offerId.value },
+        data: { currentVersionId: "noMatch"},
+      });
       await assert.rejects( offerOperations.getCurrentOfferVersion(offerId))
     })
 

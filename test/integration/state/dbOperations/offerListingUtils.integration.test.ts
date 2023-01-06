@@ -14,7 +14,8 @@ import {
   OfferListKey,
   OfferListingVersionId,
   TokenId,
-  TransactionId
+  TransactionId,
+  OfferVersionId
 } from "src/state/model";
 import { prisma } from "utils/test/mochaHooks";
 
@@ -106,8 +107,16 @@ describe("OfferList Operations Integration test suite", () => {
     await offerOperations.addVersionedOffer(offerId3, "noMatch", (o) => o.wants="40", {makerId:makerId});
     await offerOperations.addVersionedOffer(offerId4, txId1.value, (o) => o.wants="50", {makerId:makerId}); 
     await offerOperations.addVersionedOffer(offerId4, txId1.value, (o) => o.wants="50", {makerId:makerId}); 
-    await prisma.offerVersion.deleteMany({where:{ offerId: offerId4.value, versionNumber:0}}) // deletes offer 4's previous version
-    await prisma.offerVersion.deleteMany({where:{ offerId: offerId2.value, versionNumber:0}}) // deletes offer 2's current version
+    await prisma.offerVersion.update({
+      where: { id: new OfferVersionId(offerId4, 1).value },
+      data: { id: "noMatch"},
+    });
+    // await prisma.offerVersion.deleteMany({where:{ offerId: offerId4.value, versionNumber:0}}) // deletes offer 4's previous version
+    await prisma.offer.update({
+      where: { id: offerId2.value },
+      data: { currentVersionId: "noMatch"},
+    });
+    // await prisma.offerVersion.deleteMany({where:{ offerId: offerId2.value, versionNumber:0}}) // deletes offer 2's current version
 
     await offerOperations.addVersionedOffer(offerId5, txId2.value, (o) => o.wants="50", {makerId:makerId}); 
     })
