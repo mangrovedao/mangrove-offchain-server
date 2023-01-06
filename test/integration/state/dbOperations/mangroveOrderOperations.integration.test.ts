@@ -222,7 +222,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
     });
 
     it("No current version, with mangroveOrder", async () => {
-      await prisma.mangroveOrderVersion.deleteMany();
+      await prisma.mangroveOrder.update({where: { id: mangroveOrderId.value}, data: { currentVersionId: "noMatch"} })
       await assert.rejects(
         mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrder,
@@ -253,7 +253,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
     });
 
     it("No current version, with mangroveOrderId", async () => {
-      await prisma.mangroveOrderVersion.deleteMany();
+      await prisma.mangroveOrder.update({where: { id: mangroveOrderId.value}, data: { currentVersionId: "noMatch"} })
       await assert.rejects(
         mangroveOrderOperations.getCurrentMangroveOrderVersion(
           mangroveOrderId,
@@ -473,15 +473,6 @@ describe("Mangrove Order Operations Integration test suite", () => {
     });
   });
 
-  describe("deleteMangroveOrder", () => {
-    it("deletes mangroveOrder", async () => {
-      assert.strictEqual(await prisma.mangroveOrder.count(), 1);
-      assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
-      await mangroveOrderOperations.deleteMangroveOrder(mangroveOrderId);
-      assert.strictEqual(await prisma.mangroveOrder.count(), 0);
-      assert.strictEqual(await prisma.mangroveOrderVersion.count(), 0);
-    });
-  });
 
   describe("getMangroveIdByStratId", () => {
     it("finds MangroveOrder", async () => {

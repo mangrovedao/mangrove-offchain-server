@@ -77,7 +77,7 @@ export class MangroveOrderEventsLogic {
     );
 
     if (undo) {
-      await db.mangroveOrderOperations.deleteMangroveOrder(mangroveOrderId);
+      await db.mangroveOrderOperations.deleteLatestVersionOfMangroveOrder(mangroveOrderId);
       return;
     }
     const restingOrderId = new OfferId(mangroveId, offerList, e.restingOrderId);

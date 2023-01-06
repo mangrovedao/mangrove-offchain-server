@@ -174,16 +174,27 @@ export class MangroveOrderOperations extends DbOperations {
     const version = await this.tx.mangroveOrderVersion.findUnique({
       where: { id: mangroveOrder.currentVersionId },
     });
-    await this.tx.mangroveOrderVersion.delete({
-      where: { id: mangroveOrder.currentVersionId },
-    });
 
-    if (version!.prevVersionId != null) {
-      // No need to handle 'null' scenario, this will never happen in a 'undo' of offerRetract
-      mangroveOrder.currentVersionId = version!.prevVersionId;
+
+    if (version!.prevVersionId === null) {
       await this.tx.mangroveOrder.update({
         where: { id: id },
-        data: mangroveOrder,
+        data: { 
+          currentVersionId: "",
+         }, 
+      });
+      await this.tx.mangroveOrderVersion.delete({
+        where: { id: mangroveOrder.currentVersionId },
+      });
+      await this.tx.mangroveOrder.delete({ where: { id: id } });
+
+    } else {
+      await this.tx.mangroveOrder.update({
+        where: { id: id },
+        data: { currentVersionId: version!.prevVersionId}
+      });
+      await this.tx.mangroveOrderVersion.delete({
+        where: { id: mangroveOrder.currentVersionId },
       });
     }
   }
@@ -212,10 +223,6 @@ export class MangroveOrderOperations extends DbOperations {
     }
   }
 
-
-  public async deleteMangroveOrder(id: MangroveOrderId) {
-    await this.tx.mangroveOrder.delete({ where: { id: id.value } });
-  }
 
   public async getMangroveIdByStratId(stratId:StratId){
     const mangroveOrder = await this.tx.mangroveOrder.findFirst({where: {stratId: stratId.value}});
