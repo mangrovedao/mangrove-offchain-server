@@ -118,7 +118,7 @@ export class MangroveOrderOperations extends DbOperations {
         takerGave: "0",
         takerGaveNumber: 0,
         price: 0,
-        expiryDate: new Date(1640991600000), // Sat Jan 01 2022 00:00:00 - A date that has already been expired.
+        expiryDate: new Date("0"),
         versionNumber: 0,
         prevVersionId: null
       }

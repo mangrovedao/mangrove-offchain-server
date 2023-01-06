@@ -237,7 +237,7 @@ export function getOrderSummaryEvent(): StreamEvent {
         takerGave: "500",
         bounty: "0",
         fee: "10",
-        expiryDate: 1672354800000, // Fri Dec 30 2022 00:00:00
+        expiryDate: 1672354800, // Fri Dec 30 2022 00:00:00
         restingOrderId: 11
     };
     return toStreamEvent( JSON.stringify( event ) );

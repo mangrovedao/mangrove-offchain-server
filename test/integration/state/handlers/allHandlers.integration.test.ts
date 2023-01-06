@@ -31,7 +31,7 @@ describe( "All Handlers Integration Test Suite" ,() => {
         await mangroveHandler.handleEvents([data.getOfferWrittenEvent(11, "1000", "500")] ); // create offer with residual
         const stratHandler = new IOrderLogicEventHandler(prisma, "testStream", chainId); 
         await stratHandler.handleEvents([ data.getOrderSummaryEvent() ]); // create orderSummary from orderCompleted and offerWritten
-        await stratHandler.handleEvents([ data.getSetExpiryEvent(1672527600000)]); // date: Sun Jan 01 2023 00:00:00 - update expiry date on resting order
+        await stratHandler.handleEvents([ data.getSetExpiryEvent(1672527600)]); // date: Sun Jan 01 2023 00:00:00 - update expiry date on resting order
 
         await mangroveHandler.handleEvents([data.getOfferRetracted()] ); // cancel resting order
 

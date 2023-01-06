@@ -315,7 +315,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
         takerGave: "0",
         takerGaveNumber: 0,
         price: 0,
-        expiryDate: new Date(1640991600000),
+        expiryDate: new Date("0"),
         versionNumber: 0,
         prevVersionId: null
       })
