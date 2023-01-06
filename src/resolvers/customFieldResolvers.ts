@@ -37,18 +37,6 @@ type Context = {
   prisma: PrismaClient;
 };
 
-@Resolver((of) => Mangrove)
-export class CustomMangroveFieldsResolver {
-  @FieldResolver((type) => MangroveVersion, { nullable: true })
-  async currentVersion(
-    @Root() mangrove: Mangrove,
-    @Ctx() ctx: Context
-  ): Promise<MangroveVersion | null> {
-    return await ctx.prisma.mangroveVersion.findUnique({
-      where: { id: mangrove.currentVersionId },
-    });
-  }
-}
 
 @Resolver((of) => TakerApproval)
 export class CustomTakerApprovalFieldsResolver {

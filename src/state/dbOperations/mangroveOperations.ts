@@ -64,7 +64,6 @@ export class MangroveOperations extends DbOperations {
       params.updateFunc(newVersion);
     }
 
-
     await this.tx.mangrove.upsert(
       toUpsert(
         _.merge(mangrove, {
@@ -74,6 +73,8 @@ export class MangroveOperations extends DbOperations {
     );
 
     await this.tx.mangroveVersion.create({ data: newVersion });
+    
+
   }
 
   async getCurrentMangroveVersion(idOrMangrove: MangroveId | prisma.Mangrove) {
@@ -106,18 +107,31 @@ export class MangroveOperations extends DbOperations {
     const mangroveVersion = await this.tx.mangroveVersion.findUnique({
       where: { id: mangrove.currentVersionId },
     });
-    await this.tx.mangroveVersion.delete({
-      where: { id: mangrove.currentVersionId },
-    });
-
+    
+    
     if (mangroveVersion!.prevVersionId === null) {
-      await this.tx.mangrove.delete({ where: { id: id.value } });
-    } else {
-      mangrove.currentVersionId = mangroveVersion!.prevVersionId;
       await this.tx.mangrove.update({
         where: { id: id.value },
-        data: mangrove,
+        data: { 
+          currentVersionId: "",
+         }, 
+      });
+      await this.tx.mangroveVersion.delete({
+        where: { id: mangrove.currentVersionId },
+      });
+      await this.tx.mangrove.delete({ where: { id: id.value } });
+    } else {
+      await this.tx.mangrove.update({
+        where: { id: id.value },
+        data: { 
+          currentVersionId: mangroveVersion!.prevVersionId,
+         }, 
+      });
+      await this.tx.mangroveVersion.delete({
+        where: { id: mangrove.currentVersionId },
       });
     }
+    
+
   }
 }

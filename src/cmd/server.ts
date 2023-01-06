@@ -17,7 +17,6 @@ import {
 } from "@apollo/server/plugin/landingPage/default";
 import {
   CustomMakerBalanceFieldsResolver,
-  CustomMangroveFieldsResolver,
   CustomOfferFieldsResolver,
   CustomOfferListingFieldsResolver,
   CustomOfferVersionFieldsResolver,
@@ -137,7 +136,6 @@ async function main() {
       graphql.TransactionRelationsResolver,
 
       CustomMakerBalanceFieldsResolver,
-      CustomMangroveFieldsResolver,
       CustomOfferFieldsResolver,
       CustomOfferListingFieldsResolver,
       CustomOfferVersionFieldsResolver,

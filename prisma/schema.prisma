@@ -83,14 +83,16 @@ model Mangrove {
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId String            @db.VarChar(255)
-  mangroveVersions MangroveVersion[]
+  currentVersionId String @unique @db.VarChar(255)
+  currentVersion MangroveVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+
+  mangroveVersions MangroveVersion[] @relation("mangroveVersion")
 }
 
 // Few mangrove instances, no extra index needed
 
 model MangroveVersion {
-  id         String   @id @db.VarChar(255)
+  id         String   @id @unique @db.VarChar(255)
   mangroveId String   @db.VarChar(255)
   txId       String?  @db.VarChar(255)
   governance String?
@@ -106,9 +108,11 @@ model MangroveVersion {
 
   // The following fields are bookkeeping to support undo of events.
   versionNumber Int
-  prevVersionId String? @db.VarChar(255) // This points to the older version that this version replaces, if any
-
-  mangrove Mangrove @relation(fields: [mangroveId], references: [id])
+  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion MangroveVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion MangroveVersion? @relation("prevVersion")
+  currentVersion Mangrove? @relation("currentVersion")
+  mangrove Mangrove? @relation("mangroveVersion", fields: [mangroveId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // could potentially have many accounts, maybe extra indexes are needed.
