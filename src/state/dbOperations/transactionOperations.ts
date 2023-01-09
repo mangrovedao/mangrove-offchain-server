@@ -32,17 +32,4 @@ export class TransactionOperations extends DbOperations {
     return transaction;
   }
 
-  public async checkBlockNumber(blockNumber: number, chainId: ChainId) {
-    const count = await this.tx.transaction.count({
-      where: {
-        blockNumber: {
-          gte: blockNumber
-        },
-        chainId: {
-          equals: chainId.value
-        }
-      }
-    })
-    return count != 0;
-  }
 }

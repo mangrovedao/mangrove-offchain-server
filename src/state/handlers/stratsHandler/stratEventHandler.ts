@@ -36,15 +36,7 @@ export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSc
 
       const txRef = payload.tx;
       const txId = new TransactionId(chainId, txRef.txHash);
-      let ready = false;
-      const delay = (ms:number) => new Promise(res => setTimeout(res, ms));
 
-      while(!ready){
-        ready = await allDbOperation.transactionOperations.checkBlockNumber(txRef.blockNumber, chainId);
-        if(!ready){
-          await delay(5000)
-        } 
-      }
       const transaction = await allDbOperation.transactionOperations.ensureTransaction({
         id: txId,
         txHash: txRef.txHash,
