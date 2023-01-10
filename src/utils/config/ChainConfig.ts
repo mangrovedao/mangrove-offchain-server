@@ -1,16 +1,11 @@
 export type ChainConfig = {
   id: string,
   streams: {
-    mangrove?: StreamConfing[],
-    strats?: StreamConfing[],
-    tokens?: StreamConfing[],
+    mangrove?: string[],
+    strats?: string[],
+    tokens?: string[],
   }
-  excludeMangroves: string[]
   };
 
-export type StreamConfing = {
-  streamId: string,
-  offset?: string
-}
 
   

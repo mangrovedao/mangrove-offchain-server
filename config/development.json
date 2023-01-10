@@ -5,32 +5,25 @@
       "id": "137",
       "streams": {
         "mangrove": [
-          { 
-            "streamId": "proxima.mangrove.polygon-main.domain-events.0_3"
-
-         }
+             "proxima.mangrove.polygon-main.domain-events.0_3"
         ],
         "strats": [],
-        "tokens": [ { "streamId": "proxima.mangrove.polygon-main.tokens.0_1" } ]
+        "tokens": [ "proxima.mangrove.polygon-main.tokens.0_1" ]
       }
     },
     {
       "id": "80001",
       "streams": {
         "mangrove": [
-          { 
-            "streamId": "proxima.mangrove.polygon-mumbai.domain-events.0_5"
-          } 
+            "proxima.mangrove.polygon-mumbai.domain-events.0_5"
         ],
         "strats": [
-          { "streamId": "proxima.mangrove.polygon-mumbai.strategies.0_4",
-          "offset": "1672991640000" }
+           "proxima.mangrove.polygon-mumbai.strategies.0_4"
         ],
         "tokens": [
-          { "streamId": "proxima.mangrove.polygon-mumbai.tokens.0_2" }
+          "proxima.mangrove.polygon-mumbai.tokens.0_2" 
         ]
-      },
-      "excludeMangroves": ["0xa34b6addf822177258cbd0a9c3a80600c1028ca8", "0xF3e339d8a0B989114412fa157Cc846ebaf4BCbd8", "0x6f531931a7eaefb95307ccd93a348e4c27f62dcf"]
+      }
     }
   ]
 }

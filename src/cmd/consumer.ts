@@ -31,8 +31,7 @@ let subscription: Subscription;
 type streamLinks = {
   stream: {
     handler: StreamEventHandler, 
-    toHeight?: bigint,
-    offset?: Offset
+    toHeight?: bigint
   }[]
   then?: streamLinks[]
 }
@@ -42,33 +41,30 @@ async function main() {
   for (const chain of getChainConfigsOrThrow<ChainConfig>(config)) {
     logger.info(`consuming chain ${chain.id} using following streams ${JSON.stringify(chain.streams)}`);
     const chainId = new ChainId(parseInt( chain.id) );
-    const tokenPreloads: {handler: StreamEventHandler, toHeight: bigint, offset?:Offset}[] = [];
-    const mangrovePreloads: {handler: StreamEventHandler, toHeight: bigint, offset?:Offset}[] = [];
-    const takerStratPreloads: {handler: StreamEventHandler, toHeight?: bigint, offset?:Offset}[] = [];
+    const tokenPreloads: {handler: StreamEventHandler, toHeight: bigint}[] = [];
+    const mangrovePreloads: {handler: StreamEventHandler, toHeight: bigint}[] = [];
+    const takerStratPreloads: {handler: StreamEventHandler, toHeight?: bigint}[] = [];
 
     const tokenStreams = chain.streams.tokens ?? [];
     for (const tokenStream of tokenStreams) {
-      const lastOffset = await getStreamLastOffset(tokenStream.streamId);
-      const timeOffset = tokenStream.offset ? await getStreamOffsetFromTime(tokenStream.streamId, tokenStream.offset) : undefined;
+      const lastOffset = await getStreamLastOffset(tokenStream);
       if (lastOffset){
-        tokenPreloads.push({handler: new TokenEventHandler(prisma, tokenStream.streamId, chainId), toHeight: lastOffset.height, offset: timeOffset });
+        tokenPreloads.push({handler: new TokenEventHandler(prisma, tokenStream, chainId), toHeight: lastOffset.height });
       }
 
     }
 
     const mangroveStreams = chain.streams.mangrove ?? [];
     for (const mangroveStream of mangroveStreams) {
-      const lastOffset = await getStreamLastOffset(mangroveStream.streamId);
-      const timeOffset = mangroveStream.offset ? await getStreamOffsetFromTime(mangroveStream.streamId, mangroveStream.offset) : undefined;
+      const lastOffset = await getStreamLastOffset(mangroveStream);
       if (lastOffset)
-        mangrovePreloads.push({handler: new MangroveEventHandler(prisma, mangroveStream.streamId, chainId), toHeight: lastOffset.height, offset:timeOffset });
+        mangrovePreloads.push({handler: new MangroveEventHandler(prisma, mangroveStream, chainId), toHeight: lastOffset.height });
 
     }
 
     const takerStratStreams = chain.streams.strats ?? [];
     for (const takerStratStream of takerStratStreams) {
-      const timeOffset = takerStratStream.offset ? await getStreamOffsetFromTime(takerStratStream.streamId, takerStratStream.offset) : undefined;
-      takerStratPreloads.push({handler: new TakerStratEventHandler(prisma, takerStratStream.streamId, chainId), offset: timeOffset})
+      takerStratPreloads.push({handler: new TakerStratEventHandler(prisma, takerStratStream, chainId)})
     }
 
     streamLinks.push( { stream: tokenPreloads, then: [{ stream: mangrovePreloads, then: [{stream: takerStratPreloads }] }] } )
@@ -81,16 +77,16 @@ async function main() {
 }
 
 async function handleStreamLinks( streamLink: streamLinks){
-  await Promise.all(  streamLink.stream.map( ( ({handler, toHeight, offset}) => {
-        return retry( () => consumeStream({ handler, toHeight: toHeight ?? BigInt(0), offset } ) )
+  await Promise.all(  streamLink.stream.map( ( ({handler, toHeight}) => {
+        return retry( () => consumeStream({ handler, toHeight: toHeight ?? BigInt(0) } ) )
       } ), {
         retries: retries,
         factor: retryFactor,
       } ) );
 
   let promises:Promise<void[]>[] = []
-  let continueStreams = Promise.all(  streamLink.stream.map( ({handler, offset}) => {
-    return retry( () => consumeStream( { handler, offset }) )
+  let continueStreams = Promise.all(  streamLink.stream.map( ({handler }) => {
+    return retry( () => consumeStream( { handler }) )
   }, {
     retries: retries,
     factor: retryFactor,
@@ -103,10 +99,9 @@ async function handleStreamLinks( streamLink: streamLinks){
   await Promise.all( promises );
 }
 
-async function consumeStream(params:{handler: StreamEventHandler, toHeight?: bigint, offset?:Offset}) {
+async function consumeStream(params:{handler: StreamEventHandler, toHeight?: bigint}) {
   
-  const dbOffset = await params.handler.getCurrentStreamOffset();
-  const currentOffset = ( params.offset && dbOffset.height < params.offset.height ) ? params.offset : dbOffset;
+  const currentOffset = await params.handler.getCurrentStreamOffset();
   const stream = params.handler.getStreamName();
 
   logger.info(
@@ -160,15 +155,6 @@ async function getStreamLastOffset(stream: string): Promise<Offset | undefined> 
     .value();
 }
 
-async function getStreamOffsetFromTime(stream: string, timestamp:string): Promise<Offset | undefined> {
-  const registry = new StreamRegistryClient();
-  const streamInfo = await registry.findStream(stream);
-  if (!streamInfo)
-    return undefined;
-  let time = Timestamp.fromEpochMs(timestamp);
-  let e = await registry.findOffset(stream, { timestampMs: time.epochMs})
-  return e
-}
 
 main()
   .catch((e) => {

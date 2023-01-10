@@ -14,25 +14,18 @@ import {
   OrderId,
   TransactionId
 } from "src/state/model";
-import { ChainConfig } from "src/utils/config/ChainConfig";
-import config from "src/utils/config/config";
-import { getChainConfigsOrThrow } from "src/utils/config/configUtils";
 import { createPatternMatcher } from "src/utils/discriminatedUnion";
 import { MangroveEventsLogic } from "./mangroveEventsLogic";
 import { OfferEventsLogic } from "./offerEventsLogic";
 import { OrderEventLogic } from "./orderEventsLogic";
-import logger from "src/utils/logger";
-import e from "express";
 
 export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchema.events.MangroveEvent> {
-  private configs:ChainConfig | undefined;
   public constructor(
     prisma: PrismaClient,
     stream: string,
     private readonly chainId: ChainId
   ) {
     super(prisma, stream);
-    this.configs = getChainConfigsOrThrow<ChainConfig>(config).find( value => value.id == chainId.value.toString());
   }
   mangroveEventsLogic = new MangroveEventsLogic();
   offerEventsLogic = new OfferEventsLogic();
@@ -46,10 +39,6 @@ export class MangroveEventHandler extends PrismaStreamEventHandler<mangroveSchem
     for (const event of events) {
       const { payload, undo, timestamp } = event;
       const mangroveId = new MangroveId(this.chainId, payload.mangroveId!);
-      if( this.configs && this.configs.excludeMangroves && this.configs.excludeMangroves.find( value => mangroveId.value.includes( value.toLowerCase().substring(0, 6) ) ) ){
-        // logger.info(`Skipping event: ${JSON.stringify(event)}, because of mangroveId: ${mangroveId.value}`)
-        return;
-      }
       const parentOrderId =
         payload.parentOrder === undefined
           ? undefined
