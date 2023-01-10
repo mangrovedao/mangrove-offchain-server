@@ -46,10 +46,10 @@ model Transaction {
   mangroveVersions      MangroveVersion[]
   takerApprovalVersions TakerApprovalVersion[]
   makerBalanceVersions  MakerBalanceVersion[]
-  offerListingVersions     OfferListingVersion[]
+  offerListingVersions  OfferListingVersion[]
   offerVersions         OfferVersion[]
   orders                Order[]
-  MangroveOrderVersion         MangroveOrderVersion[]
+  MangroveOrderVersion  MangroveOrderVersion[]
 }
 
 // probably have few tokens, so no extra index needed
@@ -62,7 +62,7 @@ model Token {
   name     String
   decimals Int
 
-  chain                   Chain       @relation(fields: [chainId], references: [id])
+  chain                      Chain          @relation(fields: [chainId], references: [id])
   offerListingsWhereInbound  OfferListing[] @relation("OfferListingsByInboundToken")
   offerListingsWhereOutbound OfferListing[] @relation("OfferListingsByOutboundToken")
 }
@@ -75,7 +75,7 @@ model Mangrove {
   address String @default("") @db.VarChar(80)
 
   chain          Chain           @relation(fields: [chainId], references: [id])
-  offerListings     OfferListing[]
+  offerListings  OfferListing[]
   offers         Offer[]
   orders         Order[]
   makerBalances  MakerBalance[]
@@ -83,8 +83,8 @@ model Mangrove {
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId String @unique @db.VarChar(255)
-  currentVersion MangroveVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+  currentVersionId String           @unique @db.VarChar(255)
+  currentVersion   MangroveVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
 
   mangroveVersions MangroveVersion[] @relation("mangroveVersion")
 }
@@ -107,12 +107,12 @@ model MangroveVersion {
   tx Transaction? @relation(fields: [txId], references: [id])
 
   // The following fields are bookkeeping to support undo of events.
-  versionNumber Int
-  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
-  prevVersion MangroveVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  nextVersion MangroveVersion? @relation("prevVersion")
-  currentVersion Mangrove? @relation("currentVersion")
-  mangrove Mangrove? @relation("mangroveVersion", fields: [mangroveId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  versionNumber  Int
+  prevVersionId  String?          @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion    MangroveVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion    MangroveVersion? @relation("prevVersion")
+  currentVersion Mangrove?        @relation("currentVersion")
+  mangrove       Mangrove?        @relation("mangroveVersion", fields: [mangroveId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // could potentially have many accounts, maybe extra indexes are needed.
@@ -147,21 +147,21 @@ model Strat {
 // could potentially have many approvals, extra indexes might be needed.
 
 model TakerApproval {
-  id          String @id @db.VarChar(255)
-  mangroveId  String @db.VarChar(255)
+  id             String @id @db.VarChar(255)
+  mangroveId     String @db.VarChar(255)
   offerListingId String @db.VarChar(255)
-  ownerId     String @db.VarChar(255) // index?
-  spenderId   String @db.VarChar(255) // index?
+  ownerId        String @db.VarChar(255) // index?
+  spenderId      String @db.VarChar(255) // index?
 
-  mangrove  Mangrove  @relation(fields: [mangroveId], references: [id])
+  mangrove     Mangrove     @relation(fields: [mangroveId], references: [id])
   offerListing OfferListing @relation(fields: [offerListingId], references: [id])
-  owner     Account   @relation("OwnerApprovals", fields: [ownerId], references: [id])
-  spender   Account   @relation("SpenderApprovals", fields: [spenderId], references: [id])
+  owner        Account      @relation("OwnerApprovals", fields: [ownerId], references: [id])
+  spender      Account      @relation("SpenderApprovals", fields: [spenderId], references: [id])
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId      String    @unique @db.VarChar(255)
-  currentVersion TakerApprovalVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+  currentVersionId String                @unique @db.VarChar(255)
+  currentVersion   TakerApprovalVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
 
   takerApprovalVersions TakerApprovalVersion[] @relation("takerApprovalVersion")
 }
@@ -179,12 +179,12 @@ model TakerApprovalVersion {
   parentOrder Order?      @relation(fields: [parentOrderId], references: [id])
 
   // The following fields are bookkeeping to support undo of events.
-  versionNumber Int
-  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
-  prevVersion TakerApprovalVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  nextVersion TakerApprovalVersion? @relation("prevVersion")
-  currentVersion TakerApproval? @relation("currentVersion")
-  takerApproval TakerApproval @relation( "takerApprovalVersion", fields: [takerApprovalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  versionNumber  Int
+  prevVersionId  String?               @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion    TakerApprovalVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion    TakerApprovalVersion? @relation("prevVersion")
+  currentVersion TakerApproval?        @relation("currentVersion")
+  takerApproval  TakerApproval         @relation("takerApprovalVersion", fields: [takerApprovalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // could potentially have many makers, but extra indexes probably not needed
@@ -199,8 +199,8 @@ model MakerBalance {
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId     String     @unique @db.VarChar(255)
-  currentVersion MakerBalanceVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+  currentVersionId String               @unique @db.VarChar(255)
+  currentVersion   MakerBalanceVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
 
   makerBalanceVersions MakerBalanceVersion[] @relation("makerBalanceVersion")
 }
@@ -216,12 +216,12 @@ model MakerBalanceVersion {
   tx Transaction @relation(fields: [txId], references: [id])
 
   // The following fields are bookkeeping to support undo of events.
-  versionNumber Int
-  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
-  prevVersion MakerBalanceVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  nextVersion MakerBalanceVersion? @relation("prevVersion")
-  currentVersion MakerBalance? @relation("currentVersion")
-  makerBalance MakerBalance @relation( "makerBalanceVersion", fields: [makerBalanceId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  versionNumber  Int
+  prevVersionId  String?              @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion    MakerBalanceVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion    MakerBalanceVersion? @relation("prevVersion")
+  currentVersion MakerBalance?        @relation("currentVersion")
+  makerBalance   MakerBalance         @relation("makerBalanceVersion", fields: [makerBalanceId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // probably very few offerlists, no extra indexes needed
@@ -241,53 +241,53 @@ model OfferListing {
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  MangroveOrder     MangroveOrder[]
-  currentVersionId  String             @unique @db.VarChar(255)
-  currentVersion OfferListingVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+  MangroveOrder        MangroveOrder[]
+  currentVersionId     String                @unique @db.VarChar(255)
+  currentVersion       OfferListingVersion?  @relation("currentVersion", fields: [currentVersionId], references: [id])
   offerListingVersions OfferListingVersion[] @relation("offerListingVersion")
 }
 
 // few offerlist, will have some versions, but not enough for it to need extra indexes
 
 model OfferListingVersion {
-  id          String   @id @db.VarChar(255)
+  id             String   @id @db.VarChar(255)
   offerListingId String   @db.VarChar(255)
-  txId        String   @db.VarChar(255)
-  active      Boolean?
-  fee         String?  @db.VarChar(80)
-  gasbase     Int?
-  density     String?  @db.VarChar(80)
+  txId           String   @db.VarChar(255)
+  active         Boolean?
+  fee            String?  @db.VarChar(80)
+  gasbase        Int?
+  density        String?  @db.VarChar(80)
 
   tx Transaction @relation(fields: [txId], references: [id])
 
   // The following fields are bookkeeping to support undo of events.
-  versionNumber Int
-  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
-  prevVersion OfferListingVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  nextVersion OfferListingVersion? @relation("prevVersion")
-  currentVersion OfferListing? @relation("currentVersion")
-  offerListing OfferListing @relation( "offerListingVersion", fields: [offerListingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  versionNumber  Int
+  prevVersionId  String?              @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion    OfferListingVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion    OfferListingVersion? @relation("prevVersion")
+  currentVersion OfferListing?        @relation("currentVersion")
+  offerListing   OfferListing         @relation("offerListingVersion", fields: [offerListingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // Could potentially have many offers, maybe extra indexes are needed.
 
 model Offer {
-  id               String @id @db.VarChar(255)
-  mangroveId       String @db.VarChar(255)
-  offerListingId      String @db.VarChar(255)
-  makerId          String @db.VarChar(255) // index?
-  offerNumber      Int
+  id             String @id @db.VarChar(255)
+  mangroveId     String @db.VarChar(255)
+  offerListingId String @db.VarChar(255)
+  makerId        String @db.VarChar(255) // index?
+  offerNumber    Int
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions or mark the offer as deleted, which makes undo easy.
 
   mangrove      Mangrove        @relation(fields: [mangroveId], references: [id])
   MangroveOrder MangroveOrder[]
-  offerListing     OfferListing       @relation(fields: [offerListingId], references: [id])
+  offerListing  OfferListing    @relation(fields: [offerListingId], references: [id])
   maker         Account         @relation(fields: [makerId], references: [id])
-  
-  currentVersionId String @unique @db.VarChar(255)
-  currentVersion OfferVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
-  offerVersions OfferVersion[] @relation ( "offerVersion" )
+
+  currentVersionId String         @unique @db.VarChar(255)
+  currentVersion   OfferVersion?  @relation("currentVersion", fields: [currentVersionId], references: [id])
+  offerVersions    OfferVersion[] @relation("offerVersion")
 }
 
 // Many offers, each having many version, we probably need indexes here.
@@ -314,12 +314,12 @@ model OfferVersion {
   parentOrder Order?      @relation(fields: [parentOrderId], references: [id])
 
   // The following fields are bookkeeping to support undo of events.
-  versionNumber Int
-  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
-  prevVersion OfferVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  nextVersion OfferVersion? @relation("prevVersion")
-  currentVersion Offer? @relation("currentVersion")
-  offer Offer @relation( "offerVersion", fields: [offerId], references: [id], onDelete: Restrict, onUpdate: Restrict) // This points to the older version that this version replaces, if any
+  versionNumber  Int
+  prevVersionId  String?       @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion    OfferVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion    OfferVersion? @relation("prevVersion")
+  currentVersion Offer?        @relation("currentVersion")
+  offer          Offer         @relation("offerVersion", fields: [offerId], references: [id], onDelete: Restrict, onUpdate: Restrict) // This points to the older version that this version replaces, if any
 
   TakenOffer TakenOffer[]
 }
@@ -331,7 +331,7 @@ model Order {
   txId            String  @db.VarChar(255) // index?
   parentOrderId   String? @db.VarChar(255)
   mangroveId      String  @db.VarChar(255)
-  offerListingId     String  @db.VarChar(255) // maybe index?
+  offerListingId  String  @db.VarChar(255) // maybe index?
   takerId         String  @db.VarChar(255) // index?
   proximaId       String  @db.VarChar(255)
   // takerWants       String
@@ -344,8 +344,8 @@ model Order {
   takerGaveNumber Float
   takerPaidPrice  Float?
   makerPaidPrice  Float?
-  totalFee         String
-  totalFeeNumber   Float
+  totalFee        String
+  totalFeeNumber  Float
   bounty          String
   bountyNumber    Float
 
@@ -354,11 +354,12 @@ model Order {
 
   takenOffers                TakenOffer[]
   mangrove                   Mangrove               @relation(fields: [mangroveId], references: [id])
-  offerListing                  OfferListing              @relation(fields: [offerListingId], references: [id])
+  offerListing               OfferListing           @relation(fields: [offerListingId], references: [id])
   taker                      Account                @relation(fields: [takerId], references: [id])
   childOrders                Order[]                @relation("ParentOrders")
   childTakerApprovalVersions TakerApprovalVersion[]
   childOfferVersions         OfferVersion[]
+  MangroveOrder              MangroveOrder[]
 }
 
 // With many offers and offer versions, we could have many takenOffers, this probably needs indexes
@@ -395,15 +396,15 @@ model TakenOffer {
 // This should be MangroveOrder and MangroveOrderVersion, with all the parameteres for MangroveOrder
 
 model MangroveOrder {
-  id               String  @id @db.VarChar(255)
-  
+  id String @id @db.VarChar(255)
+
   mangroveId       String  @db.VarChar(255)
   stratId          String  @db.VarChar(255)
-  offerListingId      String  @db.VarChar(255)
+  offerListingId   String  @db.VarChar(255)
   takerId          String  @db.VarChar(255)
   proximaId        String  @db.VarChar(255)
-  // orderId          String  @db.VarChar(255)
-  restingOrderId   String  @db.VarChar(255) // maybe index?
+  orderId          String  @db.VarChar(255)
+  restingOrderId   String? @db.VarChar(255) // maybe index?
   restingOrder     Boolean
   fillOrKill       Boolean
   fillWants        Boolean
@@ -418,21 +419,20 @@ model MangroveOrder {
 
   // Events are not allowed to overwrite/delete data, as it might have to be restored on undo.
   // Instead, we create new versions which makes undo easy.
-  currentVersionId String @unique @db.VarChar(255)
-  currentVersion MangroveOrderVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
+  currentVersionId String                @unique @db.VarChar(255)
+  currentVersion   MangroveOrderVersion? @relation("currentVersion", fields: [currentVersionId], references: [id])
 
-  
   strat                Strat                  @relation(fields: [stratId], references: [id])
-  offerListing            OfferListing              @relation(fields: [offerListingId], references: [id])
+  offerListing         OfferListing           @relation(fields: [offerListingId], references: [id])
   taker                Account                @relation(fields: [takerId], references: [id])
-  // order                Order                  @relation(fields: [orderId], references: [id])
-  offer                Offer                  @relation(fields: [restingOrderId], references: [id])
+  order                Order                  @relation(fields: [orderId], references: [id])
+  offer                Offer?                 @relation(fields: [restingOrderId], references: [id])
   MangroveOrderVersion MangroveOrderVersion[] @relation("mangroveOrderVersion")
 }
 
 model MangroveOrderVersion {
   id              String   @id @db.VarChar(255)
-  txId            String  @db.VarChar(255)
+  txId            String   @db.VarChar(255)
   mangroveOrderId String   @db.VarChar(255)
   filled          Boolean
   cancelled       Boolean  @default(false)
@@ -447,16 +447,15 @@ model MangroveOrderVersion {
   // penaltyNumber   Float
   expiryDate      DateTime @db.Timestamp
 
-  tx                   Transaction            @relation(fields: [txId], references: [id])
+  tx Transaction @relation(fields: [txId], references: [id])
 
   // The following fields are bookkeeping to support undo of events.
-  versionNumber Int
-  prevVersionId String? @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
-  prevVersion MangroveOrderVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  nextVersion MangroveOrderVersion? @relation("prevVersion")
-  currentVersion MangroveOrder? @relation("currentVersion")
-  mangroveOrder MangroveOrder @relation( "mangroveOrderVersion", fields: [mangroveOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict) 
-
+  versionNumber  Int
+  prevVersionId  String?               @unique @db.VarChar(255) // This points to the older version that this version replaces, if any
+  prevVersion    MangroveOrderVersion? @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion    MangroveOrderVersion? @relation("prevVersion")
+  currentVersion MangroveOrder?        @relation("currentVersion")
+  mangroveOrder  MangroveOrder         @relation("mangroveOrderVersion", fields: [mangroveOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 // store consumed streams offsets

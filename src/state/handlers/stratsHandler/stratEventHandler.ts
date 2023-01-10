@@ -50,7 +50,7 @@ export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSc
         LogIncident: async (e) => {},
         NewOwnedOffer: async (e) => {},
         OrderSummary: async (e) => {
-          await this.mangroveOrderEventsLogic.handleOrderSummary(allDbOperation, chainId, e, event, txRef.txHash, undo, transaction)
+          await this.mangroveOrderEventsLogic.handleOrderSummary(allDbOperation, chainId, e, undo, transaction)
         },
         SetExpiry: async (e) => {
           await this.mangroveOrderEventsLogic.handleSetExpiry(allDbOperation, chainId, transaction.id, e )

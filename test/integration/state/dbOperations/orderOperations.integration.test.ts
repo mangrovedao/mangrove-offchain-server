@@ -210,6 +210,7 @@ describe("Order Operations Integration test Suite", () => {
 
         await mangroveOrderOperations.addMangroveOrderVersion( mangroveOrderId, "txId", (m) => m , {
             stratId: new StratId(chainId, "mangroveOrder").value,
+            orderId: new OrderId(mangroveId, offerListKey, "proximaId").value,
             takerId: takerId.value,
             restingOrderId: offerId0.value,
             restingOrder: true,
@@ -311,6 +312,7 @@ describe("Order Operations Integration test Suite", () => {
             
             await mangroveOrderOperations.addMangroveOrderVersion( new MangroveOrderId(mangroveId, offerListKey, "2"), "txId", (m) => m , {
                 stratId: new StratId(chainId, "mangroveOrder").value,
+                orderId: new OrderId(mangroveId, offerListKey, "proximaId").value,
                 takerId: takerId.value,
                 restingOrderId: offerId2.value,
                 restingOrder: true,
