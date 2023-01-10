@@ -61,7 +61,7 @@ export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSc
             // logger.info(`Skipping event: ${JSON.stringify(event)}, because of mangroveId: ${e.mangroveId}`)
             return;
           }
-          await this.mangroveOrderEventsLogic.handleOrderSummary(allDbOperation, chainId, e, event, txRef.txHash, undo, transaction)
+          await this.mangroveOrderEventsLogic.handleOrderSummary(allDbOperation, chainId, e, undo, transaction)
         },
         SetExpiry: async (e) => {
           await this.mangroveOrderEventsLogic.handleSetExpiry(allDbOperation, chainId, transaction.id, e )

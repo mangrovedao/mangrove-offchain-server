@@ -10,6 +10,7 @@ import {
   MangroveOrderId,
   OfferId,
   OfferListingId,
+  OrderId,
   StratId,
   TokenId
 } from "src/state/model";
@@ -31,16 +32,16 @@ export class MangroveOrderEventsLogic {
       inboundToken: string;
     }
   ) {
-    const stratId =  new StratId(chainId, params.address);
+    const stratId = new StratId(chainId, params.address);
     const mangroveId = await db.mangroveOrderOperations.getMangroveIdByStratId(stratId);
-    if(!mangroveId){
+    if (!mangroveId) {
       throw new Error(`Cannot find match mangroveId, from mangroveOrder address: ${params.address}`);
     }
     const offerListKey = {
       inboundToken: params.inboundToken,
       outboundToken: params.outboundToken,
     };
-    const offerId = new OfferId( mangroveId, offerListKey, params.offerId );
+    const offerId = new OfferId(mangroveId, offerListKey, params.offerId);
 
     db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
       offerId,
@@ -53,8 +54,6 @@ export class MangroveOrderEventsLogic {
     db: AllDbOperations,
     chainId: ChainId,
     e: OrderSummary & { id: string; address: string },
-    event: any,
-    txHash: string,
     undo: boolean,
     transaction: Transaction
   ) {
@@ -80,11 +79,10 @@ export class MangroveOrderEventsLogic {
       await db.mangroveOrderOperations.deleteLatestVersionOfMangroveOrder(mangroveOrderId);
       return;
     }
-    const restingOrderId = new OfferId(mangroveId, offerList, e.restingOrderId);
 
     const { outboundToken, inboundToken } = await db.offerListOperations.getOfferListTokens({
-      id:offerListingId
-  });
+      id: offerListingId
+    });
     const takerGaveNumber = getNumber({
       value: e.takerGave,
       token: inboundToken,
@@ -104,11 +102,13 @@ export class MangroveOrderEventsLogic {
       version.takerGave = e.takerGave;
       version.takerGaveNumber = takerGaveNumber;
       version.price = getPrice({ over: takerGaveNumber, under: takerGotNumber }) ?? 0;
-      version.expiryDate = new Date(e.expiryDate*1000);
+      version.expiryDate = new Date(e.expiryDate * 1000);
     }
 
 
-    let initialMangroveOrderValue = {
+
+    await db.mangroveOrderOperations.addMangroveOrderVersion(mangroveOrderId, transaction.id, initialVersionFunc, {
+      orderId: new OrderId(mangroveId, offerList, e.orderId).value,
       takerId: new AccountId(chainId, e.taker).value,
       stratId: new StratId(chainId, e.address).value,
       fillOrKill: e.fillOrKill.valueOf(),
@@ -128,10 +128,8 @@ export class MangroveOrderEventsLogic {
       bountyNumber: getNumber({ value: e.bounty, decimals: 18 }),
       totalFee: e.fee,
       totalFeeNumber: getNumber({ value: e.fee, token: outboundToken }),
-      restingOrderId: restingOrderId.value,
-    }
-
-    await db.mangroveOrderOperations.addMangroveOrderVersion(mangroveOrderId, transaction.id, initialVersionFunc, initialMangroveOrderValue);
+      restingOrderId: e.restingOrderId != 0 ? new OfferId(mangroveId, offerList, e.restingOrderId).value : null,
+    });
 
   }
 
@@ -165,7 +163,7 @@ export class MangroveOrderEventsLogic {
       value: newVersion.takerGot,
       token: tokens.inboundToken,
     });
-    newVersion.filled = this.getFilled({ ...mangroveOrder, ...newVersion, fee: mangroveOrder.totalFee}, tokens.outboundToken);
+    newVersion.filled = this.getFilled({ ...mangroveOrder, ...newVersion, fee: mangroveOrder.totalFee }, tokens.outboundToken);
     newVersion.price = getPrice({
       over: newVersion.takerGaveNumber,
       under: newVersion.takerGotNumber
@@ -174,7 +172,7 @@ export class MangroveOrderEventsLogic {
 
   }
 
-  getFilled(event: {fillWants: boolean, takerWants: string, takerGives: string, fee: string, takerGave: string, takerGot: string }, outboundToken: { decimals: number }) {
+  getFilled(event: { fillWants: boolean, takerWants: string, takerGives: string, fee: string, takerGave: string, takerGot: string }, outboundToken: { decimals: number }) {
     return event.fillWants
       ? event.takerWants ==
       addNumberStrings({
@@ -186,12 +184,12 @@ export class MangroveOrderEventsLogic {
   }
 
   getFailedReason(
-    o: {failReason: string| null, posthookData:string |null}
+    o: { failReason: string | null, posthookData: string | null }
   ): string | null {
     return o.failReason ? o.failReason : o.posthookData;
   }
 
-  getFailed(o: {posthookFailed: boolean, posthookData:string |null}): boolean {
+  getFailed(o: { posthookFailed: boolean, posthookData: string | null }): boolean {
     return o.posthookFailed || o.posthookData != null;
   }
 }

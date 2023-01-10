@@ -104,6 +104,7 @@ export class MangroveOrderOperations extends DbOperations {
         offerListingId: new OfferListingId( id.mangroveId, id.offerListKey ).value,
         currentVersionId: newVersionId.value,
         proximaId: id.proximaId
+        
       }};
       newVersion = {
         id: newVersionId.value,
