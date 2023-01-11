@@ -62,6 +62,23 @@ describe("Mangrove Order Events Logic Unit Test Suite", () => {
         })
     })
 
+    describe("getOfferListFromOrderSummary", () => {
+        it("fillWants = true", () => {
+            const outboundToken = "outbound";
+            const inboundToken = "inbound";
+            const offerListKey  = mangroveOrderEventLogic.getOfferListFromOrderSummary({ fillWants:true, outboundToken: outboundToken, inboundToken: inboundToken})
+            assert.strictEqual(offerListKey.inboundToken, inboundToken);
+            assert.strictEqual(offerListKey.outboundToken, outboundToken);
+        })
+        it("fillWants = false", () => {
+            const outboundToken = "outbound";
+            const inboundToken = "inbound";
+            const offerListKey  = mangroveOrderEventLogic.getOfferListFromOrderSummary({ fillWants:false, outboundToken: outboundToken, inboundToken: inboundToken})
+            assert.strictEqual(offerListKey.inboundToken, outboundToken);
+            assert.strictEqual(offerListKey.outboundToken, inboundToken);
+        })
+    })
+
     describe("newVersionOfMangroveOrderFromTakenOffer", () => {
         it("Update with taken offer", async () => {
           const takenOffer: Omit<prismaModel.TakenOffer, "orderId" | "offerVersionId"> =

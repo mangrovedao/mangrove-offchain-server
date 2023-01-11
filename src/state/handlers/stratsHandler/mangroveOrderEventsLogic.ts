@@ -57,10 +57,7 @@ export class MangroveOrderEventsLogic {
     undo: boolean,
     transaction: Transaction
   ) {
-    const offerList = {
-      outboundToken: e.outboundToken,
-      inboundToken: e.inboundToken,
-    };
+    const offerList = this.getOfferListFromOrderSummary(e);
     await db.tokenOperations.assertTokenExists(
       new TokenId(chainId, offerList.outboundToken)
     );
@@ -133,6 +130,8 @@ export class MangroveOrderEventsLogic {
 
   }
 
+
+
   async newVersionOfMangroveOrderFromTakenOffer(
     takenOffer: Omit<TakenOffer, "orderId" | "offerVersionId">,
     tokens: {
@@ -181,6 +180,12 @@ export class MangroveOrderEventsLogic {
         token: outboundToken,
       })
       : event.takerGave == event.takerGives;
+  }
+  getOfferListFromOrderSummary(e:{ fillWants: boolean, outboundToken: string, inboundToken: string }) {
+    return {
+      outboundToken: e.fillWants ? e.outboundToken : e.inboundToken,
+      inboundToken: e.fillWants ? e.inboundToken : e.outboundToken,
+    };
   }
 
   getFailedReason(
