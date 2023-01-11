@@ -1,27 +1,27 @@
 {
-  "logLevel": "info",
+  "logLevel": "debug",
   "chains": [
     {
       "id": "137",
       "streams": {
         "mangrove": [
-          "proxima.mangrove.polygon-main.domain-events.0_3"
+             "proxima.mangrove.polygon-main.domain-events.0_3"
         ],
         "strats": [],
-        "tokens": ["proxima.mangrove.polygon-main.tokens.0_1"]
+        "tokens": [ "proxima.mangrove.polygon-main.tokens.0_1" ]
       }
     },
     {
       "id": "80001",
       "streams": {
         "mangrove": [
-          "proxima.mangrove.polygon-mumbai.domain-events.0_5"
+            "proxima.mangrove.polygon-mumbai.domain-events.0_5"
         ],
         "strats": [
-          "proxima.mangrove.polygon-mumbai.strategies.0_4"
+           "proxima.mangrove.polygon-mumbai.strategies.0_4"
         ],
         "tokens": [
-          "proxima.mangrove.polygon-mumbai.tokens.0_2"
+          "proxima.mangrove.polygon-mumbai.tokens.0_2" 
         ]
       }
     }

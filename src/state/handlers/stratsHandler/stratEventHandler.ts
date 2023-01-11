@@ -7,11 +7,11 @@ import {
   PrismaTransaction,
   TypedEvent,
 } from "src/common";
-import { createPatternMatcher } from "src/utils/discriminatedUnion";
 import {
   ChainId,
   TransactionId
 } from "src/state/model";
+import { createPatternMatcher } from "src/utils/discriminatedUnion";
 import { MangroveOrderEventsLogic } from "./mangroveOrderEventsLogic";
 
 export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSchema.strategyEvents.StrategyEvent> {
@@ -33,6 +33,7 @@ export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSc
     for (const event of events) {
       const { payload, undo, timestamp } = event;
       const chainId = new ChainId(payload.chainId);
+      
 
       const txRef = payload.tx;
       const txId = new TransactionId(chainId, txRef.txHash);

@@ -1,13 +1,12 @@
 import * as prisma from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import _ from "lodash";
-import { PrismaClient } from "@prisma/client";
 import {
   PrismaStreamEventHandler,
   PrismaTransaction,
   TypedEvent,
 } from "src/common";
-import { createPatternMatcher } from "src/utils/discriminatedUnion";
 import { allDbOperations } from "src/state/dbOperations/allDbOperations";
 import {
   ChainId,
@@ -15,6 +14,7 @@ import {
   OrderId,
   TransactionId
 } from "src/state/model";
+import { createPatternMatcher } from "src/utils/discriminatedUnion";
 import { MangroveEventsLogic } from "./mangroveEventsLogic";
 import { OfferEventsLogic } from "./offerEventsLogic";
 import { OrderEventLogic } from "./orderEventsLogic";
