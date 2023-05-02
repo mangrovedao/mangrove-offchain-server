@@ -48,7 +48,7 @@
     "@graphql-tools/merge": "^8.4.0",
     "@mangrovedao/commonlib.js": "^1.0.0",
     "@prisma/client": "^4.11.0",
-    "@proximaone/stream-client-js": "^1.2.9",
+    "@proximaone/stream-client-js": "^1.2.10",
     "@proximaone/stream-schema-mangrove": "^0.3.7",
     "@types/cors": "^2.8.12",
     "@types/graphql-fields": "^1.3.4",
