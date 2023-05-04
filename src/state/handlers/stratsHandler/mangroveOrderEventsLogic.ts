@@ -126,7 +126,7 @@ export class MangroveOrderEventsLogic {
       bountyNumber: fromBigNumber({ value: e.bounty, decimals: 18 }),
       totalFee: e.fee,
       totalFeeNumber: fromBigNumber({ value: e.fee, token: outboundToken }),
-      restingOrderId: e.restingOrderId != 0 ? new OfferId(mangroveId, offerList, e.restingOrderId).value : null,
+      restingOrderId: e.restingOrderId != 0 ? new OfferId(mangroveId, {outboundToken:offerList.inboundToken, inboundToken: offerList.outboundToken}, e.restingOrderId).value : null,
     });
 
   }
