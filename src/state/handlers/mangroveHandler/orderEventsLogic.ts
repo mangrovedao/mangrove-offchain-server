@@ -93,8 +93,8 @@ export class OrderEventLogic extends EventsLogic {
       tokenBalanceId: inboundTokenBalanceId,
       txId: txId,
       updateFunc: (tokenBalanceVersion) => {
-        tokenBalanceVersion.received = new BigNumber(takenOffer.takerGot).plus(tokenBalanceVersion.received).toString();
-        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGot).plus(tokenBalanceVersion.balance).toString();
+        tokenBalanceVersion.received = new BigNumber(takenOffer.takerGave).plus(tokenBalanceVersion.received).toString();
+        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGave).plus(tokenBalanceVersion.balance).toString();
       }
     })
     await this. db.tokenBalanceOperations.createTokenBalanceEvent(reserveId, inboundTokenId, newInboundBalance, takenOfferId)
@@ -107,8 +107,8 @@ export class OrderEventLogic extends EventsLogic {
       tokenBalanceId: outboundTokenBalanceId,
       txId: txId,
       updateFunc: (tokenBalanceVersion) => {
-        tokenBalanceVersion.send = new BigNumber(takenOffer.takerGave).plus(tokenBalanceVersion.send).toString();
-        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGave).minus(tokenBalanceVersion.balance).toString();
+        tokenBalanceVersion.send = new BigNumber(takenOffer.takerGot).plus(tokenBalanceVersion.send).toString();
+        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGot).minus(tokenBalanceVersion.balance).toString();
       }
     })
     await this. db.tokenBalanceOperations.createTokenBalanceEvent(reserveId, outboundTokenId, newOutboundBalance, takenOfferId)

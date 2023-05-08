@@ -44,8 +44,8 @@ export class MangroveOrderEventsLogic extends EventsLogic {
       txId,
       (m) => (m.expiryDate = new Date(event.date))
     );
-
-    await db.mangroveOrderOperations.createMangroveOrderSetExpiryDateEvent({mangroveOrderVersion,event });
+    if( mangroveOrderVersion)
+      await db.mangroveOrderOperations.createMangroveOrderSetExpiryDateEvent({mangroveOrderVersion,event });
   }
 
   async handleOrderSummary(

@@ -13,6 +13,7 @@ import { DbOperations, PrismaTx, toNewVersionUpsert } from "./dbOperations";
 import { OfferListingOperations } from "./offerListingOperations";
 import { SetExpiry } from "@proximaone/stream-schema-mangrove/dist/strategyEvents";
 import { Timestamp } from "@proximaone/stream-schema-mangrove/dist/core";
+import logger from "src/utils/logger";
 
 export type MangroveOrderIds = {
   mangroveOrderId: string;
@@ -44,7 +45,8 @@ export class MangroveOrderOperations extends DbOperations {
       where: { restingOrderId: id.value },
     });
     if( !mangroveOrder){
-      throw new Error(`Could not find mangroveOrder from: ${id.value}`);
+      logger.info(`MangroveOrder strat not yet created, offerId: ${id.value}`)
+      return;
     }
     const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion( mangroveOrder );
     updateFunc(mangroveOrderVersion);

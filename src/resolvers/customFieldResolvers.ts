@@ -388,7 +388,7 @@ export class KandelHomePageResolver {
         reserve: kandel.reserve.address,
         tokenA: kandel.baseToken,
         tokenB: kandel.quoteToken,
-        return: "-", // await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
+        return: await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
         status: kandel.strat.offers.length > 0 ? "active" : "closed"
       });
     }))).sort((v1, v2) => v1.status == "active" ? 0 : -1);

@@ -79,7 +79,7 @@ export class KandelReturnUtils {
         if (!rates) {
             return "0";
         }
-        return this.calculateReturn(periods, rates).toString();
+        return periods.length > 0 ? this.calculateReturn(periods, rates).toString() : "0";
     
     }
     

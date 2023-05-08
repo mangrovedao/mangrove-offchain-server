@@ -145,9 +145,13 @@ export class KandelEventsLogic extends EventsLogic {
             await this.db.tokenBalanceOperations.deleteLatestTokenBalanceVersion(tokenBalanceId)
             return;
         }
+        let tokenBalance:prisma.TokenBalanceVersion|undefined=undefined;
+        try{
+            tokenBalance = await this.db.tokenBalanceOperations.getCurrentTokenBalanceVersion(tokenBalanceId);
+        } catch (e) {
 
-        const tokenBalance = await this.db.tokenBalanceOperations.getCurrentTokenBalanceVersion(tokenBalanceId);
-        const newDepositWithdrawalAmount = event.type == "Credit" ? new BigNumber(tokenBalance.deposit) : new BigNumber(tokenBalance.withdrawal)
+        }
+        const newDepositWithdrawalAmount = tokenBalance ? ( event.type == "Credit" ? new BigNumber(tokenBalance.deposit) : new BigNumber(tokenBalance.withdrawal) ) : "0";
         const newAmount = new BigNumber(newDepositWithdrawalAmount).plus(new BigNumber(event.amount)).toString()
         const plusMinus = event.type == "Debit" ? "minus" : "plus";
 
@@ -156,9 +160,9 @@ export class KandelEventsLogic extends EventsLogic {
             txId: transaction!.id,
             updateFunc: (model) => {
                 _.merge(model, {
-                    withdrawal: event.type == "Debit" ? newAmount : tokenBalance.withdrawal,
-                    deposit: event.type == "Credit" ? newAmount : tokenBalance.deposit,
-                    balance: new BigNumber(tokenBalance.balance)[plusMinus](new BigNumber(event.amount)).toString()
+                    withdrawal: event.type == "Debit" ? newAmount : (tokenBalance?.withdrawal ?? "0"),
+                    deposit: event.type == "Credit" ? newAmount : (tokenBalance?.deposit ?? "0"),
+                    balance: new BigNumber(tokenBalance?.balance ?? "0")[plusMinus](new BigNumber(event.amount)).toString()
 
                 })
             }
