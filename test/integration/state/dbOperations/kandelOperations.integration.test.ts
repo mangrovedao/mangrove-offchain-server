@@ -61,7 +61,7 @@ describe("Kandel Operations Integration test suite", () => {
         from: "from",
         blockNumber: 0,
         blockHash: "blockHash",
-        time: new Date()
+        time: new Date(2023,1,1)
       }
     })
 
@@ -653,14 +653,18 @@ describe("Kandel Operations Integration test suite", () => {
     const event = await kandelOperations.createKandelEvent(kandel, "txId", kandelVersion);
     assert.strictEqual( await prisma.kandelEvent.count(), 1);
     assert.strictEqual( await prisma.kandelPopulateEvent.count(), 0);
-    const kandelPopulateEvent = await kandelOperations.createKandelPopulateEvent(event);
+    const kandelPopulateEvent = await kandelOperations.createKandelPopulateEvent(event, tx);
     assert.strictEqual( await prisma.kandelEvent.count(), 1);
     assert.strictEqual( await prisma.kandelPopulateEvent.count(), 1);
     assert.deepStrictEqual(kandelPopulateEvent, {
       id: kandelPopulateEvent.id,
       eventId: event.id,
-      baseTokenBalanceVersionId: baseTokenBalanceVersionId.value,
-      quoteTokenBalanceVersionId: quoteTokenBalanceVersionId.value,
+      baseTokenId: baseId.value,
+      quoteTokenId: quoteId.value,
+      baseSend: "0",
+      quoteSend: "0",
+      baseReceived: "0",
+      quoteReceived: "0",
     });
   })
 
@@ -668,14 +672,18 @@ describe("Kandel Operations Integration test suite", () => {
     const event = await kandelOperations.createKandelEvent(kandel, "txId", kandelVersion);
     assert.strictEqual( await prisma.kandelEvent.count(), 1);
     assert.strictEqual( await prisma.kandelRetractEvent.count(), 0);
-    const kandelRetractEvent = await kandelOperations.createKandelRetractEvent(event);
+    const kandelRetractEvent = await kandelOperations.createKandelRetractEvent(event, tx);
     assert.strictEqual( await prisma.kandelEvent.count(), 1);
     assert.strictEqual( await prisma.kandelRetractEvent.count(), 1);
     assert.deepStrictEqual(kandelRetractEvent, {
       id: kandelRetractEvent.id,
       eventId: event.id,
-      baseTokenBalanceVersionId: baseTokenBalanceVersionId.value,
-      quoteTokenBalanceVersionId: quoteTokenBalanceVersionId.value,
+      baseTokenId: baseId.value,
+      quoteTokenId: quoteId.value,
+      baseSend: "0",
+      quoteSend: "0",
+      baseReceived: "0",
+      quoteReceived: "0",
     });
   })
 

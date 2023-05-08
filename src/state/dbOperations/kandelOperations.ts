@@ -343,26 +343,28 @@ export class KandelOperations extends DbOperations {
     })
   }
 
-  async createKandelPopulateEvent(kandelEvent: prisma.KandelEvent, ) {
+  async createKandelPopulateEvent(kandelEvent: prisma.KandelEvent, tx: prisma.Transaction ) {
     const kandel = await this.getKandel(kandelEvent.kandelId);
-    const { base, quote } = await this.tokenBalanceOperations.getCurrentBaseAndQuoteBalanceVersionForAddress(kandelEvent.kandelId, kandel.baseId, kandel.quoteId);
+    const balance = await this.tokenBalanceOperations.getCurrentBaseAndQuoteBalanceForAddress(kandelEvent.kandelId, kandel.baseId, kandel.quoteId, tx);
     return this.tx.kandelPopulateEvent.create({
       data: {
         eventId: kandelEvent.id,
-        baseTokenBalanceVersionId: base?.id,
-        quoteTokenBalanceVersionId: quote?.id
+        baseTokenId: kandel.baseId,
+        quoteTokenId: kandel.quoteId,
+        ...balance
       }
     })
   }
 
-  async createKandelRetractEvent(kandelEvent: prisma.KandelEvent) {
+  async createKandelRetractEvent(kandelEvent: prisma.KandelEvent, tx: prisma.Transaction) {
     const kandel = await this.getKandel(kandelEvent.kandelId);
-    const { base, quote } = await this.tokenBalanceOperations.getCurrentBaseAndQuoteBalanceVersionForAddress(kandelEvent.kandelId, kandel.baseId, kandel.quoteId);
+    const balance = await this.tokenBalanceOperations.getCurrentBaseAndQuoteBalanceForAddress(kandelEvent.kandelId, kandel.baseId, kandel.quoteId, tx);
     return this.tx.kandelRetractEvent.create({
       data: {
         eventId: kandelEvent.id,
-        baseTokenBalanceVersionId: base?.id,
-        quoteTokenBalanceVersionId: quote?.id
+        baseTokenId: kandel.baseId,
+        quoteTokenId: kandel.quoteId,
+        ...balance
       }
     })
   }

@@ -1,6 +1,10 @@
 /*
   Warnings:
 
+  - You are about to drop the column `baseTokenBalanceVersionId` on the `KandelPopulateEvent` table. All the data in the column will be lost.
+  - You are about to drop the column `quoteTokenBalanceVersionId` on the `KandelPopulateEvent` table. All the data in the column will be lost.
+  - You are about to drop the column `baseTokenBalanceVersionId` on the `KandelRetractEvent` table. All the data in the column will be lost.
+  - You are about to drop the column `quoteTokenBalanceVersionId` on the `KandelRetractEvent` table. All the data in the column will be lost.
   - You are about to drop the column `cancelled` on the `MangroveOrderVersion` table. All the data in the column will be lost.
   - You are about to drop the column `failed` on the `MangroveOrderVersion` table. All the data in the column will be lost.
   - You are about to drop the column `failedReason` on the `MangroveOrderVersion` table. All the data in the column will be lost.
@@ -12,11 +16,55 @@
   - You are about to drop the column `takerGotNumber` on the `MangroveOrderVersion` table. All the data in the column will be lost.
   - A unique constraint covering the columns `[offerVersionId]` on the table `TakenOffer` will be added. If there are existing duplicate values, this will fail.
   - A unique constraint covering the columns `[reserveId,tokenId,stream]` on the table `TokenBalance` will be added. If there are existing duplicate values, this will fail.
+  - Added the required column `baseReceived` to the `KandelPopulateEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `baseSend` to the `KandelPopulateEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `baseTokenId` to the `KandelPopulateEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `quoteReceived` to the `KandelPopulateEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `quoteSend` to the `KandelPopulateEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `quoteTokenId` to the `KandelPopulateEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `baseReceived` to the `KandelRetractEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `baseSend` to the `KandelRetractEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `baseTokenId` to the `KandelRetractEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `quoteReceived` to the `KandelRetractEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `quoteSend` to the `KandelRetractEvent` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `quoteTokenId` to the `KandelRetractEvent` table without a default value. This is not possible if the table is not empty.
   - Added the required column `stream` to the `TokenBalance` table without a default value. This is not possible if the table is not empty.
 
 */
 -- DropIndex
+DROP INDEX "KandelPopulateEvent_baseTokenBalanceVersionId_key";
+
+-- DropIndex
+DROP INDEX "KandelPopulateEvent_quoteTokenBalanceVersionId_key";
+
+-- DropIndex
+DROP INDEX "KandelRetractEvent_baseTokenBalanceVersionId_key";
+
+-- DropIndex
+DROP INDEX "KandelRetractEvent_quoteTokenBalanceVersionId_key";
+
+-- DropIndex
 DROP INDEX "TokenBalance_reserveId_tokenId_key";
+
+-- AlterTable
+ALTER TABLE "KandelPopulateEvent" DROP COLUMN "baseTokenBalanceVersionId",
+DROP COLUMN "quoteTokenBalanceVersionId",
+ADD COLUMN     "baseReceived" TEXT NOT NULL,
+ADD COLUMN     "baseSend" TEXT NOT NULL,
+ADD COLUMN     "baseTokenId" VARCHAR(255) NOT NULL,
+ADD COLUMN     "quoteReceived" TEXT NOT NULL,
+ADD COLUMN     "quoteSend" TEXT NOT NULL,
+ADD COLUMN     "quoteTokenId" VARCHAR(255) NOT NULL;
+
+-- AlterTable
+ALTER TABLE "KandelRetractEvent" DROP COLUMN "baseTokenBalanceVersionId",
+DROP COLUMN "quoteTokenBalanceVersionId",
+ADD COLUMN     "baseReceived" TEXT NOT NULL,
+ADD COLUMN     "baseSend" TEXT NOT NULL,
+ADD COLUMN     "baseTokenId" VARCHAR(255) NOT NULL,
+ADD COLUMN     "quoteReceived" TEXT NOT NULL,
+ADD COLUMN     "quoteSend" TEXT NOT NULL,
+ADD COLUMN     "quoteTokenId" VARCHAR(255) NOT NULL;
 
 -- AlterTable
 ALTER TABLE "MangroveOrderVersion" DROP COLUMN "cancelled",

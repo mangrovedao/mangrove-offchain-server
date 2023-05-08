@@ -186,7 +186,7 @@ export class KandelEventsLogic extends EventsLogic {
         }
 
         const kandelEvent = await this.db.kandelOperations.createKandelEvent(kandelId, transaction!.id );
-        const kandelRetractEvent = await this.db.kandelOperations.createKandelRetractEvent(kandelEvent);
+        const kandelRetractEvent = await this.db.kandelOperations.createKandelRetractEvent(kandelEvent, transaction!);
 
         for( const offerRetracted of event.offers) {
             const offerId = new OfferId(mangroveId, offerRetracted.offerList, offerRetracted.offerId);
@@ -215,7 +215,7 @@ export class KandelEventsLogic extends EventsLogic {
     async handlePopulateOfferWrittenEvents(kandelId: KandelId, event: kandel.Populate, mangroveId: MangroveId, transaction: prisma.Transaction | undefined) {
         const kandelEvent = await this.db.kandelOperations.createKandelEvent(kandelId, transaction!.id );
          
-        const kandelPopulateEvent = await this.db.kandelOperations.createKandelPopulateEvent(kandelEvent);
+        const kandelPopulateEvent = await this.db.kandelOperations.createKandelPopulateEvent(kandelEvent, transaction!);
 
         for (const offerWritten of event.offers) {
             const offerId = new OfferId(mangroveId, offerWritten.offerList, offerWritten.offer.id);

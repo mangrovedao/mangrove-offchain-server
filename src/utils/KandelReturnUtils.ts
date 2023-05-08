@@ -46,8 +46,10 @@ export type simpleOfferVersion = {
 }
 
 export type baseQuoteBalance = {
-    baseTokenBalanceVersion: { send: string; received: string; } | null;
-    quoteTokenBalanceVersion: { send: string; received: string; } | null;
+    baseSend: string,
+    baseReceived: string,
+    quoteSend: string,
+    quoteReceived: string,
 }
 
 export type period = {
@@ -67,6 +69,8 @@ export type rates = {
         rate: number;
     };
 }
+
+
 
 export class KandelReturnUtils {
 
@@ -123,19 +127,15 @@ export class KandelReturnUtils {
         const quoteRate: number = await rate(tokens.quoteToken);
     
         const events = (await prisma.kandelEvent.findMany({
-            where: { kandelId: kandelId.value, OR: [{ NOT: { KandelPopulateEvent: null } }, { NOT: { KandelRetractEvent: null } }] }, select: {
+            where: { kandelId: kandelId.value, OR: [{ NOT: { KandelPopulateEvent: null } }, { NOT: { KandelRetractEvent: null } }] }, include: {
                 transaction: { select: { time: true } },
                 KandelPopulateEvent: {
-                    select: {
-                        baseTokenBalanceVersion: { select: { send: true, received: true } },
-                        quoteTokenBalanceVersion: { select: { send: true, received: true } },
+                    include: {
                         KandelOfferUpdate: { select: { offerId: true, gives: true, offer: { select: { offerListing: { select: { outboundToken: { select: { id: true, decimals: true, symbol: true } } } } } } } }
                     }
                 },
                 KandelRetractEvent: {
-                    select: {
-                        baseTokenBalanceVersion: { select: { send: true, received: true } },
-                        quoteTokenBalanceVersion: { select: { send: true, received: true } },
+                    include: {
                         KandelOfferUpdate: { select: { offerId: true, gives: true, offer: { select: { offerListing: { select: { outboundToken: { select: { id: true, decimals: true, symbol: true } } } } } } } }
                     }
                 }
@@ -153,14 +153,10 @@ export class KandelReturnUtils {
             KandelPopulateEvent: null,
             KandelRetractEvent: null,
             End:{
-                baseTokenBalanceVersion: {
-                    send: lastBase.send,
-                    received: lastBase.send    
-                },
-                quoteTokenBalanceVersion: {
-                    send: lastQuote.send,
-                    received: lastQuote.send    
-                }
+                baseSend: lastBase.send,
+                baseReceived: lastBase.received,
+                quoteSend: lastQuote.send,
+                quoteReceived: lastQuote.received,
             } as baseQuoteBalance
         } :null
     
@@ -177,21 +173,17 @@ export class KandelReturnUtils {
             }
             const eventForOffers = previous.KandelPopulateEvent ? previous.KandelPopulateEvent : ( previous.KandelRetractEvent ? previous.KandelRetractEvent :  undefined ) ;
             const eventForBalance = current.KandelPopulateEvent ? current.KandelPopulateEvent : ( current.KandelRetractEvent ? current.KandelRetractEvent :  (current.End ? current.End : undefined) ) ;
-    
+            eventForBalance
             return [...result,
                 {
                     start: events[index-1].transaction.time,
                     end: current.transaction.time,
                     offers: eventForOffers ? eventForOffers.KandelOfferUpdate.map( this.convertOfferVersion ) : [] ,
                     type: type,
-                    baseTokenBalanceVersion: eventForBalance ? eventForBalance.baseTokenBalanceVersion : {
-                        send: "0",
-                        received: "0"
-                    },
-                    quoteTokenBalanceVersion:eventForBalance ? eventForBalance.quoteTokenBalanceVersion : {
-                        send: "0",
-                        received: "0"
-                    },
+                    baseSend: eventForBalance ? eventForBalance.baseSend : "0",
+                    baseReceived: eventForBalance ? eventForBalance.baseReceived : "0",
+                    quoteSend: eventForBalance ? eventForBalance.quoteSend : "0",
+                    quoteReceived: eventForBalance ? eventForBalance.quoteReceived : "0",
                 }
              ];
         }, [] as period[])
@@ -282,10 +274,8 @@ export class KandelReturnUtils {
             send: BigNumber;
             received: BigNumber;
         } {
-        const baseBalance = period.baseTokenBalanceVersion;
-        const quoteBalance = period.quoteTokenBalanceVersion;
-        const send = (this.getTokenValueFromRate(this.getTokenBalanceNumber(baseBalance, "send"), rates.base.token, rates.base.rate)).plus(this.getTokenValueFromRate(this.getTokenBalanceNumber(quoteBalance, "send"), rates.quote.token, rates.quote.rate));
-        const received = (this.getTokenValueFromRate(this.getTokenBalanceNumber(baseBalance, "received"), rates.base.token, rates.base.rate)).plus(this.getTokenValueFromRate(this.getTokenBalanceNumber(quoteBalance, "received"), rates.quote.token, rates.quote.rate));
+        const send = (this.getTokenValueFromRate(period.baseSend, rates.base.token, rates.base.rate)).plus(this.getTokenValueFromRate(period.quoteSend, rates.quote.token, rates.quote.rate));
+        const received = (this.getTokenValueFromRate(period.baseReceived, rates.base.token, rates.base.rate)).plus(this.getTokenValueFromRate(period.quoteReceived, rates.quote.token, rates.quote.rate));
         const dif = received.minus(send);
         return { dif, send, received };
     }

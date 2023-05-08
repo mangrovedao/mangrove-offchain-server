@@ -329,11 +329,7 @@ export class MangroveOrderResolver {
       })
     );
   }
-
-
 }
-
-
 
 @Resolver()
 export class KandelHomePageResolver {

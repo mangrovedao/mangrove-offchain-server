@@ -2,6 +2,7 @@ import * as prisma from "@prisma/client";
 import _ from "lodash";
 import { AccountId, KandelId, TakenOfferId, TokenBalanceId, TokenBalanceVersionId, TokenId } from "../model";
 import { DbOperations, toNewVersionUpsert } from "./dbOperations";
+import BigNumber from "bignumber.js";
 
 
 export class TokenBalanceOperations extends DbOperations {
@@ -118,16 +119,47 @@ export class TokenBalanceOperations extends DbOperations {
   }
 
 
-  public async getCurrentBaseAndQuoteBalanceVersionForAddress( accountId: AccountId | string, baseId: TokenId | string, quoteId: TokenId | string){
-    const account = await this.tx.account.findUnique({where: { id: typeof accountId === "string"?  accountId : accountId.value},  include: { TokenBalance: { where: { OR: [{ tokenId:typeof baseId === "string"?  baseId : baseId.value }, { tokenId: typeof quoteId === "string"?  quoteId : quoteId.value}]}, include: { currentVersion: true} } }} )
+  public async getCurrentBaseAndQuoteBalanceForAddress( accountId: AccountId | string, baseId: TokenId | string, quoteId: TokenId | string, tx:{ time: Date}){
+    const account = await this.tx.account.findUnique( {
+      where: { 
+        id: typeof accountId === "string"?  accountId : accountId.value
+      },  
+      include: { 
+        TokenBalance: { 
+          where: { 
+            OR: [
+              { tokenId:typeof baseId === "string"?  baseId : baseId.value }, 
+              { tokenId: typeof quoteId === "string"?  quoteId : quoteId.value}
+            ],
+            }, 
+            include: { 
+              allBalances: { 
+                include: { tx: true},
+                where: {
+                  tx: { time: { lte: tx.time } }
+                },
+                orderBy: [{
+                  tx: { time: "desc" },
+                }, 
+                {
+                  versionNumber: "desc"
+                }],
+                take: 1
+              } 
+            }, 
+          } 
+        }
+      } )
     if( !account ){
       throw new Error(`Cannot find account with id: ${typeof accountId === "string"?  accountId : accountId.value }`)
     }
-    const baseValue = account.TokenBalance.find( v => v.tokenId == (typeof baseId === "string"?  baseId : baseId.value ));
-    const quoteValue = account.TokenBalance.find( v => v.tokenId == (typeof quoteId === "string"?  quoteId : quoteId.value));
+    const baseValue = account.TokenBalance.filter( v => v.tokenId == (typeof baseId === "string"?  baseId : baseId.value ));
+    const quoteValue = account.TokenBalance.filter( v => v.tokenId == (typeof quoteId === "string"?  quoteId : quoteId.value));
     return {
-      base: baseValue ? baseValue.currentVersion : undefined,
-      quote: quoteValue ? quoteValue.currentVersion : undefined,
+      baseSend: baseValue.map( v => v.allBalances[0]?.send ?? "0").reduce( (a,b) => a.plus(b), new BigNumber(0)).toString(),
+      baseReceived: baseValue.map( v => v.allBalances[0]?.received ??  "0").reduce( (a,b) => a.plus(b), new BigNumber(0)).toString(),
+      quoteSend: quoteValue.map( v => v.allBalances[0]?.send ?? "0").reduce( (a,b) => a.plus(b), new BigNumber(0)).toString(),
+      quoteReceived: quoteValue.map( v => v.allBalances[0]?.received ?? "0").reduce( (a,b) => a.plus(b), new BigNumber(0)).toString(),
     }
   }
 

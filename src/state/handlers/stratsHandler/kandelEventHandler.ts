@@ -4,7 +4,7 @@ import {
   PrismaTransaction,
   TypedEvent,
 } from "src/utils/common";
-import { allDbOperations } from "src/state/dbOperations/allDbOperations";
+import { AllDbOperations, allDbOperations } from "src/state/dbOperations/allDbOperations";
 import {
   ChainId,
   KandelId,
@@ -15,6 +15,8 @@ import { createPatternMatcher } from "src/utils/discriminatedUnion";
 import { KandelEventsLogic } from "./kandelEventsLogic";
 import * as kandel from "@proximaone/stream-schema-mangrove/dist/kandel";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
+import { sleep } from "@mangrovedao/commonlib.js";
+import { Timestamp } from "@proximaone/stream-client-js";
 
 export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.KandelEvent | kandel.SeederEvent > {
   public constructor(
@@ -33,11 +35,13 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
     const kandelEventsLogic = new KandelEventsLogic(allDbOperation, this.stream);
     for (const event of events) {
       const { payload, undo, timestamp } = event;
+      
       const chainId = new ChainId(payload.chainId);
       
       const txRef = payload.tx;
       const txId = new TransactionId(chainId, txRef.txHash);
 
+      await waitForTimestamp(allDbOperation, timestamp);
       const transaction = await allDbOperation.transactionOperations.ensureTransaction({
         id: txId,
         txHash: txRef.txHash,
@@ -81,3 +85,14 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
 
 const eventMatcher =
   createPatternMatcher<kandel.KandelEvent | kandel.SeederEvent >();
+
+async function waitForTimestamp(allDbOperation: AllDbOperations, timestamp:Timestamp) {
+  let isReady = false;
+  while (!isReady) {
+    isReady = await allDbOperation.transactionOperations.hasTransactionWithHigherTimestamp(timestamp);
+    if (!isReady) {
+      await sleep(1000);
+    }
+  }
+}
+
