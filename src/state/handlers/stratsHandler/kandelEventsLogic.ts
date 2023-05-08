@@ -3,11 +3,10 @@ import BigNumber from "bignumber.js";
 import _ from "lodash";
 import { AllDbOperations } from "src/state/dbOperations/allDbOperations";
 
-import { AccountId, ChainId, KandelId, KandelVersionId, MangroveId, OfferId, OfferListingId, TokenBalanceId, TokenId } from "src/state/model";
-import {kandel} from "@proximaone/stream-schema-mangrove";
+import { kandel } from "@proximaone/stream-schema-mangrove";
+import { AccountId, ChainId, KandelId, KandelVersionId, MangroveId, OfferId, TokenBalanceId, TokenId } from "src/state/model";
 
 // import { Credit, Debit, NewKandel, NewAaveKandel, SetParams } from "@proximaone/stream-schema-mangrove/dist/kandel"
-import { OfferEventsLogic } from "../mangroveHandler/offerEventsLogic";
 import { EventsLogic } from "../eventsLogic";
 export class KandelEventsLogic extends EventsLogic {
 
@@ -140,7 +139,7 @@ export class KandelEventsLogic extends EventsLogic {
         const reserveAddress = await this.db.kandelOperations.getReserveAddress({ kandelId });
         const reserveId = new AccountId(kandelId.chainId, reserveAddress);
         const tokenId = new TokenId(kandelId.chainId, event.token);
-        const tokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: tokenId });
+        const tokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: tokenId, stream: this.stream });
 
         if (undo) {
             await this.db.tokenBalanceOperations.deleteLatestTokenBalanceVersion(tokenBalanceId)

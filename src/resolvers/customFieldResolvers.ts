@@ -137,7 +137,6 @@ export class MangroveOrderResolver {
       },
       include: {
         currentVersion: true,
-        offer: true,
         offer: { include: { currentVersion: { include: { takenOffer: true, OfferRetractEvent: true} }, offerVersions: { include: { takenOffer: true } } } },
         order: { include: { tx: true } },
         taker: true,

@@ -49,7 +49,7 @@ export class MangroveOrderOperations extends DbOperations {
     const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion( mangroveOrder );
     updateFunc(mangroveOrderVersion);
     return await this.addMangroveOrderVersion(
-      new MangroveOrderId(id.mangroveId, id.offerListKey, mangroveOrder.proximaId ),
+      new MangroveOrderId(id.mangroveId, { inboundToken: id.offerListKey.outboundToken, outboundToken: id.offerListKey.inboundToken}, mangroveOrder.proximaId ),
       txId,
       updateFunc,
   );

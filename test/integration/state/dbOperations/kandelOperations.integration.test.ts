@@ -36,9 +36,9 @@ describe("Kandel Operations Integration test suite", () => {
     inboundToken: quoteId.tokenAddress,
   };
   const offerListingId = new OfferListingId(mangroveId, offerListKey);
-  const baseTokenBalanceId= new TokenBalanceId({ accountId:reserveId, tokenId: baseId})
+  const baseTokenBalanceId= new TokenBalanceId({ accountId:reserveId, tokenId: baseId, stream: "stream"})
   const baseTokenBalanceVersionId = new TokenBalanceVersionId({ tokenBalanceId:baseTokenBalanceId, versionNumber: 0 })
-  const quoteTokenBalanceId= new TokenBalanceId({ accountId:reserveId, tokenId: quoteId})
+  const quoteTokenBalanceId= new TokenBalanceId({ accountId:reserveId, tokenId: quoteId, stream: "stream"})
   const quoteTokenBalanceVersionId = new TokenBalanceVersionId({ tokenBalanceId:quoteTokenBalanceId, versionNumber: 0 })
 
   let tx:Transaction;
@@ -100,7 +100,8 @@ describe("Kandel Operations Integration test suite", () => {
         id: baseTokenBalanceId.value,
         accountId: kandelId.value,
         currentVersionId: baseTokenBalanceVersionId.value,
-        tokenId: baseId.value
+        tokenId: baseId.value,
+        stream: "stream"
       }
     })
 
@@ -123,7 +124,8 @@ describe("Kandel Operations Integration test suite", () => {
         id: quoteTokenBalanceId.value,
         accountId: kandelId.value,
         currentVersionId: quoteTokenBalanceVersionId.value,
-        tokenId: quoteId.value
+        tokenId: quoteId.value,
+        stream: "stream"
       }
     })
 

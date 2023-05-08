@@ -48,6 +48,7 @@ export class TokenBalanceOperations extends DbOperations {
         id: params.tokenBalanceId.value,
         accountId: reserve.id,
         tokenId: params.tokenBalanceId.params.tokenId.value,
+        stream: params.tokenBalanceId.params.stream,
         currentVersionId: newVersionId.value
       }      
 

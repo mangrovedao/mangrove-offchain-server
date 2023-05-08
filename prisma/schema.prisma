@@ -540,6 +540,7 @@ model TokenBalance {
   id        String @id @db.VarChar(255)
   accountId String @map("reserveId") @db.VarChar(255)
   tokenId   String @db.VarChar(255)
+  stream   String @db.VarChar(255)
 
   currentVersionId String                @unique @db.VarChar(255)
   currentVersion   TokenBalanceVersion?  @relation("currentVersion", fields: [currentVersionId], references: [id])
@@ -547,7 +548,7 @@ model TokenBalance {
   reserve          Account               @relation("reserve", fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   allBalances      TokenBalanceVersion[] @relation("tokenBalance")
 
-  @@unique([accountId, tokenId])
+  @@unique([accountId, tokenId, stream])
   @@index([tokenId])
 }
 

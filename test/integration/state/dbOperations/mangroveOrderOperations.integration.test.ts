@@ -31,7 +31,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
     outboundToken: outboundTokenId.tokenAddress,
     inboundToken: inboundTokenId.tokenAddress,
   };
-  const offerId = new OfferId(mangroveId, offerListKey, 1);
+  const offerId = new OfferId(mangroveId, {inboundToken:offerListKey.outboundToken, outboundToken: offerListKey.inboundToken}, 1);
   const offerListingId = new OfferListingId(mangroveId, offerListKey);
   const offerListVersionId = new OfferListingVersionId(offerListingId, 0);
   const mangroveOrderId = new MangroveOrderId(

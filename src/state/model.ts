@@ -211,13 +211,14 @@ export class TokenBalanceId extends Id<string> {
       }
       | { account: Account }
     ) & {
-      tokenId: TokenId;
+      tokenId: TokenId,
+      stream: string,
     }
   ) {
     super(
       "accountId" in params
-        ? `${params.accountId.value}-${params.tokenId.value}`
-        : `${params.account.id}-${params.tokenId.value}`
+        ? `${params.accountId.value}-${params.tokenId.value}-${params.stream}`
+        : `${params.account.id}-${params.tokenId.value}-${params.stream}`
     );
   }
 }

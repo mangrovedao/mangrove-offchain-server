@@ -88,7 +88,7 @@ export class OrderEventLogic extends EventsLogic {
 
   async addNewInboundBalanceWithEvent(chainId:ChainId, reserveId:AccountId, inboundToken:prisma.Token, txId:string, takenOfferId:TakenOfferId, takenOffer:Omit<prisma.TakenOffer, "orderId">) {
     const inboundTokenId = new TokenId(chainId, inboundToken.address);
-    const inboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: inboundTokenId })
+    const inboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: inboundTokenId, stream: this.stream })
     const { updatedOrNewTokenBalance, newVersion:newInboundBalance } = await this.db.tokenBalanceOperations.addTokenBalanceVersion({
       tokenBalanceId: inboundTokenBalanceId,
       txId: txId,
@@ -102,7 +102,7 @@ export class OrderEventLogic extends EventsLogic {
 
   async addNewOutboundBalanceWithEvent(chainId:ChainId, reserveId:AccountId, outboundToken:prisma.Token, txId:string, takenOfferId:TakenOfferId, takenOffer:Omit<prisma.TakenOffer, "orderId">) {
     const outboundTokenId = new TokenId(chainId, outboundToken.address);
-    const outboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: outboundTokenId })
+    const outboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: outboundTokenId, stream: this.stream })
     const { updatedOrNewTokenBalance, newVersion:newOutboundBalance } = await this.db.tokenBalanceOperations.addTokenBalanceVersion({
       tokenBalanceId: outboundTokenBalanceId,
       txId: txId,

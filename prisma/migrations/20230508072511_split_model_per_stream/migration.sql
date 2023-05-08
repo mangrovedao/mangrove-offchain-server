@@ -11,8 +11,13 @@
   - You are about to drop the column `takerGot` on the `MangroveOrderVersion` table. All the data in the column will be lost.
   - You are about to drop the column `takerGotNumber` on the `MangroveOrderVersion` table. All the data in the column will be lost.
   - A unique constraint covering the columns `[offerVersionId]` on the table `TakenOffer` will be added. If there are existing duplicate values, this will fail.
+  - A unique constraint covering the columns `[reserveId,tokenId,stream]` on the table `TokenBalance` will be added. If there are existing duplicate values, this will fail.
+  - Added the required column `stream` to the `TokenBalance` table without a default value. This is not possible if the table is not empty.
 
 */
+-- DropIndex
+DROP INDEX "TokenBalance_reserveId_tokenId_key";
+
 -- AlterTable
 ALTER TABLE "MangroveOrderVersion" DROP COLUMN "cancelled",
 DROP COLUMN "failed",
@@ -26,6 +31,9 @@ DROP COLUMN "takerGotNumber";
 
 -- AlterTable
 ALTER TABLE "TakenOffer" ADD COLUMN     "partialFill" BOOLEAN;
+
+-- AlterTable
+ALTER TABLE "TokenBalance" ADD COLUMN     "stream" VARCHAR(255) NOT NULL;
 
 -- CreateTable
 CREATE TABLE "MangroveEvent" (
@@ -115,3 +123,6 @@ CREATE UNIQUE INDEX "MangroveOrderSetExpiryEvent_mangroveOrderVersionId_key" ON 
 
 -- CreateIndex
 CREATE UNIQUE INDEX "TakenOffer_offerVersionId_key" ON "TakenOffer"("offerVersionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TokenBalance_reserveId_tokenId_stream_key" ON "TokenBalance"("reserveId", "tokenId", "stream");

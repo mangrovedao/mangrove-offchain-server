@@ -34,8 +34,8 @@ export class MangroveOrderEventsLogic extends EventsLogic {
       return;
     }
     const offerListKey = {
-      inboundToken: event.inboundToken,
-      outboundToken: event.outboundToken,
+      inboundToken: event.outboundToken,
+      outboundToken: event.inboundToken,
     };
     const offerId = new OfferId(mangroveId, offerListKey, event.offerId);
 
