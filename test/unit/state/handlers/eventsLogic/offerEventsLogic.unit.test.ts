@@ -9,7 +9,7 @@ import assert from "assert";
 describe("Offer Events Logic Unit Test Suite", () => {
 
     const mangroveId = new MangroveId(new ChainId(10), "1");
-    const offerEventsLogic = new OfferEventsLogic();
+    const offerEventsLogic = new OfferEventsLogic("stream");
     const tokens = { inboundToken: { address: "iaddress", decimals: 0}, outboundToken: { address: "oaddress", decimals:0}}
     describe("offerWrittenFunc", () => {
         it(" Updates with offerWritten event", () => {

@@ -1,7 +1,9 @@
 import * as prisma from "@prisma/client";
 import _ from "lodash";
-import { MangroveId, MangroveVersionId } from "src/state/model";
+import { AccountId, MangroveId, MangroveVersionId, OfferListingId, OfferVersionId } from "src/state/model";
 import { DbOperations, toNewVersionUpsert } from "./dbOperations";
+import { OfferWritten } from "@proximaone/stream-schema-mangrove/dist/events";
+import { Offer } from "@proximaone/stream-schema-mangrove/dist/core";
 
 export class MangroveOperations extends DbOperations {
 
@@ -129,5 +131,53 @@ export class MangroveOperations extends DbOperations {
     }
     
 
+  }
+
+  async createMangroveEvent(params: {
+    mangroveId: MangroveId,
+    txId: string,
+  }) {
+    return await this.tx.mangroveEvent.create({
+      data: {
+        mangroveId: params.mangroveId.value,  
+        txId: params.txId,
+      },
+    });
+  }
+
+  async createOfferWriteEvent(params:{
+    offerListingId: OfferListingId,
+    offerVersion: {id: string},
+    makerId: AccountId,
+    mangroveEvent: {id: string}
+    event: { offer: Omit<Offer,"id">}
+  }){
+    return await this.tx.offerWriteEvent.create({
+      data: {
+        offerListingId: params.offerListingId.value,
+        offerVersionId: params.offerVersion.id,
+        makerId: params.makerId.value,
+        mangroveEventId: params.mangroveEvent.id,
+        gives: params.event.offer.gives,
+        wants: params.event.offer.wants,
+        gasprice: params.event.offer.gasprice,
+        gasreq: params.event.offer.gasreq,
+        prev: params.event.offer.prev,
+      },
+    });
+  }
+
+  async createOfferRetractEvent(params:{
+    offerListingId: OfferListingId,
+    offerVersion: {id: string},
+    mangroveEvent: {id: string}
+  }){
+    return await this.tx.offerRetractEvent.create({
+      data: {
+        offerListingId: params.offerListingId.value,
+        offerVersionId: params.offerVersion.id,
+        mangroveEventId: params.mangroveEvent.id,
+      },
+    });
   }
 }

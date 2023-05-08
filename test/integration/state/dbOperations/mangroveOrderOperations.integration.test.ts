@@ -31,7 +31,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
     outboundToken: outboundTokenId.tokenAddress,
     inboundToken: inboundTokenId.tokenAddress,
   };
-  const offerId = new OfferId(mangroveId, offerListKey, 1);
+  const offerId = new OfferId(mangroveId, {inboundToken:offerListKey.outboundToken, outboundToken: offerListKey.inboundToken}, 1);
   const offerListingId = new OfferListingId(mangroveId, offerListKey);
   const offerListVersionId = new OfferListingVersionId(offerListingId, 0);
   const mangroveOrderId = new MangroveOrderId(
@@ -103,10 +103,6 @@ describe("Mangrove Order Operations Integration test suite", () => {
         mangroveId: mangroveId.value,
         offerListingId: offerListingId.value,
         takerId: takerId.value,
-        // takerWants: "100",
-        // takerWantsNumber: 100,
-        // takerGives: "50",
-        // takerGivesNumber: 50,
         takerGot: "49.5",
         takerGotNumber: 49.5,
         takerGave: "25",
@@ -147,16 +143,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
         id: mangroveOrderVersionId.value,
         mangroveOrderId: mangroveOrderId.value,
         txId: "txId",
-        filled: false,
-        cancelled: false,
-        failed: false,
-        failedReason: null,
-        takerGot: "49.5",
-        takerGotNumber: 49.5,
-        takerGave: "25",
-        takerGaveNumber: 25,
-        price: 25 / 49.5,
-        expiryDate: new Date(),
+        expiryDate: new Date(2022,1,1),
         versionNumber: 0,
         prevVersionId: null,
       },
@@ -164,7 +151,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
   });
 
   describe("addMangroveOrderVersionFromOfferId", () => {
-    it("updates to cancelled", async () => {
+    it("updates to expiryDate", async () => {
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
       const oldMangroveOrder = await prisma.mangroveOrder.findUnique({
@@ -177,7 +164,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
       await mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
         offerId,
         "txId",
-        (m) => (m.cancelled = true)
+        (m) => (m.expiryDate = new Date(2023, 1, 1))
       );
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
@@ -205,8 +192,8 @@ describe("Mangrove Order Operations Integration test suite", () => {
         oldMangroveOrderVersion,
         newMangroveOrderVersion
       );
-      assert.strictEqual(oldMangroveOrderVersion?.cancelled, false);
-      assert.strictEqual(newMangroveOrderVersion?.cancelled, true);
+      assert.deepStrictEqual(oldMangroveOrderVersion?.expiryDate, new Date(2022, 1, 1));
+      assert.deepStrictEqual(newMangroveOrderVersion?.expiryDate, new Date( 2023, 1, 1));
     });
   });
 
@@ -307,15 +294,6 @@ describe("Mangrove Order Operations Integration test suite", () => {
         id: newVersionId.value,
         txId: "txId",
         mangroveOrderId: mangroveOrderId2.value,
-        filled: false,
-        cancelled: false,
-        failed: false,
-        failedReason: null,
-        takerGot: "0",
-        takerGotNumber: 0,
-        takerGave: "0",
-        takerGaveNumber: 0,
-        price: 0,
         expiryDate: new Date("0"),
         versionNumber: 0,
         prevVersionId: null
@@ -335,7 +313,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
       await mangroveOrderOperations.addMangroveOrderVersion(
         mangroveOrderId,
         "txId",
-        (m) => m.cancelled = true
+        (m) => m.expiryDate = new Date(2023,1,1)
       );
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
@@ -363,8 +341,8 @@ describe("Mangrove Order Operations Integration test suite", () => {
         oldMangroveOrderVersion,
         newMangroveOrderVersion
       );
-      assert.strictEqual(oldMangroveOrderVersion?.cancelled, false);
-      assert.strictEqual(newMangroveOrderVersion?.cancelled, true);
+      assert.deepStrictEqual(oldMangroveOrderVersion?.expiryDate, new Date(2022, 1, 1));
+      assert.deepStrictEqual(newMangroveOrderVersion?.expiryDate, new Date( 2023, 1, 1));
     });
   });
 
@@ -396,7 +374,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
       await mangroveOrderOperations.addMangroveOrderVersion(
         mangroveOrderId,
         "txId",
-        (m) => m.cancelled = true
+        (m) => m.expiryDate = new Date(2023,1,1)
       );
       assert.strictEqual(await prisma.mangroveOrder.count(), 1);
       assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
@@ -415,7 +393,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
       const newMangroveOrder = await prisma.mangroveOrder.findUnique({
         where: { id: mangroveOrderId.value },
       });
-      const newMangroveOrderVersion =
+      const currentMangroveOrderVersion =
         await prisma.mangroveOrderVersion.findUnique({
           where: { id: newMangroveOrder?.currentVersionId },
         });
@@ -434,45 +412,14 @@ describe("Mangrove Order Operations Integration test suite", () => {
       );
       assert.notDeepStrictEqual(
         deletedMangroveOrderVersion,
-        newMangroveOrderVersion
+        currentMangroveOrderVersion
       );
-      assert.strictEqual(deletedMangroveOrderVersion?.cancelled, true);
-      assert.strictEqual(newMangroveOrderVersion?.cancelled, false);
+      assert.deepStrictEqual(deletedMangroveOrderVersion?.expiryDate, new Date(2023, 1, 1));
+      assert.deepStrictEqual(currentMangroveOrderVersion?.expiryDate, new Date( 2022, 1, 1));
     });
   });
 
-  describe("updateMangroveOrderFromTakenOffer", () => {
-    it("Update with taken offer", async () => {
 
-
-
-      assert.strictEqual(await prisma.mangroveOrderVersion.count(), 1);
-      await mangroveOrderOperations.updateMangroveOrderFromTakenOffer(
-        offerId,
-        (t, m, v) => v.cancelled = true
-      );
-      assert.strictEqual(await prisma.mangroveOrderVersion.count(), 2);
-      const newVersion =
-        await mangroveOrderOperations.getCurrentMangroveOrderVersion(
-          mangroveOrder,
-        );
-      assert.notStrictEqual(newVersion.cancelled, mangroveOrderVersion.cancelled);
-      assert.strictEqual(newVersion.cancelled, true);
-      assert.strictEqual(newVersion.failed, mangroveOrderVersion.failed);
-      assert.strictEqual(newVersion.failedReason, mangroveOrderVersion.failedReason);
-      assert.strictEqual(newVersion.takerGot, mangroveOrderVersion.takerGot);
-      assert.strictEqual(newVersion.takerGotNumber, mangroveOrderVersion.takerGotNumber);
-      assert.strictEqual(newVersion.takerGave, mangroveOrderVersion.takerGave);
-      assert.strictEqual(newVersion.takerGaveNumber, mangroveOrderVersion.takerGaveNumber);
-      assert.strictEqual(newVersion.price, mangroveOrderVersion.price);
-      assert.deepStrictEqual(
-        newVersion.expiryDate,
-        mangroveOrderVersion.expiryDate
-      );
-      assert.strictEqual(newVersion.versionNumber, 1);
-      assert.strictEqual(newVersion.prevVersionId, mangroveOrderVersion.id);
-    });
-  });
 
 
   describe("getMangroveIdByStratId", () => {
@@ -481,6 +428,17 @@ describe("Mangrove Order Operations Integration test suite", () => {
     })
     it("does not find MangroveOrder", async () => {
       assert.strictEqual(await mangroveOrderOperations.getMangroveIdByStratId(new AccountId(chainId, "noMatch")), null);
+    })
+  })
+
+  it(MangroveOrderOperations.prototype.createMangroveOrderSetExpiryDateEvent.name, async () => {
+    const mangroveOrderSetExpiryEventCount = await prisma.mangroveOrderSetExpiryEvent.count();
+    const mangroveOrderSetExpiryEvent = await mangroveOrderOperations.createMangroveOrderSetExpiryDateEvent({ mangroveOrderVersion: { id: "versionId"}, event: { date: new Date(2023, 1, 1).getTime() } } );
+    assert.strictEqual(await prisma.mangroveOrderSetExpiryEvent.count(), mangroveOrderSetExpiryEventCount + 1);
+    assert.deepStrictEqual(mangroveOrderSetExpiryEvent, {
+      id: mangroveOrderSetExpiryEvent.id,
+      mangroveOrderVersionId: "versionId",
+      expiryDate: new Date(2023, 1, 1),
     })
   })
 

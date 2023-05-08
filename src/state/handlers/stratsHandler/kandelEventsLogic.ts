@@ -3,15 +3,16 @@ import BigNumber from "bignumber.js";
 import _ from "lodash";
 import { AllDbOperations } from "src/state/dbOperations/allDbOperations";
 
-import { AccountId, ChainId, KandelId, KandelVersionId, MangroveId, OfferId, OfferListingId, TokenBalanceId, TokenId } from "src/state/model";
-import {kandel} from "@proximaone/stream-schema-mangrove";
+import { kandel } from "@proximaone/stream-schema-mangrove";
+import { AccountId, ChainId, KandelId, KandelVersionId, MangroveId, OfferId, TokenBalanceId, TokenId } from "src/state/model";
 
 // import { Credit, Debit, NewKandel, NewAaveKandel, SetParams } from "@proximaone/stream-schema-mangrove/dist/kandel"
-import { OfferEventsLogic } from "../mangroveHandler/offerEventsLogic";
-export class KandelEventsLogic {
+import { EventsLogic } from "../eventsLogic";
+export class KandelEventsLogic extends EventsLogic {
 
     db: AllDbOperations;
-    constructor(db: AllDbOperations) {
+    constructor(db: AllDbOperations, stream: string) {
+        super(stream);
         this.db = db;
     }
 
@@ -138,15 +139,19 @@ export class KandelEventsLogic {
         const reserveAddress = await this.db.kandelOperations.getReserveAddress({ kandelId });
         const reserveId = new AccountId(kandelId.chainId, reserveAddress);
         const tokenId = new TokenId(kandelId.chainId, event.token);
-        const tokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: tokenId });
+        const tokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: tokenId, stream: this.stream });
 
         if (undo) {
             await this.db.tokenBalanceOperations.deleteLatestTokenBalanceVersion(tokenBalanceId)
             return;
         }
+        let tokenBalance:prisma.TokenBalanceVersion|undefined=undefined;
+        try{
+            tokenBalance = await this.db.tokenBalanceOperations.getCurrentTokenBalanceVersion(tokenBalanceId);
+        } catch (e) {
 
-        const tokenBalance = await this.db.tokenBalanceOperations.getCurrentTokenBalanceVersion(tokenBalanceId);
-        const newDepositWithdrawalAmount = event.type == "Credit" ? new BigNumber(tokenBalance.deposit) : new BigNumber(tokenBalance.withdrawal)
+        }
+        const newDepositWithdrawalAmount = tokenBalance ? ( event.type == "Credit" ? new BigNumber(tokenBalance.deposit) : new BigNumber(tokenBalance.withdrawal) ) : "0";
         const newAmount = new BigNumber(newDepositWithdrawalAmount).plus(new BigNumber(event.amount)).toString()
         const plusMinus = event.type == "Debit" ? "minus" : "plus";
 
@@ -155,9 +160,9 @@ export class KandelEventsLogic {
             txId: transaction!.id,
             updateFunc: (model) => {
                 _.merge(model, {
-                    withdrawal: event.type == "Debit" ? newAmount : tokenBalance.withdrawal,
-                    deposit: event.type == "Credit" ? newAmount : tokenBalance.deposit,
-                    balance: new BigNumber(tokenBalance.balance)[plusMinus](new BigNumber(event.amount)).toString()
+                    withdrawal: event.type == "Debit" ? newAmount : (tokenBalance?.withdrawal ?? "0"),
+                    deposit: event.type == "Credit" ? newAmount : (tokenBalance?.deposit ?? "0"),
+                    balance: new BigNumber(tokenBalance?.balance ?? "0")[plusMinus](new BigNumber(event.amount)).toString()
 
                 })
             }
@@ -185,7 +190,7 @@ export class KandelEventsLogic {
         }
 
         const kandelEvent = await this.db.kandelOperations.createKandelEvent(kandelId, transaction!.id );
-        const kandelRetractEvent = await this.db.kandelOperations.createKandelRetractEvent(kandelEvent);
+        const kandelRetractEvent = await this.db.kandelOperations.createKandelRetractEvent(kandelEvent, transaction!);
 
         for( const offerRetracted of event.offers) {
             const offerId = new OfferId(mangroveId, offerRetracted.offerList, offerRetracted.offerId);
@@ -214,7 +219,7 @@ export class KandelEventsLogic {
     async handlePopulateOfferWrittenEvents(kandelId: KandelId, event: kandel.Populate, mangroveId: MangroveId, transaction: prisma.Transaction | undefined) {
         const kandelEvent = await this.db.kandelOperations.createKandelEvent(kandelId, transaction!.id );
          
-        const kandelPopulateEvent = await this.db.kandelOperations.createKandelPopulateEvent(kandelEvent);
+        const kandelPopulateEvent = await this.db.kandelOperations.createKandelPopulateEvent(kandelEvent, transaction!);
 
         for (const offerWritten of event.offers) {
             const offerId = new OfferId(mangroveId, offerWritten.offerList, offerWritten.offer.id);

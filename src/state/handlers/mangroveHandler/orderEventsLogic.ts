@@ -8,6 +8,7 @@ import {
   MangroveId,
   OfferId,
   OfferListingId,
+  OfferVersionId,
   OrderId,
   TakenOfferId,
   TokenBalanceId,
@@ -16,11 +17,13 @@ import {
 import { getFromBigNumber, fromBigNumber, getPrice } from "src/utils/numberUtils";
 import { AllDbOperations } from "src/state/dbOperations/allDbOperations";
 import BigNumber from "bignumber.js";
+import { EventsLogic } from "../eventsLogic";
 
-export class OrderEventLogic {
+export class OrderEventLogic extends EventsLogic {
   db: AllDbOperations;
   orderEventsLogicHelper = new OrderEventLogicHelper();
-  constructor(db: AllDbOperations) {
+  constructor(db: AllDbOperations, stream:string) {
+      super(stream);
       this.db = db;
   }
 
@@ -53,10 +56,10 @@ export class OrderEventLogic {
       id: offerListingId,
     });
     const prismaOrder = this.orderEventsLogicHelper.createOrder(mangroveId, offerListingId, tokens, order, takerAccountId, orderId, transaction!.id, parentOrderId);
-    const takenOffersWithEvents = await Promise.all(order.takenOffers.map((value) => this.orderEventsLogicHelper.mapTakenOffer(orderId, value, tokens, (o) => this.db.offerOperations.getOffer(o))));
+    const takenOffersWithEvents = await Promise.all(order.takenOffers.map((value) => this.orderEventsLogicHelper.mapTakenOffer(orderId, value, tokens, (o) => this.db.offerOperations.getOfferWithCurrentVersion(o))));
     const takenOffers: Omit<prisma.TakenOffer, "orderId">[] = takenOffersWithEvents.map(value => value.takenOffer);
 
-    await this.db.orderOperations.createOrder(orderId, prismaOrder, takenOffers);
+    await this.db.orderOperations.createOrder(orderId, prismaOrder, takenOffersWithEvents);
 
     for (let i = 0; i < takenOffersWithEvents.length; i++) {
       const { takenOffer, takenOfferEvent } = takenOffersWithEvents[i];
@@ -79,21 +82,19 @@ export class OrderEventLogic {
       await this.addNewInboundBalanceWithEvent(chainId, reserveId, inboundToken, transaction!.id, takenOfferId, takenOffer)
       await this.addNewOutboundBalanceWithEvent(chainId, reserveId, outboundToken, transaction!.id, takenOfferId, takenOffer)
       
-
-
     }
 
   }
 
   async addNewInboundBalanceWithEvent(chainId:ChainId, reserveId:AccountId, inboundToken:prisma.Token, txId:string, takenOfferId:TakenOfferId, takenOffer:Omit<prisma.TakenOffer, "orderId">) {
     const inboundTokenId = new TokenId(chainId, inboundToken.address);
-    const inboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: inboundTokenId })
+    const inboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: inboundTokenId, stream: this.stream })
     const { updatedOrNewTokenBalance, newVersion:newInboundBalance } = await this.db.tokenBalanceOperations.addTokenBalanceVersion({
       tokenBalanceId: inboundTokenBalanceId,
       txId: txId,
       updateFunc: (tokenBalanceVersion) => {
-        tokenBalanceVersion.received = new BigNumber(takenOffer.takerGot).plus(tokenBalanceVersion.received).toString();
-        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGot).plus(tokenBalanceVersion.balance).toString();
+        tokenBalanceVersion.received = new BigNumber(takenOffer.takerGave).plus(tokenBalanceVersion.received).toString();
+        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGave).plus(tokenBalanceVersion.balance).toString();
       }
     })
     await this. db.tokenBalanceOperations.createTokenBalanceEvent(reserveId, inboundTokenId, newInboundBalance, takenOfferId)
@@ -101,13 +102,13 @@ export class OrderEventLogic {
 
   async addNewOutboundBalanceWithEvent(chainId:ChainId, reserveId:AccountId, outboundToken:prisma.Token, txId:string, takenOfferId:TakenOfferId, takenOffer:Omit<prisma.TakenOffer, "orderId">) {
     const outboundTokenId = new TokenId(chainId, outboundToken.address);
-    const outboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: outboundTokenId })
+    const outboundTokenBalanceId = new TokenBalanceId({ accountId: reserveId, tokenId: outboundTokenId, stream: this.stream })
     const { updatedOrNewTokenBalance, newVersion:newOutboundBalance } = await this.db.tokenBalanceOperations.addTokenBalanceVersion({
       tokenBalanceId: outboundTokenBalanceId,
       txId: txId,
       updateFunc: (tokenBalanceVersion) => {
-        tokenBalanceVersion.send = new BigNumber(takenOffer.takerGave).plus(tokenBalanceVersion.send).toString();
-        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGave).minus(tokenBalanceVersion.balance).toString();
+        tokenBalanceVersion.send = new BigNumber(takenOffer.takerGot).plus(tokenBalanceVersion.send).toString();
+        tokenBalanceVersion.balance = new BigNumber(takenOffer.takerGot).minus(tokenBalanceVersion.balance).toString();
       }
     })
     await this. db.tokenBalanceOperations.createTokenBalanceEvent(reserveId, outboundTokenId, newOutboundBalance, takenOfferId)
@@ -175,18 +176,22 @@ export class OrderEventLogicHelper {
     orderId: OrderId,
     takenOfferEvent: mangroveSchema.core.TakenOffer,
     tokens: { inboundToken: { decimals: number }, outboundToken: { decimals: number } },
-    getOffer: (offerId: OfferId) => Promise<{ currentVersionId: string } | null>,
+    getOffer: (offerId: OfferId) => Promise<( {
+      currentVersion: {versionNumber: number, wants: string} | null;
+  }) | null>,
   ) {
     const takerGotBigNumber = getFromBigNumber({ value: takenOfferEvent.takerWants, token: tokens.outboundToken });
     const takerGaveBigNumber = getFromBigNumber({ value: takenOfferEvent.takerGives, token: tokens.inboundToken });
     const offerId = new OfferId(orderId.mangroveId, orderId.offerListKey, takenOfferEvent.id);
     const offer = await getOffer(offerId);
-
+    const currentVersion = offer?.currentVersion;
     assert(offer);
-
+    assert(currentVersion);
+    
+    
     const takenOffer: Omit<prisma.TakenOffer, "orderId"> = {
       id: new TakenOfferId(orderId, takenOfferEvent.id).value,
-      offerVersionId: offer.currentVersionId,
+      offerVersionId: new OfferVersionId(offerId, currentVersion.versionNumber +1).value,
       takerGot: takenOfferEvent.takerWants,
       takerGotNumber: takerGotBigNumber.toNumber(),
       takerGave: takenOfferEvent.takerGives,
@@ -196,6 +201,7 @@ export class OrderEventLogicHelper {
       failReason: takenOfferEvent.failReason ?? null,
       posthookData: takenOfferEvent.posthookData ?? null,
       posthookFailed: takenOfferEvent.posthookFailed ?? false,
+      partialFill: currentVersion.wants == takenOfferEvent.takerGives,
     };
 
     return { takenOffer, takenOfferEvent };

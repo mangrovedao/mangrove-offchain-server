@@ -17,8 +17,9 @@ import {
   TakerApprovalId,
   TokenId,
 } from "src/state/model";
+import { EventsLogic } from "../eventsLogic";
 
-export class MangroveEventsLogic {
+export class MangroveEventsLogic extends EventsLogic {
 
 
   async handleMangroveParamsUpdated(

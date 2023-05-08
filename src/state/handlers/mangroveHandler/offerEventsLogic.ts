@@ -14,8 +14,10 @@ import {
   OrderId,
 } from "src/state/model";
 import { getFromBigNumber, getPrice } from "src/utils/numberUtils";
+import { EventsLogic } from "../eventsLogic";
 
-export class OfferEventsLogic {
+export class OfferEventsLogic extends EventsLogic {
+
   async handleOfferRetracted(
     mangroveId: MangroveId,
     undo: boolean,
@@ -31,12 +33,11 @@ export class OfferEventsLogic {
       );
       return;
     }
-    await db.mangroveOrderOperations.addMangroveOrderVersionFromOfferId(
-      offerId,
-      txId,
-      (m) => (m.cancelled = true)
-    );
-    await db.offerOperations.addVersionedOffer(offerId, txId, (m) => m.deleted = true);
+    const offerVersion = await db.offerOperations.addVersionedOffer(offerId, txId, (m) => m.deleted = true);
+    const offerListingId = new OfferListingId(mangroveId, e.offerList);
+    
+    const mangroveEvent = await db.mangroveOperation.createMangroveEvent({mangroveId,txId})
+    await db.mangroveOperation.createOfferRetractEvent({offerListingId, offerVersion, mangroveEvent})
   }
 
   async handleOfferWritten(
@@ -44,35 +45,38 @@ export class OfferEventsLogic {
     undo: boolean,
     chainId: ChainId,
     mangroveId: MangroveId,
-    offerList: mangroveSchema.core.OfferList,
-    maker: string,
-    offer: mangroveSchema.core.Offer,
+    event: mangroveSchema.events.OfferWritten,
     transaction: prisma.Transaction,
     db: AllDbOperations,
     parentOrderId: OrderId | undefined
   ) {
     assert(txRef);
-    const offerId = new OfferId(mangroveId, offerList, offer.id);
+    const offerId = new OfferId(mangroveId, event.offerList, event.offer.id);
 
     if (undo) {
       await db.offerOperations.deleteLatestOfferVersion(offerId);
       return;
     }
 
-    const accountId = new AccountId(chainId, maker);
+    const accountId = new AccountId(chainId, event.maker);
     await db.accountOperations.ensureAccount(accountId);
     const tokens = await db.offerListOperations.getOfferListTokens({
-      id: new OfferListingId(mangroveId, offerList),
+      id: new OfferListingId(mangroveId, event.offerList),
     });
 
-    await db.offerOperations.addVersionedOffer(
+    const offerVersion = await db.offerOperations.addVersionedOffer(
       offerId,
       transaction?.id,
-      (v) => this.offerWrittenFunc(v, offer, mangroveId, tokens, transaction!.id, parentOrderId),
+      (v) => this.offerWrittenFunc(v, event.offer, mangroveId, tokens, transaction!.id, parentOrderId),
       {
         makerId: accountId
       }
     );
+
+    const offerListingId = new OfferListingId(mangroveId, event.offerList);
+    
+    const mangroveEvent = await db.mangroveOperation.createMangroveEvent({mangroveId,txId: transaction?.id})
+    await db.mangroveOperation.createOfferWriteEvent({offerListingId, offerVersion, makerId:accountId, mangroveEvent, event})
   }
 
   async offerWrittenFunc(

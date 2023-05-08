@@ -2,9 +2,11 @@ import assert from "assert";
 import { before, describe, it } from "mocha";
 import { MangroveOperations } from "src/state/dbOperations/mangroveOperations";
 import {
+  AccountId,
   ChainId,
   MangroveId,
   MangroveVersionId,
+  OfferListingId,
 } from "src/state/model";
 import { prisma } from "utils/test/mochaHooks";
 import { Mangrove, MangroveVersion } from "@prisma/client";
@@ -250,4 +252,60 @@ describe("Mangrove Operations Integration test suite", () => {
     });
   });
 
+  it(MangroveOperations.prototype.createMangroveEvent.name, async () => {
+    const mangroveEventCount=  await prisma.mangroveEvent.count();  
+    const mangroveEvent = await mangroveOperations.createMangroveEvent({ mangroveId, txId: "txId" });
+    assert.strictEqual( await prisma.mangroveEvent.count()-mangroveEventCount, 1);  
+    assert.deepStrictEqual( mangroveEvent.mangroveId, mangroveId.value)
+    assert.deepStrictEqual( mangroveEvent.txId, "txId")
+  })
+
+
+  it(MangroveOperations.prototype.createOfferWriteEvent.name, async () => {
+    const offerWriteCount=  await prisma.offerWriteEvent.count();  
+    const offer = {
+      gives: "10",
+      wants: "6",
+      gasprice: 4,
+      gasreq: 5,
+      prev: 1
+    };
+    const offerListingId =new OfferListingId(mangroveId, { outboundToken: "outbound", inboundToken:"inbound"});
+    const makerId = new AccountId(chainId, "makerAddress");
+    const offerWriteEvent = await mangroveOperations.createOfferWriteEvent({ 
+      offerListingId: offerListingId, 
+      offerVersion: {id: "offerVersionId"}, 
+      makerId: makerId, 
+      mangroveEvent: {id: "mangroveEventId"}, 
+      event:{ 
+        offer: offer
+      } });
+    assert.strictEqual( await prisma.offerWriteEvent.count()- offerWriteCount, 1);  
+    assert.deepStrictEqual( offerWriteEvent, { 
+      id:offerWriteEvent.id,
+      offerListingId: offerListingId.value,
+      offerVersionId: "offerVersionId",
+      makerId: makerId.value,
+      mangroveEventId: "mangroveEventId",
+      ...offer
+    })
+  })
+
+  it(MangroveOperations.prototype.createOfferRetractEvent.name, async () => {
+    const offerRetractCount = await prisma.offerRetractEvent.count();
+    const offerListingId = new OfferListingId(mangroveId, { outboundToken: "outbound", inboundToken:"inbound"});
+    const offerRetractEvent = await mangroveOperations.createOfferRetractEvent({
+      offerListingId: offerListingId,
+      offerVersion: { id: "offerVersionId" },
+      mangroveEvent: { id: "mangroveEventId" },
+    })
+    assert.strictEqual(await prisma.offerRetractEvent.count() - offerRetractCount, 1);
+    assert.deepStrictEqual(offerRetractEvent, {
+      id: offerRetractEvent.id,
+      offerListingId: offerListingId.value,
+      offerVersionId: "offerVersionId",
+      mangroveEventId: "mangroveEventId",
+    });
+
+  })
 });

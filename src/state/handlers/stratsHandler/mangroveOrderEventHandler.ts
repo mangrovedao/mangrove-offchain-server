@@ -28,7 +28,7 @@ export class IOrderLogicEventHandler extends PrismaStreamEventHandler<mangroveSc
   }
   chainConfigs = getChainConfigsOrThrow<ChainConfig>(config);
 
-  mangroveOrderEventsLogic = new MangroveOrderEventsLogic();
+  mangroveOrderEventsLogic = new MangroveOrderEventsLogic(this.stream);
 
   protected async handleParsedEvents(
     events: TypedEvent<mangroveSchema.strategyEvents.StrategyEvent>[],

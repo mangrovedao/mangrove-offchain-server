@@ -4,14 +4,12 @@ import { MangroveId, OfferId, OrderId } from "src/state/model";
 import { DbOperations, PrismaTx } from "./dbOperations";
 import { MangroveOrderOperations } from "./mangroveOrderOperations";
 import { OfferOperations } from "./offerOperations";
-import { MangroveOrderEventsLogic } from "src/state/handlers/stratsHandler/mangroveOrderEventsLogic";
-import BigNumber from "bignumber.js";
 
 export class OrderOperations extends DbOperations {
 
   private offerOperations: OfferOperations;
   private mangroveOrderOperations: MangroveOrderOperations;
-  private mangroveOrderEventsLogic: MangroveOrderEventsLogic = new MangroveOrderEventsLogic();
+  // private mangroveOrderEventsLogic: MangroveOrderEventsLogic = new MangroveOrderEventsLogic();
   public constructor(public readonly tx: PrismaTx) {
     super(tx);
     this.offerOperations = new OfferOperations(tx);
@@ -35,40 +33,30 @@ export class OrderOperations extends DbOperations {
   public async createOrder(
     orderId: OrderId,
     order: prismaModel.Order,
-    takenOffers: Omit<prismaModel.TakenOffer, "orderId">[]
+    takenOffers: {
+      takenOffer: Omit<prismaModel.TakenOffer, "orderId">;
+      takenOfferEvent: {id:number};
+  }[]
     ) {
       await this.tx.order.create( { data: { 
         ...order, 
         takenOffers: {
-          createMany: {data: takenOffers }
+          createMany: {data: takenOffers.map( v => v.takenOffer) }
       } } });
 
       // Updates offerVersions and possible mangroveOrderVersions
-      for( const takenOffer of takenOffers){
-        const offerVersion = await this.tx.offerVersion.findUnique({where: {id: takenOffer.offerVersionId}});
-        if(!offerVersion){
-          throw new Error(`Could no find OfferVersion from takenOffer.offerVersionId: ${takenOffer.offerVersionId}`);
-        }
-        const offer = await this.tx.offer.findUnique({where: {id: offerVersion?.offerId}});
+      for( const takenOfferData of takenOffers){
+
+        const offerId = new OfferId(orderId.mangroveId, orderId.offerListKey, takenOfferData.takenOfferEvent.id);
+        const offer = await this.tx.offer.findUnique({where: {id: offerId.value}});
         if(!offer){
-          throw new Error(`Could not find offer matching takenOffer with offerVersion id: ${takenOffer.offerVersionId}`)
+          throw new Error(`Could not find offer matching takenOffer with offer id: ${offerId.value}`)
         }
         const currentVersionId =  await this.offerOperations.getCurrentOfferVersion(offer);
-        if( currentVersionId.id != takenOffer.offerVersionId){
-          throw new Error(`Cannot take version of offer that is not the current version of the offer. currentOfferVersionId: ${currentVersionId.id} & takenOffer.offerVersionId: ${takenOffer.offerVersionId}`)
+        const newOfferVersion = await this.offerOperations.addVersionedOffer(new OfferId(orderId.mangroveId, orderId.offerListKey, offer.offerNumber), order.txId, (m) => m.deleted = true); 
+        if( newOfferVersion.id != takenOfferData.takenOffer.offerVersionId){
+          throw new Error(`Cannot take version of offer that is not the current version of the offer. currentOfferVersionId: ${newOfferVersion.id} & takenOffer.offerVersionId: ${takenOfferData.takenOffer.offerVersionId}`)
         }
-        await this.offerOperations.addVersionedOffer(new OfferId(orderId.mangroveId, orderId.offerListKey, offer.offerNumber), order.txId, (m) => m.deleted = true); 
-        const updateFunc = ( 
-          tokens: {
-             outboundToken: prismaModel.Token; 
-             inboundToken: prismaModel.Token; }, 
-          mangroveOrder: prismaModel.MangroveOrder, 
-          newVersion: Omit<prismaModel.MangroveOrderVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId">) =>
-           this.mangroveOrderEventsLogic.newVersionOfMangroveOrderFromTakenOffer( takenOffer, tokens, mangroveOrder, newVersion);
-        await this.mangroveOrderOperations.updateMangroveOrderFromTakenOffer(
-          new OfferId(orderId.mangroveId, orderId.offerListKey, offer.offerNumber),
-          updateFunc
-          );
       };
   }
 

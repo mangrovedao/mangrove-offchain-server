@@ -11,6 +11,9 @@ import {
 } from "src/state/model";
 import { DbOperations, PrismaTx, toNewVersionUpsert } from "./dbOperations";
 import { OfferListingOperations } from "./offerListingOperations";
+import { SetExpiry } from "@proximaone/stream-schema-mangrove/dist/strategyEvents";
+import { Timestamp } from "@proximaone/stream-schema-mangrove/dist/core";
+import logger from "src/utils/logger";
 
 export type MangroveOrderIds = {
   mangroveOrderId: string;
@@ -38,18 +41,21 @@ export class MangroveOrderOperations extends DbOperations {
       "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId"
     >) => void,
   ) {
-    const mangroveOrders = await this.tx.mangroveOrder.findMany({
+    const mangroveOrder = await this.tx.mangroveOrder.findFirst({
       where: { restingOrderId: id.value },
     });
-    for (const mangroveOrder of mangroveOrders) {
-      const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion( mangroveOrder );
-      updateFunc(mangroveOrderVersion);
-      await this.addMangroveOrderVersion(
-        new MangroveOrderId(id.mangroveId, id.offerListKey, mangroveOrder.proximaId ),
-        txId,
-        updateFunc,
-    );
+    if( !mangroveOrder){
+      logger.info(`MangroveOrder strat not yet created, offerId: ${id.value}`)
+      return;
     }
+    const mangroveOrderVersion = await this.getCurrentMangroveOrderVersion( mangroveOrder );
+    updateFunc(mangroveOrderVersion);
+    return await this.addMangroveOrderVersion(
+      new MangroveOrderId(id.mangroveId, { inboundToken: id.offerListKey.outboundToken, outboundToken: id.offerListKey.inboundToken}, mangroveOrder.proximaId ),
+      txId,
+      updateFunc,
+  );
+    
   }
 
   public async getCurrentMangroveOrderVersion(
@@ -110,15 +116,6 @@ export class MangroveOrderOperations extends DbOperations {
         id: newVersionId.value,
         txId: txId,
         mangroveOrderId: id.value,
-        filled: false,
-        cancelled: false,
-        failed: false,
-        failedReason: null,
-        takerGot: "0",
-        takerGotNumber: 0,
-        takerGave: "0",
-        takerGaveNumber: 0,
-        price: 0,
         expiryDate: new Date("0"),
         versionNumber: 0,
         prevVersionId: null
@@ -144,7 +141,7 @@ export class MangroveOrderOperations extends DbOperations {
     await this.tx.mangroveOrder.upsert(
       toNewVersionUpsert(mangroveOrder, newVersion.id )
     );
-    await this.tx.mangroveOrderVersion.create({ data: newVersion });
+    return await this.tx.mangroveOrderVersion.create({ data: newVersion });
   }
 
 
@@ -196,37 +193,22 @@ export class MangroveOrderOperations extends DbOperations {
     }
   }
 
-  public async updateMangroveOrderFromTakenOffer(
-    offerId: OfferId,
-    updateFunc: (     tokens: {
-      outboundToken: prisma.Token,
-      inboundToken: prisma.Token,
-  },
-  mangroveOrder: MangroveOrder, 
-  newVersion:Omit< prisma.MangroveOrderVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId" > ) => void
-  ) {
-    const mangroveOrders = await this.tx.mangroveOrder.findMany({
-      where: { restingOrderId: offerId.value },
-    });
-    for (const mangroveOrder of mangroveOrders) {
-      const tokens = await this.offerListingOperations.getOfferListTokens({
-        mangroveOrder,
-      });
-      await this.addMangroveOrderVersion(
-        new MangroveOrderId( offerId.mangroveId, offerId.offerListKey, mangroveOrder.proximaId ),
-        "",
-        ( m ) => updateFunc(tokens, mangroveOrder, m)
-      );
-    }
-  }
-
-
   public async getMangroveIdByStratId(stratId:AccountId){
     const mangroveOrder = await this.tx.mangroveOrder.findFirst({where: {stratId: stratId.value}});
     if( mangroveOrder){
       return new MangroveId(stratId.chainId, mangroveOrder.mangroveId);
     }
     return null;
+  }
+
+  async createMangroveOrderSetExpiryDateEvent(params:{mangroveOrderVersion:{ id : string}, event: {date:Timestamp}}){
+    return this.tx.mangroveOrderSetExpiryEvent.create({
+      data: {
+        mangroveOrderVersionId: params.mangroveOrderVersion.id,
+        expiryDate: new Date(params.event.date),
+      }
+    })
+
   }
 
 }

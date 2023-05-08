@@ -31,8 +31,20 @@ describe("Token Balance Operations Integration test suite", () => {
   const reserveId = new AccountId(chainId, "reserveAddress");
   const baseId = new TokenId(chainId,"baseAddress");
   const quoteId = new TokenId(chainId,"quoteAddress");
-  const tokenBalanceId = new TokenBalanceId({accountId:reserveId, tokenId});
-  const tokenBalanceVersionId = new TokenBalanceVersionId({tokenBalanceId, versionNumber:0})
+  const tokenBalanceId1 = new TokenBalanceId({accountId:reserveId, tokenId, stream: "stream1"});
+  const baseTokenBalanceId1 = new TokenBalanceId({accountId:reserveId, tokenId:baseId, stream: "stream1"});
+  const baseTokenBalanceId2 = new TokenBalanceId({accountId:reserveId, tokenId:baseId, stream: "stream2"});
+  const quoteTokenBalanceId1 = new TokenBalanceId({accountId:reserveId, tokenId:quoteId, stream: "stream1"});
+  const quoteTokenBalanceId2 = new TokenBalanceId({accountId:reserveId, tokenId:quoteId, stream: "stream2"});
+  const tokenBalanceVersionId1 = new TokenBalanceVersionId({tokenBalanceId: tokenBalanceId1, versionNumber:0})
+  const baseTokenBalance1VersionId1 = new TokenBalanceVersionId({tokenBalanceId: baseTokenBalanceId1, versionNumber:0})
+  const baseTokenBalance1VersionId2 = new TokenBalanceVersionId({tokenBalanceId: baseTokenBalanceId1, versionNumber:1})
+  const quoteTokenBalance1VersionId1 = new TokenBalanceVersionId({tokenBalanceId: quoteTokenBalanceId1, versionNumber:0})
+  const quoteTokenBalance1VersionId2 = new TokenBalanceVersionId({tokenBalanceId: quoteTokenBalanceId1, versionNumber:1})
+  const baseTokenBalance2VersionId1 = new TokenBalanceVersionId({tokenBalanceId: baseTokenBalanceId2, versionNumber:0})
+  const baseTokenBalance2VersionId2 = new TokenBalanceVersionId({tokenBalanceId: baseTokenBalanceId2, versionNumber:1})
+  const quoteTokenBalance2VersionId1 = new TokenBalanceVersionId({tokenBalanceId: quoteTokenBalanceId2, versionNumber:0})
+  const quoteTokenBalance2VersionId2 = new TokenBalanceVersionId({tokenBalanceId: quoteTokenBalanceId2, versionNumber:1})
   const mangroveId = new MangroveId(chainId, "mangroveAddress");
   const kandelId = new KandelId(chainId, "kandelAddress");
   const offerListKey: OfferListKey = {
@@ -40,24 +52,50 @@ describe("Token Balance Operations Integration test suite", () => {
     inboundToken: quoteId.tokenAddress,
   };
   
-  let tx:Transaction;
+  let tx1:Transaction;
+  let tx2:Transaction;
+  let tx3:Transaction;
   let token:Token;
   let reserve:Account;
   let kandel:Kandel;
-  let tokenBalance:TokenBalance;
+  let tokenBalance1:TokenBalance;
   let tokenBalanceVersion:TokenBalanceVersion;
 
   beforeEach(async () => {
 
-    tx = await prisma.transaction.create({
+    tx1 = await prisma.transaction.create({
       data: {
-        id: "txId",
+        id: "txId1",
         chainId: chainId.value,
-        txHash: "txHash",
+        txHash: "txHash1",
         from: "from",
         blockNumber: 0,
         blockHash: "blockHash",
-        time: new Date()
+        time: new Date(2023,1,1)
+      }
+    })
+
+    tx2 = await prisma.transaction.create({
+      data: {
+        id: "txId2",
+        chainId: chainId.value,
+        txHash: "txHash2",
+        from: "from",
+        blockNumber: 0,
+        blockHash: "blockHash",
+        time: new Date(2023,5,1)
+      }
+    })
+
+    tx3 = await prisma.transaction.create({
+      data: {
+        id: "txId3",
+        chainId: chainId.value,
+        txHash: "txHash3",
+        from: "from",
+        blockNumber: 0,
+        blockHash: "blockHash",
+        time: new Date(2023,8,1)
       }
     })
 
@@ -92,20 +130,61 @@ describe("Token Balance Operations Integration test suite", () => {
       }
     })
 
-    tokenBalance = await prisma.tokenBalance.create( {
+    tokenBalance1 = await prisma.tokenBalance.create( {
       data: {
-        id: tokenBalanceId.value,
+        id: tokenBalanceId1.value,
         accountId: reserveId.value,
         tokenId: tokenId.value,
-        currentVersionId: tokenBalanceVersionId.value
+        stream: tokenBalanceId1.params.stream,
+        currentVersionId: tokenBalanceVersionId1.value
+      }
+    })
+
+    await prisma.tokenBalance.create( {
+      data: {
+        id: baseTokenBalanceId1.value,
+        accountId: reserveId.value,
+        tokenId: baseId.value,
+        stream: baseTokenBalanceId1.params.stream,
+        currentVersionId: baseTokenBalance1VersionId2.value
+      }
+    })
+
+    await prisma.tokenBalance.create( {
+      data: {
+        id: baseTokenBalanceId2.value,
+        accountId: reserveId.value,
+        tokenId: baseId.value,
+        stream: baseTokenBalanceId2.params.stream,
+        currentVersionId: baseTokenBalance2VersionId2.value
+      }
+    })
+
+    await prisma.tokenBalance.create( {
+      data: {
+        id: quoteTokenBalanceId1.value,
+        accountId: reserveId.value,
+        tokenId: quoteId.value,
+        stream: quoteTokenBalanceId1.params.stream,
+        currentVersionId: quoteTokenBalance1VersionId2.value
+      }
+    })
+
+    await prisma.tokenBalance.create( {
+      data: {
+        id: quoteTokenBalanceId2.value,
+        accountId: reserveId.value,
+        tokenId: quoteId.value,
+        stream: quoteTokenBalanceId2.params.stream,
+        currentVersionId: quoteTokenBalance2VersionId2.value
       }
     })
 
     tokenBalanceVersion = await prisma.tokenBalanceVersion.create({
       data: {
-        id: tokenBalanceVersionId.value,
-        txId: tx.id,
-        tokenBalanceId: tokenBalanceId.value,
+        id: tokenBalanceVersionId1.value,
+        txId: tx1.id,
+        tokenBalanceId: tokenBalanceId1.value,
         deposit: "20",
         withdrawal: "10",
         send: "0",
@@ -115,46 +194,158 @@ describe("Token Balance Operations Integration test suite", () => {
       }
     })
 
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: baseTokenBalance1VersionId1.value,
+        txId: tx1.id,
+        tokenBalanceId: baseTokenBalanceId1.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "7",
+        received: "1",
+        balance: "11",
+        versionNumber: 0
+      }
+    })
+
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: baseTokenBalance1VersionId2.value,
+        txId: tx2.id,
+        tokenBalanceId: baseTokenBalanceId1.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "8",
+        received: "3",
+        balance: "15",
+        versionNumber: 1
+      }
+    })
+
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: baseTokenBalance2VersionId1.value,
+        txId: tx2.id,
+        tokenBalanceId: baseTokenBalanceId2.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "5",
+        received: "2",
+        balance: "16",
+        versionNumber: 0
+      }
+    })
+
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: baseTokenBalance2VersionId2.value,
+        txId: tx3.id,
+        tokenBalanceId: baseTokenBalanceId2.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "6",
+        received: "7",
+        balance: "12",
+        versionNumber: 1
+      }
+    })
+
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: quoteTokenBalance1VersionId1.value,
+        txId: tx1.id,
+        tokenBalanceId: quoteTokenBalanceId1.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "3",
+        received: "1",
+        balance: "11",
+        versionNumber: 0
+      }
+    })
+
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: quoteTokenBalance1VersionId2.value,
+        txId: tx3.id,
+        tokenBalanceId: quoteTokenBalanceId1.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "4",
+        received: "3",
+        balance: "15",
+        versionNumber: 1
+      }
+    })
+
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: quoteTokenBalance2VersionId1.value,
+        txId: tx2.id,
+        tokenBalanceId: quoteTokenBalanceId2.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "1",
+        received: "2",
+        balance: "16",
+        versionNumber: 0
+      }
+    })
+
+    await prisma.tokenBalanceVersion.create({
+      data: {
+        id: quoteTokenBalance2VersionId2.value,
+        txId: tx2.id,
+        tokenBalanceId: quoteTokenBalanceId2.value,
+        deposit: "20",
+        withdrawal: "10",
+        send: "2",
+        received: "7",
+        balance: "12",
+        versionNumber: 1
+      }
+    })
+
 
   });
 
 
   describe(TokenBalanceOperations.prototype.addTokenBalanceVersion.name, () => {
     it("Has existing reserve account + has existing token balance  ", async () => {
-      assert.strictEqual(await prisma.tokenBalance.count(), 1);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 1);
-      assert.strictEqual(await prisma.account.count(), 1);
-      const { updatedOrNewTokenBalance,newVersion} = await tokenBalanceOperations.addTokenBalanceVersion({tokenBalanceId, txId:tx.id, updateFunc:(version) => { version.deposit="10"; version.balance="10" }});
-      assert.strictEqual(await prisma.tokenBalance.count(), 1);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 2);
-      assert.strictEqual(await prisma.account.count(), 1);
+      const tokenBalanceCount =  await prisma.tokenBalance.count();
+      const tokenBalanceVersionCount = await prisma.tokenBalanceVersion.count();
+      const accountCount =  await prisma.account.count();
+      const { updatedOrNewTokenBalance,newVersion} = await tokenBalanceOperations.addTokenBalanceVersion({tokenBalanceId: tokenBalanceId1, txId:tx1.id, updateFunc:(version) => { version.deposit="10"; version.balance="10" }});
+      assert.strictEqual(await prisma.tokenBalance.count()-tokenBalanceCount, 0);
+      assert.strictEqual(await prisma.tokenBalanceVersion.count() - tokenBalanceVersionCount, 1);
+      assert.strictEqual(await prisma.account.count() - accountCount, 0);
       assert.deepStrictEqual( {
         ...tokenBalanceVersion, 
         deposit:"10", 
         balance:"10",
         versionNumber: 1,
         prevVersionId: tokenBalanceVersion.id,
-        id: new TokenBalanceVersionId({tokenBalanceId, versionNumber:1}).value
+        id: new TokenBalanceVersionId({tokenBalanceId: tokenBalanceId1, versionNumber:1}).value
        }, newVersion )
       assert.deepStrictEqual({
-        ...tokenBalance,
-        currentVersionId:new TokenBalanceVersionId({tokenBalanceId, versionNumber:1}).value
+        ...tokenBalance1,
+        currentVersionId:new TokenBalanceVersionId({tokenBalanceId: tokenBalanceId1, versionNumber:1}).value
       },  updatedOrNewTokenBalance)
     })
 
     it("Has no existing reserve account + has no existing token balance  ", async () => {
-      assert.strictEqual(await prisma.tokenBalance.count(), 1);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 1);
-      assert.strictEqual(await prisma.account.count(), 1);
+      const tokenBalanceCount =  await prisma.tokenBalance.count();
+      const tokenBalanceVersionCount = await prisma.tokenBalanceVersion.count();
+      const accountCount =  await prisma.account.count();
       const newReserveId = new AccountId(chainId, "reserveAddress2")
-      const newTokenBalanceId = new TokenBalanceId({accountId:newReserveId, tokenId})
-      const { updatedOrNewTokenBalance,newVersion} = await tokenBalanceOperations.addTokenBalanceVersion({tokenBalanceId: newTokenBalanceId, txId:tx.id });
-      assert.strictEqual(await prisma.tokenBalance.count(), 2);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 2);
-      assert.strictEqual(await prisma.account.count(), 2);
+      const newTokenBalanceId = new TokenBalanceId({accountId:newReserveId, tokenId, stream: "stream"})
+      const { updatedOrNewTokenBalance,newVersion} = await tokenBalanceOperations.addTokenBalanceVersion({tokenBalanceId: newTokenBalanceId, txId:tx1.id });
+      assert.strictEqual(await prisma.tokenBalance.count()-tokenBalanceCount, 1);
+      assert.strictEqual(await prisma.tokenBalanceVersion.count() - tokenBalanceVersionCount, 1);
+      assert.strictEqual(await prisma.account.count() - accountCount, 1);
       assert.deepStrictEqual( {
         id: new TokenBalanceVersionId({tokenBalanceId:newTokenBalanceId, versionNumber:0}).value,
-        txId: tx.id,
+        txId: tx1.id,
         tokenBalanceId: newTokenBalanceId.value,
         deposit:"0", 
         withdrawal: "0",
@@ -168,23 +359,24 @@ describe("Token Balance Operations Integration test suite", () => {
         id: newTokenBalanceId.value,
         accountId: newReserveId.value,
         tokenId: tokenId.value,
+        stream: "stream",
         currentVersionId: new TokenBalanceVersionId({tokenBalanceId:newTokenBalanceId, versionNumber:0}).value
       },  updatedOrNewTokenBalance)
     })
 
     it("Has existing reserve account + has no existing token balance  ", async () => {
-      assert.strictEqual(await prisma.tokenBalance.count(), 1);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 1);
-      assert.strictEqual(await prisma.account.count(), 1);
+      const tokenBalanceCount =  await prisma.tokenBalance.count();
+      const tokenBalanceVersionCount = await prisma.tokenBalanceVersion.count();
+      const accountCount =  await prisma.account.count();
       const newTokenId = new TokenId(chainId, "token2");
-      const newTokenBalanceId = new TokenBalanceId({accountId:reserveId, tokenId:newTokenId})
-      const { updatedOrNewTokenBalance,newVersion} = await tokenBalanceOperations.addTokenBalanceVersion({tokenBalanceId: newTokenBalanceId, txId:tx.id });
-      assert.strictEqual(await prisma.tokenBalance.count(), 2);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 2);
-      assert.strictEqual(await prisma.account.count(), 1);
+      const newTokenBalanceId = new TokenBalanceId({accountId:reserveId, tokenId:newTokenId,stream: "stream"})
+      const { updatedOrNewTokenBalance,newVersion} = await tokenBalanceOperations.addTokenBalanceVersion({tokenBalanceId: newTokenBalanceId, txId:tx1.id });
+      assert.strictEqual(await prisma.tokenBalance.count()-tokenBalanceCount, 1);
+      assert.strictEqual(await prisma.tokenBalanceVersion.count()-tokenBalanceVersionCount, 1);
+      assert.strictEqual(await prisma.account.count() - accountCount, 0);
       assert.deepStrictEqual( {
         id: new TokenBalanceVersionId({tokenBalanceId:newTokenBalanceId, versionNumber:0}).value,
-        txId: tx.id,
+        txId: tx1.id,
         tokenBalanceId: newTokenBalanceId.value,
         deposit:"0", 
         withdrawal: "0",
@@ -198,6 +390,7 @@ describe("Token Balance Operations Integration test suite", () => {
         id: newTokenBalanceId.value,
         accountId: reserveId.value,
         tokenId: newTokenId.value,
+        stream: "stream",
         currentVersionId: new TokenBalanceVersionId({tokenBalanceId:newTokenBalanceId, versionNumber:0}).value
       },  updatedOrNewTokenBalance)
     })
@@ -206,68 +399,68 @@ describe("Token Balance Operations Integration test suite", () => {
 
   describe(TokenBalanceOperations.prototype.getTokenBalance.name,  () => {
     it("Cant find tokenBalance", async () => {
-      const tokenBalanceId = new TokenBalanceId({accountId:kandelId, tokenId:baseId});
+      const tokenBalanceId = new TokenBalanceId({accountId:kandelId, tokenId:baseId, stream: "stream1"});
       await assert.rejects( tokenBalanceOperations.getTokenBalance( tokenBalanceId) );
     })
 
     it("Has token balance", async () => {
-      const tokenBalanceId = new TokenBalanceId({accountId:reserveId, tokenId:tokenId});
+      const tokenBalanceId = new TokenBalanceId({accountId:reserveId, tokenId:tokenId,  stream: "stream1"});
       const thisTokenBalance = await tokenBalanceOperations.getTokenBalance( tokenBalanceId );
-      assert.deepStrictEqual( tokenBalance, thisTokenBalance )
+      assert.deepStrictEqual( tokenBalance1, thisTokenBalance )
     })
   })
 
   describe(TokenBalanceOperations.prototype.getCurrentTokenBalanceVersion.name,  () => {
     it("No current version", async () => {
-      await assert.rejects( tokenBalanceOperations.getCurrentTokenBalanceVersion({ ...tokenBalance, currentVersionId: "noMatch"}) );
+      await assert.rejects( tokenBalanceOperations.getCurrentTokenBalanceVersion({ ...tokenBalance1, currentVersionId: "noMatch"}) );
     })
 
     it("Has current version", async () => {
-      const thisTokenBalance =  await tokenBalanceOperations.getCurrentTokenBalanceVersion( tokenBalance);
+      const thisTokenBalance =  await tokenBalanceOperations.getCurrentTokenBalanceVersion( tokenBalance1);
       assert.deepStrictEqual( tokenBalanceVersion, thisTokenBalance )
     })
   })
 
   describe(TokenBalanceOperations.prototype.getTokenBalanceId.name, () => {
     it("With id", () => {
-      const id =  tokenBalanceOperations.getTokenBalanceId( tokenBalanceId);
-      assert.strictEqual(tokenBalanceId.value, id)
+      const id =  tokenBalanceOperations.getTokenBalanceId( tokenBalanceId1);
+      assert.strictEqual(tokenBalanceId1.value, id)
     })
     it("With TokenBalance", () => {
-      const id =  tokenBalanceOperations.getTokenBalanceId( tokenBalance);
-      assert.strictEqual(tokenBalance.id, id)
+      const id =  tokenBalanceOperations.getTokenBalanceId( tokenBalance1);
+      assert.strictEqual(tokenBalance1.id, id)
     })
   })
 
   describe(TokenBalanceOperations.prototype.deleteLatestTokenBalanceVersion.name,  () => {
     it("No token balance", async () => {
 
-      await assert.rejects( tokenBalanceOperations.deleteLatestTokenBalanceVersion( new TokenBalanceId({ accountId: new AccountId(chainId, "noMatch"), tokenId:tokenId})) );
+      await assert.rejects( tokenBalanceOperations.deleteLatestTokenBalanceVersion( new TokenBalanceId({ accountId: new AccountId(chainId, "noMatch"), tokenId:tokenId, stream: "stream"})) );
     })
     it("No prevVersion", async () => {
-      assert.strictEqual(await prisma.tokenBalance.count(), 1);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 1);
-      await tokenBalanceOperations.deleteLatestTokenBalanceVersion( tokenBalanceId );
-      assert.strictEqual(await prisma.tokenBalance.count(), 0);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 0);
+      const tokenBalanceCount = await prisma.tokenBalance.count();
+      const tokenBalanceVersionCount = await prisma.tokenBalanceVersion.count();
+      await tokenBalanceOperations.deleteLatestTokenBalanceVersion( tokenBalanceId1 );
+      assert.strictEqual(await prisma.tokenBalance.count() - tokenBalanceCount, -1);
+      assert.strictEqual(await prisma.tokenBalanceVersion.count() - tokenBalanceVersionCount, -1);
     })
 
     it("Has prevVersion", async () => {
-      await tokenBalanceOperations.addTokenBalanceVersion({ tokenBalanceId: tokenBalanceId, txId: "txId2", updateFunc: (v) => {v.deposit="10"; v.balance= "30"; } })
-      assert.strictEqual(await prisma.tokenBalance.count(), 1);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 2);
-      await tokenBalanceOperations.deleteLatestTokenBalanceVersion( tokenBalanceId );
-      assert.strictEqual(await prisma.tokenBalance.count(), 1);
-      assert.strictEqual(await prisma.tokenBalanceVersion.count(), 1);
+      await tokenBalanceOperations.addTokenBalanceVersion({ tokenBalanceId: tokenBalanceId1, txId: "txId2", updateFunc: (v) => {v.deposit="10"; v.balance= "30"; } })
+      const tokenBalanceCount = await prisma.tokenBalance.count();
+      const tokenBalanceVersionCount = await prisma.tokenBalanceVersion.count();
+      await tokenBalanceOperations.deleteLatestTokenBalanceVersion( tokenBalanceId1 );
+      assert.strictEqual(await prisma.tokenBalance.count() - tokenBalanceCount, 0);
+      assert.strictEqual(await prisma.tokenBalanceVersion.count() - tokenBalanceVersionCount, -1);
     })
   })
 
   describe(TokenBalanceOperations.prototype.createTokenBalanceEvent.name, async () => {
     it( "With kandelId and taken offerId", async () => {
-      assert.strictEqual(await prisma.tokenBalanceEvent.count(), 0);
+      const tokenBalanceCount = await prisma.tokenBalanceEvent.count();
       const takenOfferId = new TakenOfferId( new OrderId(mangroveId, offerListKey, "proximaId"), 2);
       const event = await tokenBalanceOperations.createTokenBalanceEvent(reserveId, tokenId, tokenBalanceVersion, takenOfferId)
-      assert.strictEqual(await prisma.tokenBalanceEvent.count(), 1);
+      assert.strictEqual(await prisma.tokenBalanceEvent.count()-tokenBalanceCount, 1);
       const eventInDb = await prisma.tokenBalanceEvent.findUnique({where: { id: event.id}})
       assert.deepStrictEqual( event, eventInDb )
       assert.strictEqual(event.takenOfferId, takenOfferId.value)
@@ -306,6 +499,17 @@ describe("Token Balance Operations Integration test suite", () => {
     assert.strictEqual(await prisma.tokenBalanceWithdrawalEvent.count(), 1);
     const eventInDb = await prisma.tokenBalanceWithdrawalEvent.findUnique({where: { id: withdrawEvent.id}})
     assert.deepStrictEqual( withdrawEvent, eventInDb )
+  })
+
+  it(TokenBalanceOperations.prototype.getCurrentBaseAndQuoteBalanceForAddress.name, async () => {
+    const balances =  await tokenBalanceOperations.getCurrentBaseAndQuoteBalanceForAddress( reserveId, baseId, quoteId, tx2 );
+
+    assert.deepStrictEqual( balances, { 
+      baseSend: "13", 
+      baseReceived: "5",
+      quoteSend: "5",
+      quoteReceived: "8",
+     } )
   })
 
 });

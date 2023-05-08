@@ -200,14 +200,10 @@ function createPeriod(params: { type: "Retract" | "Populate", start: Date, end: 
 
 function createBaseQuoteBalance(params: { baseSend: string; baseReceived: string; quoteSend: string; quoteReceived: string; }): baseQuoteBalance {
     return {
-        baseTokenBalanceVersion: {
-            send: toBigNumber({ value: params.baseSend, token: baseToken }).toString(),
-            received:  toBigNumber({ value: params.baseReceived, token: baseToken }).toString()
-        },
-        quoteTokenBalanceVersion: {
-            send:  toBigNumber({ value: params.quoteSend, token: quoteToken }).toString(),
-            received: toBigNumber({ value: params.quoteReceived, token: quoteToken }).toString(),
-        }
+        baseSend: toBigNumber({ value: params.baseSend, token: baseToken }).toString(),
+        baseReceived:  toBigNumber({ value: params.baseReceived, token: baseToken }).toString(),
+        quoteSend:  toBigNumber({ value: params.quoteSend, token: quoteToken }).toString(),
+        quoteReceived: toBigNumber({ value: params.quoteReceived, token: quoteToken }).toString(),
     };
 }
 

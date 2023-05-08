@@ -14,7 +14,7 @@ describe("Kandel Events Logic Integration test suite", () => {
     let kandelEventsLogic: KandelEventsLogic;
 
     before(() => {
-        kandelEventsLogic = new KandelEventsLogic(allDbOperations(prisma));
+        kandelEventsLogic = new KandelEventsLogic(allDbOperations(prisma), "stream");
     });
     const chainId = new ChainId(10);
     const mangroveId = new MangroveId(chainId, "mangroveid");
@@ -42,7 +42,7 @@ describe("Kandel Events Logic Integration test suite", () => {
     const kandelId = new KandelId(chainId, "newKandelAddress");
     const kandeVersionId = new KandelVersionId({kandelId, versionNumber:0})
     const reserveId = new AccountId(chainId, "reserveAddress");
-    const tokenBalanceId = new TokenBalanceId({accountId:reserveId, tokenId: tokenAId});
+    const tokenBalanceId = new TokenBalanceId({accountId:reserveId, tokenId: tokenAId, stream:"stream"});
     const tokenBalanceVersionId = new TokenBalanceVersionId({tokenBalanceId, versionNumber:0})
     const offerABId = new OfferId(mangroveId, offerListKeyAB, 1)
     const offerVersionIdAB = new OfferVersionId(offerABId, 0)
@@ -210,6 +210,7 @@ describe("Kandel Events Logic Integration test suite", () => {
             id:tokenBalanceId.value,
             tokenId: tokenAId.value,
             accountId: reserveId.value,
+            stream: "stream",
             currentVersionId: tokenBalanceVersionId.value
         }})
 

@@ -11,7 +11,9 @@ export class OfferOperations extends DbOperations {
   public async getOffer(id: OfferId){
     return await this.tx.offer.findUnique({ where: { id: id.value } });
   }
-
+  public async getOfferWithCurrentVersion(id: OfferId){
+    return await this.tx.offer.findUnique({ where: { id: id.value }, include: { currentVersion: true } });
+  }
 
   // Add a new OfferVersion to a (possibly new) Offer
   public async addVersionedOffer(
@@ -83,7 +85,7 @@ export class OfferOperations extends DbOperations {
       toNewVersionUpsert( offer, newVersion.id )
     );
 
-    await this.tx.offerVersion.create({ data: newVersion });
+    return await this.tx.offerVersion.create({ data: newVersion });
   }
 
 
