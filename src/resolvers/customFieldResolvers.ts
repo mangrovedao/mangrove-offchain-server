@@ -20,6 +20,7 @@ import { KandelDepositWithdraw, KandelFailedOffer, KandelFill, KandelOffer, Kand
 import { MangroveOrderFillWithTokens, MangroveOrderOpenOrder } from "./mangroveOrderObjects";
 import { GraphQLError } from "graphql";
 import { KandelReturnUtils } from "src/utils/KandelReturnUtils";
+import { getFromBigNumber } from "src/utils/numberUtils";
 const fetch = fetchBuilder.withCache(new MemoryCache({ ttl: 1000 }));
 async function fetchTokenPriceIn(token: Token, inSymbol: string) {
   return (await fetch(
@@ -142,26 +143,12 @@ export class MangroveOrderResolver {
         taker: true,
         offerListing: { include: { inboundToken: true, outboundToken: true } }
       }, orderBy: [
-        { 
-          offer: { 
-            currentVersion: { 
-              deleted: "asc", 
-              takenOffer: { 
-                failReason: "asc", 
-                partialFill: "asc"
-              }, 
-              OfferRetractEvent: { 
-                id: "asc"
-              }, 
-              tx: { 
-                time: "desc"
-              } 
-            } 
-          }, 
-          currentVersion: { 
-            expiryDate: "desc"
-          } 
-        },
+        {offer: { currentVersion: { deleted: "desc"}}},
+        {offer: { currentVersion: { takenOffer: { failReason: "desc"}}} },
+        {offer: { currentVersion: { takenOffer: { partialFill: "desc"}}} },
+        {offer: { currentVersion: { OfferRetractEvent: { id: "desc"}}} },
+        {offer: { currentVersion: { tx: { time: "desc"}}} },
+        { currentVersion: { expiryDate: "desc"} },
         {
           order: {
             tx:{
@@ -173,10 +160,11 @@ export class MangroveOrderResolver {
     })
     
     return mangroveOrders.map(m => {
-      const takerGot= this.getTakerGot( m.offer?.offerVersions.map(v => v.takenOffer), m.order.takerGotNumber );
-      const takerGave= this.getTakerGave( m.offer?.offerVersions.map(v => v.takenOffer), m.order.takerGaveNumber );
+      const takerGot= this.getTakerGot( m.offer?.offerVersions.map(v => v.takenOffer), new BigNumber( m.order.takerGot ) );
+      const takerGave= this.getTakerGave( m.offer?.offerVersions.map(v => v.takenOffer), new BigNumber(m.order.takerGaveNumber ) );
       const expiryDate = m.currentVersion?.expiryDate.getTime() == new Date(0).getTime() ? undefined : m.currentVersion?.expiryDate;
-      const status = this.getStatus(expiryDate, m.offer?.currentVersion, m.takerWantsNumber, takerGot);
+      const takerGotPlusFee = takerGot.plus(m.totalFee)
+      const status = this.getStatus(expiryDate, m.offer?.currentVersion, new BigNumber( m.takerWants ), takerGotPlusFee);
       return new MangroveOrderOpenOrder({
         mangroveOrderId: m.id,
         isBuy: m.fillWants ? true : false,
@@ -185,13 +173,13 @@ export class MangroveOrderResolver {
         taker: m.taker.address,
         inboundToken: m.offerListing.inboundToken,
         outboundToken: m.offerListing.outboundToken,
-        price: takerGave/takerGot,
+        price: takerGot.gt(0)  ? takerGave.div(takerGot).toNumber() : 0,
         status: status,
         isFailed: this.getIsFailed(m.offer?.currentVersion?.takenOffer?.failReason),
-        isFilled: m.takerWantsNumber == takerGot,
+        isFilled: takerGotPlusFee.gte(m.takerWants),
         failedReason: m.offer?.currentVersion?.takenOffer?.failReason ?? undefined,
         expiryDate: expiryDate,
-        takerGot: takerGot,
+        takerGot: getFromBigNumber({ value: takerGot.toString(), token: m.offerListing.outboundToken }).toNumber(),
         date: m.order.tx.time,
         takerWants: m.takerWantsNumber,
 	      txHash: m.order.tx.txHash
@@ -202,18 +190,18 @@ export class MangroveOrderResolver {
 
 
 
-  private getTakerGave(takenOffers: (TakenOffer|null)[] | undefined, gaveFromOrder: number ): number  {
+  private getTakerGave(takenOffers: (TakenOffer|null)[] | undefined, gaveFromOrder: BigNumber ): BigNumber  {
     if( takenOffers == undefined) {
-      return 0
+      return gaveFromOrder
     }
-    return takenOffers.reduce( (prev, current) => current == null ? prev : prev+current.takerGotNumber , 0) + gaveFromOrder;
+    return takenOffers.reduce( (prev, current) => current == null ? prev : prev.plus(current.takerGot) , new BigNumber(0)).plus( gaveFromOrder );
   }
 
-  private getTakerGot(takenOffers: (TakenOffer|null)[] | undefined, gotFromOrder: number ): number  {
+  private getTakerGot(takenOffers: (TakenOffer|null)[] | undefined, gotFromOrder: BigNumber ): BigNumber  {
     if( takenOffers == undefined) {
-      return 0
+      return gotFromOrder
     }
-    return takenOffers.reduce( (prev, current) => current == null ? prev : prev+current.takerGaveNumber , 0) + gotFromOrder;
+    return takenOffers.reduce( (prev, current) => current == null ? prev : prev.plus(current.takerGave) , new BigNumber(0)).plus( gotFromOrder );
   }
 
   private getIsFailed(failReason: string | null | undefined): boolean {
@@ -224,12 +212,12 @@ export class MangroveOrderResolver {
   }
 
 
-  private getStatus(expiryDate: Date |  undefined,  currentVersion: OfferVersion | null | undefined, takerWants:number, takerGot:number): "Cancelled" | "Failed" | "Filled" | "Partial Fill" | "Open" | undefined {
+  private getStatus(expiryDate: Date |  undefined,  currentVersion: OfferVersion | null | undefined, takerWants:BigNumber, takerGotPlusFee:BigNumber): "Cancelled" | "Failed" | "Filled" | "Partial Fill" | "Open" | undefined {
     if(currentVersion == undefined || currentVersion == null) {
-      return takerGot == takerWants ? "Filled" : "Partial Fill";
+      return takerGotPlusFee.gte(takerWants) ? "Filled" : "Partial Fill";
     }
     const failReason =currentVersion.takenOffer?.failReason ?? undefined;
-    const isFilled = takerGot == takerWants;
+    const isFilled = takerGotPlusFee == takerWants;
     const isFailed = this.getIsFailed(failReason);
     
     if( 
