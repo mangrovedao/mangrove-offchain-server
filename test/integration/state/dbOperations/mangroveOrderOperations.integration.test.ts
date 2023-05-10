@@ -125,6 +125,7 @@ describe("Mangrove Order Operations Integration test suite", () => {
         orderId: orderId.value,
         restingOrderId: offerId.value,
         restingOrder: true,
+        hasRestingOrder: true,
         fillOrKill: true,
         fillWants: true,
         takerWants: "100",

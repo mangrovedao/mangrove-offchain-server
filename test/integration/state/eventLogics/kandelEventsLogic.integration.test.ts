@@ -146,6 +146,7 @@ describe("Kandel Events Logic Integration test suite", () => {
             gasprice: 10,
             gasreq: 6000,
             live: true,
+            isRetracted: false,
             deprovisioned: false,
             versionNumber: 0,
         }})
@@ -170,6 +171,7 @@ describe("Kandel Events Logic Integration test suite", () => {
             gasprice: 10,
             gasreq: 6000,
             live: true,
+            isRetracted: false,
             deprovisioned: false,
             versionNumber: 0,
         }})

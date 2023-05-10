@@ -33,7 +33,11 @@ export class OfferEventsLogic extends EventsLogic {
       );
       return;
     }
-    const offerVersion = await db.offerOperations.addVersionedOffer(offerId, txId, (m) => m.deleted = true);
+    const offerVersion = await db.offerOperations.addVersionedOffer(offerId, txId, (m) => {
+           m.deleted = true
+           m.isRetracted = true
+           m.live = false
+           });
     const offerListingId = new OfferListingId(mangroveId, e.offerList);
     
     const mangroveEvent = await db.mangroveOperation.createMangroveEvent({mangroveId,txId})
@@ -92,6 +96,7 @@ export class OfferEventsLogic extends EventsLogic {
     offerVersion.txId = txId;
     offerVersion.parentOrderId = parentOrderId?.value ?? null;
     offerVersion.deleted = false;
+    offerVersion.isRetracted = false;
     offerVersion.gasprice = offer.gasprice;
     offerVersion.gives = offer.gives;
     offerVersion.givesNumber = givesBigNumber.toNumber();

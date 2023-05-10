@@ -58,6 +58,7 @@ export class OfferOperations extends DbOperations {
         gasreq: 0,
         live: false,
         deprovisioned: false,
+        isRetracted: false,
         versionNumber: 0,
         prevVersionId: null
       }

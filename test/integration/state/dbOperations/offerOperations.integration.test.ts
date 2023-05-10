@@ -60,6 +60,7 @@ describe("Offer Operations Integration test suite", () => {
         gasprice: 10,
         gasreq: 200,
         live: true,
+        isRetracted: false,
         deprovisioned: false,
         versionNumber: 0
       }
@@ -122,6 +123,7 @@ describe("Offer Operations Integration test suite", () => {
         gasreq: 0,
         live: false,
         deprovisioned: false,
+        isRetracted: false,
         versionNumber: 0,
         prevVersionId: null,
         kandelPopulateEventId: null,

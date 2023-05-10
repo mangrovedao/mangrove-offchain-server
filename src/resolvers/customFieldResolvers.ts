@@ -143,19 +143,12 @@ export class MangroveOrderResolver {
         taker: true,
         offerListing: { include: { inboundToken: true, outboundToken: true } }
       }, orderBy: [
-        {offer: { currentVersion: { deleted: "desc"}}},
-        {offer: { currentVersion: { takenOffer: { failReason: "desc"}}} },
-        {offer: { currentVersion: { takenOffer: { partialFill: "desc"}}} },
-        {offer: { currentVersion: { OfferRetractEvent: { id: "desc"}}} },
-        {offer: { currentVersion: { tx: { time: "desc"}}} },
+        { hasRestingOrder: "desc" },
+        {offer: { currentVersion: { isRetracted: "asc"}} },
+        {offer: { currentVersion: { takenOffer: { failReason: { sort: "asc", nulls: "last" }}}} },
+        {offer: { currentVersion: { takenOffer: { partialFill: { sort: "desc", nulls: "last" }}}} },
         { currentVersion: { expiryDate: "desc"} },
-        {
-          order: {
-            tx:{
-              time: "desc"
-            }
-          }
-        }
+        { order: { tx:{ time: "desc" } } },
       ]
     })
     

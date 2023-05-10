@@ -81,6 +81,7 @@ export class MangroveOrderEventsLogic extends EventsLogic {
     const initialVersionFunc = (version: Omit<MangroveOrderVersion, "id" | "mangroveOrderId" | "versionNumber" | "prevVersionId">) => {
       version.expiryDate = new Date(e.expiryDate * 1000);
     }
+    const restingOrderId = e.restingOrderId != 0 ? new OfferId(mangroveId, {outboundToken:offerList.inboundToken, inboundToken: offerList.outboundToken}, e.restingOrderId).value : null
 
     await db.mangroveOrderOperations.addMangroveOrderVersion(mangroveOrderId, transaction.id, initialVersionFunc, {
       orderId: new OrderId(mangroveId, offerList, e.orderId).value,
@@ -104,6 +105,7 @@ export class MangroveOrderEventsLogic extends EventsLogic {
       totalFee: e.fee,
       totalFeeNumber: fromBigNumber({ value: e.fee, token: outboundToken }),
       restingOrderId: e.restingOrderId != 0 ? new OfferId(mangroveId, {outboundToken:offerList.inboundToken, inboundToken: offerList.outboundToken}, e.restingOrderId).value : null,
+      hasRestingOrder: e.restingOrderId ? true : false,
     });
 
   }

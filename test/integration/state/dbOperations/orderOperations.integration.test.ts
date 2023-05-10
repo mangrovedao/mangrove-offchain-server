@@ -115,6 +115,7 @@ describe("Order Operations Integration test Suite", () => {
                 gasreq: 1000,
                 live: true,
                 deprovisioned: false,
+                isRetracted: false,
                 versionNumber: 0
             }
         });
@@ -132,6 +133,7 @@ describe("Order Operations Integration test Suite", () => {
                 gasreq: 1000,
                 live: true,
                 deprovisioned: false,
+                isRetracted: false,
                 versionNumber: 1,
                 prevVersionId: offer0VersionId0.value
             }
@@ -151,6 +153,7 @@ describe("Order Operations Integration test Suite", () => {
                 gasreq: 1000,
                 live: false,
                 deprovisioned: false,
+                isRetracted: true,
                 versionNumber: 0
 
             }
@@ -170,6 +173,7 @@ describe("Order Operations Integration test Suite", () => {
                 gasreq: 1000,
                 live: false,
                 deprovisioned: false,
+                isRetracted: true,
                 versionNumber: 1,
                 prevVersionId: offer1VersionId0.value
             }
@@ -220,6 +224,7 @@ describe("Order Operations Integration test Suite", () => {
             takerId: takerId.value,
             restingOrderId: offerId0.value,
             restingOrder: true,
+            hasRestingOrder: true,
             fillOrKill: false,
             fillWants: true,
             takerWants: "100",
