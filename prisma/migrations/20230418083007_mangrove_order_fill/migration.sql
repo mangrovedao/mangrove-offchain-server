@@ -4,8 +4,10 @@ CREATE VIEW "MangroveOrderFill" AS
 
 Select 
 "MangroveOrder"."id" as "mangroveOrderId", 
-"Order"."takerGotNumber" as "amount", 
-"Order"."takerPaidPrice" as "price", 
+"Order"."takerGotNumber" as "takerGot", 
+"Order"."takerGaveNumber" as "takerGave",
+"Order"."takerPaidPrice" as "takerPrice", 
+"Order"."makerPaidPrice" as "makerPrice", 
 "Transaction"."txHash" as "txHash" , 
 "Transaction"."time" as "time", 
 "MangroveOrder"."orderId" as "fillsId", 
@@ -22,8 +24,10 @@ union
 
 Select 
 "MangroveOrder"."id" as "mangroveOrderId", 
-"TakenOffer"."takerGaveNumber" as "amount", 
-"TakenOffer"."makerPaidPrice" as "price", 
+"TakenOffer"."takerGotNumber" as "takerGot",
+"TakenOffer"."takerGaveNumber" as "takerGave", 
+"TakenOffer"."takerPaidPrice" as "takerPrice", 
+"TakenOffer"."makerPaidPrice" as "makerPrice", 
 "Transaction"."txHash" as "txHash", 
 "Transaction"."time" as "time", 
 "TakenOffer"."id" as "fillsId", 
@@ -42,8 +46,10 @@ union
 
 SELECT 
 NULL as "mangroveOrderId",
-"Order"."takerGotNumber" as "amount", 
-"Order"."takerPaidPrice" as "price", 
+"Order"."takerGotNumber" as "takerGot", 
+"Order"."takerGaveNumber" as "takerGave", 
+"Order"."takerPaidPrice" as "takerPrice", 
+"Order"."makerPaidPrice" as "makerPrice", 
 "Transaction"."txHash" as "txHash",
 "Transaction"."time" as "time",
 "Order"."id" as "fillsId",

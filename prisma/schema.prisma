@@ -825,8 +825,10 @@ view MangroveOrderFill {
   fillsId         String
   type            String
   totalFee        Float
-  amount          Float
-  price           Float?
+  takerGot          Float
+  takerGave          Float
+  takerPrice           Float?
+  makerPrice           Float?
   txHash          String
   time            DateTime @db.Timestamp
 

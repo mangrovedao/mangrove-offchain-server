@@ -308,13 +308,20 @@ export class MangroveOrderResolver {
         taker: taker,
         inboundToken: m.offerListing.inboundToken,
         outboundToken: m.offerListing.outboundToken,
-        price: m.price ?? 0,
-        takerGot: m.amount,
+        price: this.getFillsPrice(m.offerListing.inboundToken.address, m.type, token2, m.takerPrice, m.makerPrice),
+        takerGot: m.takerGot,
         time: m.time,
         type: m.type,
-        totalPaid: m.amount + m.totalFee
+        totalPaid: m.takerGot + m.totalFee
       })
     );
+  }
+
+  private getFillsPrice(inboundTokenAddress: string, type:string, token2: string, takerPrice: number|null, makerPrice: number|null): number {
+    if(type == "Limit" ){
+      return makerPrice ?? 0;
+    }
+    return (inboundTokenAddress.toLowerCase() == token2.toLowerCase() ? makerPrice : takerPrice) ?? 0;
   }
 }
 
