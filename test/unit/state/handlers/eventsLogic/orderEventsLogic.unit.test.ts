@@ -115,7 +115,7 @@ describe("Order Events Logic Unit Test Suite", () => {
                 failReason: null,
                 posthookData: null,
                 posthookFailed: false,
-                partialFill: false
+                fullyTaken: false
             })
         })
 
@@ -144,7 +144,7 @@ describe("Order Events Logic Unit Test Suite", () => {
                 failReason: takenOffer.failReason,
                 posthookData: takenOffer.posthookData,
                 posthookFailed: takenOffer.posthookFailed,
-                partialFill: true
+                fullyTaken: true
             })
         })
     })

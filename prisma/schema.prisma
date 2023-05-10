@@ -370,7 +370,7 @@ model OfferVersion {
   gasreq                Int
   live                  Boolean
   deprovisioned         Boolean
-  isRetracted           Boolean 
+  isRetracted           Boolean
   kandelPopulateEventId String? @db.VarChar(255)
   kandelRetractEventId  String?
 
@@ -445,7 +445,7 @@ model TakenOffer {
   posthookFailed  Boolean
   posthookData    String?
   failReason      String?
-  partialFill     Boolean?
+  fullyTaken      Boolean?
 
   order             Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
   offerVersion      OfferVersion        @relation(fields: [offerVersionId], references: [id], onDelete: Cascade)

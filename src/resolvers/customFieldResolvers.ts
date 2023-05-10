@@ -145,8 +145,8 @@ export class MangroveOrderResolver {
       }, orderBy: [
         { hasRestingOrder: "desc" },
         {offer: { currentVersion: { isRetracted: "asc"}} },
-        {offer: { currentVersion: { takenOffer: { failReason: { sort: "asc", nulls: "last" }}}} },
-        {offer: { currentVersion: { takenOffer: { partialFill: { sort: "desc", nulls: "last" }}}} },
+        {offer: { currentVersion: { takenOffer: { failReason: { sort: "desc", nulls: "first" }}}} },
+        {offer: { currentVersion: { takenOffer: { fullyTaken: { sort: "desc", nulls: "first" }}}} },
         { currentVersion: { expiryDate: "desc"} },
         { order: { tx:{ time: "desc" } } },
       ]
@@ -187,14 +187,14 @@ export class MangroveOrderResolver {
     if( takenOffers == undefined) {
       return gaveFromOrder
     }
-    return takenOffers.reduce( (prev, current) => current == null ? prev : prev.plus(current.takerGot) , new BigNumber(0)).plus( gaveFromOrder );
+    return takenOffers.filter( v => (v?.failReason ? v.failReason == "" : true) && !(v?.posthookFailed ?? false) ).reduce( (prev, current) => current == null ? prev : prev.plus(current.takerGot) , new BigNumber(0)).plus( gaveFromOrder );
   }
 
   private getTakerGot(takenOffers: (TakenOffer|null)[] | undefined, gotFromOrder: BigNumber ): BigNumber  {
     if( takenOffers == undefined) {
       return gotFromOrder
     }
-    return takenOffers.reduce( (prev, current) => current == null ? prev : prev.plus(current.takerGave) , new BigNumber(0)).plus( gotFromOrder );
+    return takenOffers.filter( v => (v?.failReason ? v.failReason == "" : true) && !(v?.posthookFailed ?? false) ).reduce( (prev, current) => current == null ? prev : prev.plus(current.takerGave) , new BigNumber(0)).plus( gotFromOrder );
   }
 
   private getIsFailed(failReason: string | null | undefined): boolean {
@@ -210,23 +210,20 @@ export class MangroveOrderResolver {
       return takerGotPlusFee.gte(takerWants) ? "Filled" : "Partial Fill";
     }
     const failReason =currentVersion.takenOffer?.failReason ?? undefined;
-    const isFilled = takerGotPlusFee == takerWants;
+    const isFilled = takerGotPlusFee.gte(takerWants);
     const isFailed = this.getIsFailed(failReason);
-    
-    if( 
+    if (isFilled) {
+      return "Filled"
+    } else if (isFailed) {
+      return "Failed"
+    } else if( 
       !currentVersion.OfferRetractEvent && 
       !currentVersion.deleted && 
-      !isFailed && 
-      !isFilled && 
       ( expiryDate == undefined || expiryDate.getTime() >= new Date().getTime() ) ) {
       return "Open";
     }
     if (currentVersion.OfferRetractEvent || ( expiryDate && expiryDate.getTime() < new Date().getTime() ) ) {
       return "Cancelled";
-    } else if (isFailed) {
-      return "Failed"
-    } else if (isFilled) {
-      return "Filled"
     } 
     return "Partial Fill";
   }

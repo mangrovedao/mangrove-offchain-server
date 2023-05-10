@@ -291,7 +291,7 @@ describe("Order Operations Integration test Suite", () => {
                 failReason: "",
                 posthookData: "",
                 posthookFailed: false,
-                partialFill: false,
+                fullyTaken: false,
             }
 
             const takenOffers= [{takenOffer:takenOffer0, takenOfferEvent:{id:0}},
@@ -308,7 +308,7 @@ describe("Order Operations Integration test Suite", () => {
                         failReason: "failReason",
                         posthookData: "posthookData",
                         posthookFailed: true,
-                        partialFill: true,
+                        fullyTaken: true,
                     },
                     takenOfferEvent: {
                         id: 1
@@ -372,7 +372,7 @@ describe("Order Operations Integration test Suite", () => {
                     failReason: "failReasn",
                     posthookData: "posthookData",
                     posthookFailed: true,
-                    partialFill: false,
+                    fullyTaken: false,
                 }, takenOfferEvent: {
                     id: 2
                 }
@@ -422,7 +422,7 @@ describe("Order Operations Integration test Suite", () => {
                     failReason: "failReasn",
                     posthookData: "posthookData",
                     posthookFailed: true,
-                    partialFill: true,
+                    fullyTaken: true,
                 },
                 takenOfferEvent: {
                     id: 2
@@ -474,7 +474,7 @@ describe("Order Operations Integration test Suite", () => {
                     failReason: "failReasn",
                     posthookData: "posthookData",
                     posthookFailed: true,
-                    partialFill: false
+                    fullyTaken: false
                 },
                 takenOfferEvent: {
                     id: 2

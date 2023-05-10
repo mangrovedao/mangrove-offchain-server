@@ -201,7 +201,7 @@ export class OrderEventLogicHelper {
       failReason: takenOfferEvent.failReason ?? null,
       posthookData: takenOfferEvent.posthookData ?? null,
       posthookFailed: takenOfferEvent.posthookFailed ?? false,
-      partialFill: currentVersion.wants == takenOfferEvent.takerGives,
+      fullyTaken: currentVersion.wants == takenOfferEvent.takerGives,
     };
 
     return { takenOffer, takenOfferEvent };
