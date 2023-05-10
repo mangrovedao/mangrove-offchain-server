@@ -20,7 +20,7 @@ import { KandelDepositWithdraw, KandelFailedOffer, KandelFill, KandelOffer, Kand
 import { MangroveOrderFillWithTokens, MangroveOrderOpenOrder } from "./mangroveOrderObjects";
 import { GraphQLError } from "graphql";
 import { KandelReturnUtils } from "src/utils/KandelReturnUtils";
-import { getFromBigNumber } from "src/utils/numberUtils";
+import { fromBigNumber, getFromBigNumber } from "src/utils/numberUtils";
 const fetch = fetchBuilder.withCache(new MemoryCache({ ttl: 1000 }));
 async function fetchTokenPriceIn(token: Token, inSymbol: string) {
   return (await fetch(
@@ -154,7 +154,7 @@ export class MangroveOrderResolver {
     
     return mangroveOrders.map(m => {
       const takerGot= this.getTakerGot( m.offer?.offerVersions.map(v => v.takenOffer), new BigNumber( m.order.takerGot ) );
-      const takerGave= this.getTakerGave( m.offer?.offerVersions.map(v => v.takenOffer), new BigNumber(m.order.takerGaveNumber ) );
+      const takerGave= this.getTakerGave( m.offer?.offerVersions.map(v => v.takenOffer), new BigNumber(m.order.takerGave ) );
       const expiryDate = m.currentVersion?.expiryDate.getTime() == new Date(0).getTime() ? undefined : m.currentVersion?.expiryDate;
       const takerGotPlusFee = takerGot.plus(m.totalFee)
       const status = this.getStatus(expiryDate, m.offer?.currentVersion, new BigNumber( m.takerWants ), takerGotPlusFee);
@@ -166,7 +166,7 @@ export class MangroveOrderResolver {
         taker: m.taker.address,
         inboundToken: m.offerListing.inboundToken,
         outboundToken: m.offerListing.outboundToken,
-        price: takerGot.gt(0)  ? takerGave.div(takerGot).toNumber() : 0,
+        price: this.getPrice(takerGot, takerGave, m.offerListing, m.fillWants),
         status: status,
         isFailed: this.getIsFailed(m.offer?.currentVersion?.takenOffer?.failReason),
         isFilled: takerGotPlusFee.gte(m.takerWants),
@@ -182,6 +182,15 @@ export class MangroveOrderResolver {
   }
 
 
+
+  private getPrice(takerGot: BigNumber, takerGave: BigNumber, offerListing: OfferListing, fillWants: boolean): number {
+    if( takerGot.gt(0) ) {
+      const gave = fromBigNumber({ value: takerGave.toString(), token: offerListing.inboundToken! });
+      const got= fromBigNumber({ value: takerGot.toString(), token: offerListing.outboundToken! })
+      return fillWants ? gave/got : got/gave;
+    } 
+    return 0;
+  }
 
   private getTakerGave(takenOffers: (TakenOffer|null)[] | undefined, gaveFromOrder: BigNumber ): BigNumber  {
     if( takenOffers == undefined) {
