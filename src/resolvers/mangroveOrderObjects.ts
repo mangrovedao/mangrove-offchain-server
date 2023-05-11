@@ -13,7 +13,7 @@ export class MangroveOrderFillWithTokens {
         type: string,
         fillsId: string,
         time: Date,
-        takerGot: number,
+        amount: number,
         totalPaid: number,
         txHash: string
     }) {
@@ -26,7 +26,7 @@ export class MangroveOrderFillWithTokens {
         this.type = params.type;
         this.fillsId = params.fillsId;
         this.time = params.time;
-        this.takerGot = params.takerGot;
+        this.amount = params.amount;
         this.txHash = params.txHash;
         this.totalPaid = params.totalPaid;
 
@@ -60,7 +60,7 @@ export class MangroveOrderFillWithTokens {
     price: number;
 
     @Field( )
-    takerGot: number;
+    amount: number;
 
     @Field( )
     time: Date;
@@ -88,8 +88,8 @@ export class MangroveOrderOpenOrder {
         failedReason?: string,
         expiryDate?: Date
         date: Date,
-        takerGot?: number,
-        takerWants: number,
+        filled?: number,
+        amount: number,
         txHash: string
     }) {
         this.mangroveOrderId = params.mangroveOrderId
@@ -106,8 +106,8 @@ export class MangroveOrderOpenOrder {
         this.failedReason = params.failedReason;
         this.expiryDate = params.expiryDate;
         this.date = params.date;
-        this.takerGot = params.takerGot;
-        this.takerWants = params.takerWants;
+        this.filled = params.filled;
+        this.amount = params.amount;
         this.txHash = params.txHash;
 
     }
@@ -158,9 +158,9 @@ export class MangroveOrderOpenOrder {
     date!: Date;
 
     @Field( )
-    takerGot?: number;
+    filled?: number;
 
     @Field( )
-    takerWants!: number;
+    amount!: number;
 
 }

@@ -172,9 +172,9 @@ export class MangroveOrderResolver {
         isFilled: takerGotPlusFee.gte(m.takerWants),
         failedReason: m.offer?.currentVersion?.takenOffer?.failReason ?? undefined,
         expiryDate: expiryDate,
-        takerGot: getFromBigNumber({ value: takerGot.toString(), token: m.offerListing.outboundToken }).toNumber(),
+        filled: this.getOpenOrderFiled(takerGot, takerGave, m.offerListing, m.fillWants),
         date: m.order.tx.time,
-        takerWants: m.takerWantsNumber,
+        amount: m.fillWants ? m.takerWantsNumber : m.takerGivesNumber,
 	      txHash: m.order.tx.txHash
       })
     } 
@@ -182,6 +182,13 @@ export class MangroveOrderResolver {
   }
 
 
+
+  private getOpenOrderFiled(takerGot: BigNumber, takerGave: BigNumber, offerListing: { inboundToken:Token, outboundToken: Token}, fillWants: boolean): number | undefined {
+    if( !fillWants ) {
+      return getFromBigNumber({ value: takerGave.toString(), token: offerListing.inboundToken }).toNumber();  
+    }
+    return getFromBigNumber({ value: takerGot.toString(), token: offerListing.outboundToken }).toNumber();
+  }
 
   private getPrice(takerGot: BigNumber, takerGave: BigNumber, offerListing: OfferListing, fillWants: boolean): number {
     if( takerGot.gt(0) ) {
@@ -303,6 +310,8 @@ export class MangroveOrderResolver {
 
     return fills.map(m =>{
       const hasTakenOffer = m.takenOffer != null;
+      const fillsAmount = this.getFillsAmount(m.offerListing.outboundToken.address, token2, m.takerGot, m.takerGave, hasTakenOffer) ?? 0;
+      const paid = this.getFillsPaid(m.offerListing.outboundToken.address, token2, m.takerGot, m.takerGave, hasTakenOffer) ?? 0;
       return new MangroveOrderFillWithTokens({
         fillsId: m.fillsId,
         txHash: m.txHash,
@@ -312,12 +321,28 @@ export class MangroveOrderResolver {
         inboundToken: m.offerListing.inboundToken,
         outboundToken: m.offerListing.outboundToken,
         price: this.getFillsPrice(m.offerListing.outboundToken.address, m.type, token2, m.takerPrice, m.makerPrice, hasTakenOffer) ?? 0,
-        takerGot: m.takerGot, 
+        amount: fillsAmount,
         time: m.time,
         type: m.type,
-        totalPaid: m.takerGot + m.totalFee
+        totalPaid: paid
       })}
     );
+  }
+
+  private getFillsPaid(outboundTokenAddress: string, token2: string, takerGot: number|null, takerGave: number|null, hasTakenOffer:boolean): number | null {
+    const isOutboundToken = outboundTokenAddress.toLowerCase() == token2.toLowerCase();
+    if( isOutboundToken ) {
+      return (hasTakenOffer ? takerGave : takerGot) ;
+    }
+    return (hasTakenOffer ? takerGot : takerGave) ;
+  }
+
+  private getFillsAmount(outboundTokenAddress: string, token2: string, takerGot: number|null, takerGave: number|null, hasTakenOffer:boolean): number | null {
+    const isOutboundToken = outboundTokenAddress.toLowerCase() == token2.toLowerCase();
+    if( isOutboundToken ) {
+      return (hasTakenOffer ? takerGot : takerGave) ;
+    }
+    return (hasTakenOffer ? takerGave : takerGot) ;
   }
 
   private getFillsPrice(outboundTokenAddress: string, type:string, token2: string, takerPrice: number|null, makerPrice: number|null, hasTakenOffer:boolean): number | null {
