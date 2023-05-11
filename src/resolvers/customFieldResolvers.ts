@@ -309,7 +309,7 @@ export class MangroveOrderResolver {
         inboundToken: m.offerListing.inboundToken,
         outboundToken: m.offerListing.outboundToken,
         price: this.getFillsPrice(m.offerListing.inboundToken.address, m.type, token2, m.takerPrice, m.makerPrice),
-        takerGot: m.takerGot,
+        takerGot: m.takerGot, 
         time: m.time,
         type: m.type,
         totalPaid: m.takerGot + m.totalFee
