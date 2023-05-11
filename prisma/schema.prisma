@@ -424,6 +424,7 @@ model Order {
   childTakerApprovalVersions TakerApprovalVersion[]
   childOfferVersions         OfferVersion[]
   MangroveOrder              MangroveOrder[]
+  MangroveOrderFill          MangroveOrderFill[]
 
   @@index([txId])
   @@index([parentOrderId])
@@ -450,6 +451,7 @@ model TakenOffer {
   order             Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
   offerVersion      OfferVersion        @relation(fields: [offerVersionId], references: [id], onDelete: Cascade)
   TokenBalanceEvent TokenBalanceEvent[]
+  MangroveOrderFill MangroveOrderFill[]
 
   @@unique([orderId, offerVersionId])
   @@index([offerVersionId])
@@ -825,17 +827,20 @@ view MangroveOrderFill {
   fillsId         String
   type            String
   totalFee        Float
-  takerGot          Float
-  takerGave          Float
-  takerPrice           Float?
-  makerPrice           Float?
+  takerGot        Float
+  takerGave       Float
+  takerPrice      Float?
+  makerPrice      Float?
   txHash          String
   time            DateTime @db.Timestamp
 
   offerListing OfferListing @relation(fields: [offerListingId], references: [id])
+  order        Order?        @relation(fields: [fillsId], references: [id])
+  takenOffer   TakenOffer?   @relation(fields: [fillsId], references: [id])
 
   @@unique([type, fillsId])
   @@index([takerId])
   @@index([mangroveId])
   @@index([offerListingId])
+  @@index([fillsId])
 }

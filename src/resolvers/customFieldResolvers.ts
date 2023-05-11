@@ -293,14 +293,17 @@ export class MangroveOrderResolver {
         
       },
       include: {
-        offerListing: { include: { inboundToken: true, outboundToken: true } }
+        offerListing: { include: { inboundToken: true, outboundToken: true } },
+        order: true,
+        takenOffer: true
       },
       orderBy: { time: 'desc' },
       take, skip
     });
 
-    return fills.map(m =>
-      new MangroveOrderFillWithTokens({
+    return fills.map(m =>{
+      const hasTakenOffer = m.takenOffer != null;
+      return new MangroveOrderFillWithTokens({
         fillsId: m.fillsId,
         txHash: m.txHash,
         totalFee: m.totalFee,
@@ -308,20 +311,24 @@ export class MangroveOrderResolver {
         taker: taker,
         inboundToken: m.offerListing.inboundToken,
         outboundToken: m.offerListing.outboundToken,
-        price: this.getFillsPrice(m.offerListing.inboundToken.address, m.type, token2, m.takerPrice, m.makerPrice),
+        price: this.getFillsPrice(m.offerListing.inboundToken.address, m.type, token2, m.takerPrice, m.makerPrice, hasTakenOffer) ?? 0,
         takerGot: m.takerGot, 
         time: m.time,
         type: m.type,
         totalPaid: m.takerGot + m.totalFee
-      })
+      })}
     );
   }
 
-  private getFillsPrice(inboundTokenAddress: string, type:string, token2: string, takerPrice: number|null, makerPrice: number|null): number {
+  private getFillsPrice(inboundTokenAddress: string, type:string, token2: string, takerPrice: number|null, makerPrice: number|null, hasTakenOffer:boolean): number | null {
+    const isInboundToken = inboundTokenAddress.toLowerCase() == token2.toLowerCase();
     if(type == "Limit" ){
-      return makerPrice ?? 0;
+      if( isInboundToken ) {
+        return (hasTakenOffer ? takerPrice : makerPrice) ;
+      }
+      return (hasTakenOffer ? makerPrice : takerPrice) ;
     }
-    return (inboundTokenAddress.toLowerCase() == token2.toLowerCase() ? makerPrice : takerPrice) ?? 0;
+    return (isInboundToken ? makerPrice : takerPrice) ;
   }
 }
 
