@@ -311,7 +311,7 @@ export class MangroveOrderResolver {
         taker: taker,
         inboundToken: m.offerListing.inboundToken,
         outboundToken: m.offerListing.outboundToken,
-        price: this.getFillsPrice(m.offerListing.inboundToken.address, m.type, token2, m.takerPrice, m.makerPrice, hasTakenOffer) ?? 0,
+        price: this.getFillsPrice(m.offerListing.outboundToken.address, m.type, token2, m.takerPrice, m.makerPrice, hasTakenOffer) ?? 0,
         takerGot: m.takerGot, 
         time: m.time,
         type: m.type,
@@ -320,15 +320,15 @@ export class MangroveOrderResolver {
     );
   }
 
-  private getFillsPrice(inboundTokenAddress: string, type:string, token2: string, takerPrice: number|null, makerPrice: number|null, hasTakenOffer:boolean): number | null {
-    const isInboundToken = inboundTokenAddress.toLowerCase() == token2.toLowerCase();
+  private getFillsPrice(outboundTokenAddress: string, type:string, token2: string, takerPrice: number|null, makerPrice: number|null, hasTakenOffer:boolean): number | null {
+    const isOutboundToken = outboundTokenAddress.toLowerCase() == token2.toLowerCase();
     if(type == "Limit" ){
-      if( isInboundToken ) {
+      if( isOutboundToken ) {
         return (hasTakenOffer ? takerPrice : makerPrice) ;
       }
       return (hasTakenOffer ? makerPrice : takerPrice) ;
     }
-    return (isInboundToken ? makerPrice : takerPrice) ;
+    return (isOutboundToken ? makerPrice : takerPrice) ;
   }
 }
 
