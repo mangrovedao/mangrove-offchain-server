@@ -51,11 +51,6 @@ export class KandelManageStrategyPageResolver {
         strat: {
           include: {
             offers: {
-              where: {
-                currentVersion: {
-                  deleted: false
-                }
-              },
               include: {
                 currentVersion: true,
                 kandelOfferIndexes: true,
@@ -79,19 +74,19 @@ export class KandelManageStrategyPageResolver {
       throw new GraphQLError(`Cannot find kandel with address: ${address} and chain: ${chain}`);
     }
     return kandel.strat.offers.map(offer => new KandelOffer({
-        gives: offer.currentVersion?.gives ?? "0",
-        wants: offer.currentVersion?.wants ?? "0",
-        index: offer.kandelOfferIndexes?.index ?? 0,
-        base: kandel.baseToken,
-        quote: kandel.quoteToken,
-        offerId: offer.offerNumber,
-        live: offer.currentVersion?.deleted ? false : true,
-        price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
-        gasreq: offer.currentVersion?.gasreq ?? 0,
-        gasprice: offer.currentVersion?.gasprice ?? 0,
-        BA: offer.kandelOfferIndexes?.ba ?? "",
-        initialTxHash: offer.offerVersions[0].tx?.txHash ?? "",
-      }));
+      gives: offer.currentVersion?.gives ?? "0",
+      wants: offer.currentVersion?.wants ?? "0",
+      index: offer.kandelOfferIndexes?.index ?? 0,
+      base: kandel.baseToken,
+      quote: kandel.quoteToken,
+      offerId: offer.offerNumber,
+      live: offer.currentVersion?.deleted ? false : true,
+      price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
+      gasreq: offer.currentVersion?.gasreq ?? 0,
+      gasprice: offer.currentVersion?.gasprice ?? 0,
+      BA: offer.kandelOfferIndexes?.ba ?? "",
+      initialTxHash: offer.offerVersions[0].tx?.txHash ?? "",
+    }));
 
   }
 
@@ -401,20 +396,18 @@ export class KandelHomePageResolver {
         strat: {
           include: {
             offers: {
-              where: { 
-                currentVersion: { deleted: false } }, 
-                include: {
-                  currentVersion: true,
-                  kandelOfferIndexes: true,
-                  offerVersions: {
-                    where: {
-                      versionNumber: 0
-                    },
-                    include: {
-                      tx: true
-                    }
+              include: {
+                currentVersion: true,
+                kandelOfferIndexes: true,
+                offerVersions: {
+                  where: {
+                    versionNumber: 0
+                  },
+                  include: {
+                    tx: true
                   }
                 }
+              }
             }
           }
         },
@@ -472,11 +465,6 @@ export class KandelHomePageResolver {
         strat: {
           include: {
             offers: {
-              where: {
-                currentVersion: {
-                  deleted: false
-                }
-              },
               include: {
                 currentVersion: true,
                 kandelOfferIndexes: true,
