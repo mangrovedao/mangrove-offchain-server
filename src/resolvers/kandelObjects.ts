@@ -50,8 +50,8 @@ export class KandelStrategy{
     name: string,
     address: string,
     reserve: string,
-    tokenA: Token,
-    tokenB: Token,
+    base: Token,
+    quote: Token,
     return:string,
     status: "active" | "closed"
   }) {
@@ -59,10 +59,8 @@ export class KandelStrategy{
       this.name = params.name
       this.address = params.address
       this.reserve = params.reserve
-      this.tokenA = params.tokenA
-      this.tokenB = params.tokenB
-      // this.tokenAAmount = params.tokenAAmount // call on chain for values
-      // this.tokenBAmount = params.tokenBAmount
+      this.base = params.base
+      this.quote = params.quote
       this.return = params.return
       this.status = params.status
     }
@@ -78,10 +76,10 @@ export class KandelStrategy{
   reserve?:string
 
   @Field()
-  tokenA?: Token
+  base?: Token
 
   @Field()
-  tokenB?: Token
+  quote?: Token
  
   @Field()
   return?:string

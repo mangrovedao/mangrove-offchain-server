@@ -364,6 +364,7 @@ export class KandelHomePageResolver {
   async kandelStrategies(
     @Arg("admin") admin: string,
     @Arg("chain") chain: number,
+    @Arg("mangrove") mangrove: string,
     @Arg("take") take: number,
     @Arg("skip") skip: number,
     @Ctx() ctx: Context
@@ -372,10 +373,10 @@ export class KandelHomePageResolver {
       throw new GraphQLError(`Cannot take more than 100, take:${take}`)
     }
     const chainId = new ChainId(chain);
-    const adminId = new AccountId(chainId, admin);
     const kandels = await ctx.prisma.kandel.findMany({ skip, take, 
       where: { 
-        currentVersion: { adminId: adminId.value }
+        currentVersion: { admin: { chainId: chain, address: { contains: admin.toLowerCase(), mode: "insensitive" }} },
+        mangrove: { address: { contains: mangrove.toLowerCase(), mode: "insensitive" }, chainId: chain }
        }, 
        select: { 
         strat: { 
@@ -412,8 +413,8 @@ export class KandelHomePageResolver {
         name: kandel.type,
         address: kandel.strat.address,
         reserve: kandel.reserve.address,
-        tokenA: kandel.baseToken,
-        tokenB: kandel.quoteToken,
+        base: kandel.baseToken,
+        quote: kandel.quoteToken,
         return: await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
         status: kandel.strat.offers.length > 0 ? "active" : "closed"
       });
@@ -474,8 +475,8 @@ export class KandelHomePageResolver {
       name: kandel.type,
       address: kandel.strat.address,
       reserve: kandel.reserve.address,
-      tokenA: kandel.baseToken,
-      tokenB: kandel.quoteToken,
+      base: kandel.baseToken,
+      quote: kandel.quoteToken,
       return:  await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
       status: kandel.strat.offers.length > 0 ? "active" : "closed"
     });

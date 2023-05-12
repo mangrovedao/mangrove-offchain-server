@@ -144,16 +144,6 @@ export class OrderEventLogicHelper {
       offerListingId: offerListingId.value,
       mangroveId: mangroveId.value,
       takerId: takerId.value,
-      // takerWants: order.takerWants,
-      // takerWantsNumber: getNumber({
-      //   value: order.takerWants,
-      //   token: outboundToken,
-      // }),
-      // takerGives: order.takerGives,
-      // takerGivesNumber: getNumber({
-      //   value: order.takerGives,
-      //   token: inboundToken,
-      // }),
       takerGot: order.takerGot,
       takerGotNumber: takerGotBigNumber.toNumber(),
       takerGave: order.takerGave,
