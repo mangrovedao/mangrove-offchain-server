@@ -1,15 +1,15 @@
 name: ci
 on:
+  workflow_dispatch:
   push:
-    branches:
+    branches: 
       - master
-      - deploy/amur # deployment branch
+      - develop
+      - 'run-ci/**'
+  pull_request_target:
+    branches: [ master, develop, test-pr ]
+    types: [opened, synchronize, reopened, labeled]
 
-  pull_request:
-    types: [opened, synchronize]
-    branches:
-      - master
-      - deploy/amur
 
 jobs:
   node-webservice:
