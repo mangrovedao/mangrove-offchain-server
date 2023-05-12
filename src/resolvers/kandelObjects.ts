@@ -2,44 +2,73 @@ import { Token } from "@generated/type-graphql";
 import { Field, ObjectType } from "type-graphql";
 
 
-
 @ObjectType()
 export class KandelOffer{
 
   constructor(params:{
-    inbound:Token,
-    outbound:Token,
-    inboundAmount: string,
-    outboundAmount: string,
-    id: number,
-    index: number
+    gives: string,
+    wants: string,
+    index: number,
+    base: Token,
+    quote: Token,
+    offerId: number,
+    live: boolean,
+    price: number,
+    gasreq: number,
+    gasprice: number,
+    BA: string
+    initialTxHash: string
   }){
-    this.inbound = params.inbound
-    this.outbound = params.outbound
-    this.inboundAmount = params.inboundAmount
-    this.outboundAmount = params.outboundAmount
-    this.id = params.id
+    this.gives = params.gives
+    this.wants = params.wants
     this.index = params.index
+    this.base = params.base
+    this.quote = params.quote
+    this.offerId = params.offerId
+    this.live = params.live
+    this.price = params.price
+    this.gasreq = params.gasreq
+    this.gasprice = params.gasprice
+    this.BA = params.BA
+    this.initialTxHash = params.initialTxHash
   }
 
 
   @Field()
-  inboundAmount!: string;
+  gives!: string;
 
   @Field()
-  outboundAmount!: string;
+  wants!: string;
 
   @Field()
-  inbound!: Token
+  base!: Token
 
   @Field()
-  outbound!: Token
+  quote!: Token
 
   @Field()
-  id!: number
+  offerId!: number
 
   @Field()
   index!: number
+
+  @Field()
+  live!: boolean
+
+  @Field()
+  price!: number
+
+  @Field()
+  BA!: string
+
+  @Field()
+  gasreq!: number
+  
+  @Field()
+  gasprice!: number
+
+  @Field()
+  initialTxHash!: string
 
 }
 
@@ -53,7 +82,7 @@ export class KandelStrategy{
     base: Token,
     quote: Token,
     return:string,
-    status: "active" | "closed"
+    offers: KandelOffer[]
   }) {
     if( params ){
       this.name = params.name
@@ -62,7 +91,7 @@ export class KandelStrategy{
       this.base = params.base
       this.quote = params.quote
       this.return = params.return
-      this.status = params.status
+      this.offers = params.offers
     }
   }
 
@@ -84,9 +113,12 @@ export class KandelStrategy{
   @Field()
   return?:string
 
-  @Field()
-  status?: "active" | "closed"
+  @Field( type => [KandelOffer])
+  offers?: KandelOffer[]
+  
 }
+
+
 
 @ObjectType()
 export class KandelFill {
