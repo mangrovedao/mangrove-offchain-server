@@ -17,6 +17,7 @@ import * as kandel from "@proximaone/stream-schema-mangrove/dist/kandel";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import { sleep } from "@mangrovedao/commonlib.js";
 import { Timestamp } from "@proximaone/stream-client-js";
+import { async } from "rxjs";
 
 export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.KandelEvent | kandel.SeederEvent > {
   public constructor(
@@ -71,11 +72,14 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
         },
         Retract: async (e) => {
           await kandelEventsLogic.handelRetractOffers(undo, new KandelId(chainId, payload.address), e, transaction);
+        },
+        SetIndexMapping: async (e) => {
+          await kandelEventsLogic.handleOfferIndex(undo, new KandelId(chainId, payload.address), e, transaction);
         }
       })(payload);
     }
   }
-//TODO: when proxima comes with stream
+
   protected deserialize( 
     payload: Buffer
   ): kandel.KandelEvent | kandel.SeederEvent {

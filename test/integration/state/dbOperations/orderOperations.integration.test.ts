@@ -79,6 +79,19 @@ describe("Order Operations Integration test Suite", () => {
             }
         })
 
+        await prisma.offerListingVersion.create({
+            data: {
+                id: offerListingVersionId.value,
+                offerListingId: offerListingId.value,
+                txId: "txId",
+                active: true,
+                fee: "0",
+                gasbase: 1000,
+                density: "0",
+                versionNumber: 0
+            }
+        })
+
         await prisma.offer.create({
             data: {
                 id: offerId0.value,
@@ -116,7 +129,8 @@ describe("Order Operations Integration test Suite", () => {
                 live: true,
                 deprovisioned: false,
                 isRetracted: false,
-                versionNumber: 0
+                versionNumber: 0,
+                offerListingVersionId: offerListingVersionId.value
             }
         });
         offer0Version1 = await prisma.offerVersion.create({
@@ -135,7 +149,8 @@ describe("Order Operations Integration test Suite", () => {
                 deprovisioned: false,
                 isRetracted: false,
                 versionNumber: 1,
-                prevVersionId: offer0VersionId0.value
+                prevVersionId: offer0VersionId0.value,
+                offerListingVersionId: offerListingVersionId.value
             }
         });
 
@@ -154,7 +169,8 @@ describe("Order Operations Integration test Suite", () => {
                 live: false,
                 deprovisioned: false,
                 isRetracted: true,
-                versionNumber: 0
+                versionNumber: 0,
+                offerListingVersionId: offerListingVersionId.value
 
             }
         });
@@ -175,7 +191,8 @@ describe("Order Operations Integration test Suite", () => {
                 deprovisioned: false,
                 isRetracted: true,
                 versionNumber: 1,
-                prevVersionId: offer1VersionId0.value
+                prevVersionId: offer1VersionId0.value,
+                offerListingVersionId: offerListingVersionId.value
             }
         });
 

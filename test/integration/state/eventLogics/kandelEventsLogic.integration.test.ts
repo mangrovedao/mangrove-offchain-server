@@ -149,6 +149,7 @@ describe("Kandel Events Logic Integration test suite", () => {
             isRetracted: false,
             deprovisioned: false,
             versionNumber: 0,
+            offerListingVersionId: offerListingVersionIdAB.value
         }})
 
         await prisma.offer.create( {data: {
@@ -174,6 +175,7 @@ describe("Kandel Events Logic Integration test suite", () => {
             isRetracted: false,
             deprovisioned: false,
             versionNumber: 0,
+            offerListingVersionId: offerListingVersionIdBA.value
         }})
 
         await prisma.kandel.create({data: {

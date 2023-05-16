@@ -8,6 +8,7 @@ import {
   MangroveId,
   OfferId,
   OfferListingId,
+  OfferListingVersionId,
   OfferListKey,
   OfferVersionId,
   TokenId
@@ -31,6 +32,7 @@ describe("Offer Operations Integration test suite", () => {
   const offerId = new OfferId(mangroveId, offerListKey, 1);
   const offerVersionId = new OfferVersionId(offerId, 0);
   const offerListingId = new OfferListingId(mangroveId, offerListKey);
+  const offerListingVersionId = new OfferListingVersionId(offerListingId, 0);
   const makerId = new AccountId(chainId, "makerAddress");
   let offer: prismaModel.Offer;
   let offerVersion: prismaModel.OfferVersion;
@@ -62,9 +64,35 @@ describe("Offer Operations Integration test suite", () => {
         live: true,
         isRetracted: false,
         deprovisioned: false,
+        versionNumber: 0,
+        offerListingVersionId: offerListingVersionId.value
+      }
+    })
+
+    await prisma.offerListing.create({
+      data: {
+        id: offerListingId.value,
+        mangroveId: mangroveId.value,
+        outboundTokenId: outboundTokenId.value,
+        inboundTokenId: inboundTokenId.value,
+        currentVersionId: offerListingVersionId.value
+      }
+    })
+
+    await prisma.offerListingVersion.create({
+      data: {
+        id: offerListingVersionId.value,
+        offerListingId: offerListingId.value,
+        txId: "txId",
+        active: true,
+        fee: "0",
+        gasbase: 0,
+        density: "0",
         versionNumber: 0
       }
     })
+
+
   });
 
   describe("getOffer", () => {
@@ -128,6 +156,7 @@ describe("Offer Operations Integration test suite", () => {
         prevVersionId: null,
         kandelPopulateEventId: null,
         kandelRetractEventId: null,
+        offerListingVersionId: offerListingVersionId.value
       });
     })
 

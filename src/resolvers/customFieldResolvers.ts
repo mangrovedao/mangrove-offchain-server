@@ -52,7 +52,11 @@ export class KandelManageStrategyPageResolver {
           include: {
             offers: {
               include: {
-                currentVersion: true,
+                currentVersion: {
+                  include: {
+                    OfferListingVersion: true
+                  }
+                },
                 kandelOfferIndexes: true,
                 offerVersions: {
                   where: {
@@ -84,6 +88,7 @@ export class KandelManageStrategyPageResolver {
       price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
       gasreq: offer.currentVersion?.gasreq ?? 0,
       gasprice: offer.currentVersion?.gasprice ?? 0,
+      gasbase: offer.currentVersion?.OfferListingVersion?.gasbase ?? 0,
       offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
       initialTxHash: offer.offerVersions[0].tx?.txHash ?? "",
     }));
@@ -397,7 +402,11 @@ export class KandelHomePageResolver {
           include: {
             offers: {
               include: {
-                currentVersion: true,
+                currentVersion: {
+                  include: {
+                    OfferListingVersion: true
+                  }
+                },
                 kandelOfferIndexes: true,
                 offerVersions: {
                   where: {
@@ -442,6 +451,7 @@ export class KandelHomePageResolver {
           price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
           gasreq: offer.currentVersion?.gasreq ?? 0,
           gasprice: offer.currentVersion?.gasprice ?? 0,
+          gasbase: offer.currentVersion?.OfferListingVersion?.gasbase ?? 0,
           offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
           initialTxHash: offer.offerVersions[0]?.tx.txHash ?? "",
         }))
@@ -466,7 +476,11 @@ export class KandelHomePageResolver {
           include: {
             offers: {
               include: {
-                currentVersion: true,
+                currentVersion: {
+                  include: {
+                    OfferListingVersion: true
+                  }
+                },
                 kandelOfferIndexes: true,
                 offerVersions: {
                   where: {
@@ -512,6 +526,7 @@ export class KandelHomePageResolver {
         price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
         gasreq: offer.currentVersion?.gasreq ?? 0,
         gasprice: offer.currentVersion?.gasprice ?? 0,
+        gasbase: offer.currentVersion?.OfferListingVersion?.gasbase ?? 0,
         offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
         initialTxHash: offer.offerVersions[0]?.tx.txHash ?? "",
       }))
