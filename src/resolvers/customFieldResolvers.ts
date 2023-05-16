@@ -84,7 +84,7 @@ export class KandelManageStrategyPageResolver {
       price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
       gasreq: offer.currentVersion?.gasreq ?? 0,
       gasprice: offer.currentVersion?.gasprice ?? 0,
-      BA: offer.kandelOfferIndexes?.ba ?? "",
+      offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
       initialTxHash: offer.offerVersions[0].tx?.txHash ?? "",
     }));
 
@@ -442,7 +442,7 @@ export class KandelHomePageResolver {
           price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
           gasreq: offer.currentVersion?.gasreq ?? 0,
           gasprice: offer.currentVersion?.gasprice ?? 0,
-          BA: offer.kandelOfferIndexes?.ba ?? "",
+          offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
           initialTxHash: offer.offerVersions[0]?.tx.txHash ?? "",
         }))
       });
@@ -512,7 +512,7 @@ export class KandelHomePageResolver {
         price: (offer.kandelOfferIndexes?.ba == "ask" ? offer.currentVersion?.takerPaysPrice : offer.currentVersion?.makerPaysPrice) ?? 0,
         gasreq: offer.currentVersion?.gasreq ?? 0,
         gasprice: offer.currentVersion?.gasprice ?? 0,
-        BA: offer.kandelOfferIndexes?.ba ?? "",
+        offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
         initialTxHash: offer.offerVersions[0]?.tx.txHash ?? "",
       }))
     });
