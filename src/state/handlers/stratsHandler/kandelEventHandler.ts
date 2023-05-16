@@ -19,7 +19,7 @@ import { sleep } from "@mangrovedao/commonlib.js";
 import { Timestamp } from "@proximaone/stream-client-js";
 import { async } from "rxjs";
 
-export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.KandelEvent | kandel.SeederEvent > {
+export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.KandelEvent  > {
   public constructor(
     prisma: PrismaClient,
     stream: string,
@@ -29,7 +29,7 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
   }
 
   protected async handleParsedEvents(
-    events: TypedEvent<kandel.KandelEvent | kandel.SeederEvent >[],
+    events: TypedEvent<kandel.KandelEvent  >[],
     tx: PrismaTransaction
   ): Promise<void> {
     const allDbOperation = allDbOperations(tx);
@@ -82,13 +82,13 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
 
   protected deserialize( 
     payload: Buffer
-  ): kandel.KandelEvent | kandel.SeederEvent {
+  ): kandel.KandelEvent {
     return mangroveSchema.streams.kandel.serdes.deserialize(payload);
   }
 }
 
 const eventMatcher =
-  createPatternMatcher<kandel.KandelEvent | kandel.SeederEvent >();
+  createPatternMatcher<kandel.KandelEvent  >();
 
 async function waitForTimestamp(allDbOperation: AllDbOperations, timestamp:Timestamp) {
   let isReady = false;
