@@ -240,7 +240,7 @@ export class KandelEventsLogic extends EventsLogic {
         }
     }
 
-    async handleOfferIndex(
+    async handleSetIndexMapping(
         undo: boolean,
         kandelId: KandelId,
         event: kandel.SetIndexMapping,

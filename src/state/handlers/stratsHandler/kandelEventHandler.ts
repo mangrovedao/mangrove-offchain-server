@@ -74,7 +74,7 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
           await kandelEventsLogic.handelRetractOffers(undo, new KandelId(chainId, payload.address), e, transaction);
         },
         SetIndexMapping: async (e) => {
-          await kandelEventsLogic.handleOfferIndex(undo, new KandelId(chainId, payload.address), e, transaction);
+          await kandelEventsLogic.handleSetIndexMapping(undo, new KandelId(chainId, payload.address), e, transaction);
         }
       })(payload);
     }

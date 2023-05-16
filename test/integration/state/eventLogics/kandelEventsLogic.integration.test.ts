@@ -1003,7 +1003,7 @@ describe("Kandel Events Logic Integration test suite", () => {
         } )
     })
 
-    describe( KandelEventsLogic.prototype.handleOfferIndex.name, () => {
+    describe( KandelEventsLogic.prototype.handleSetIndexMapping.name, () => {
         it( "new Offer index, ba = 1 ", async () => {
             const event: SetIndexMapping = {
                 type: "SetIndexMapping",
@@ -1013,7 +1013,7 @@ describe("Kandel Events Logic Integration test suite", () => {
             }
             const offerIndexCount = await prisma.kandelOfferIndex.count();
 
-            await kandelEventsLogic.handleOfferIndex(false, kandelId, event, tx)
+            await kandelEventsLogic.handleSetIndexMapping(false, kandelId, event, tx)
 
             assert.strictEqual( await prisma.kandelOfferIndex.count() - offerIndexCount, 1);
             const offerIndex = await prisma.kandelOfferIndex.findUnique({where: { offerId_kandelId_ba: {
@@ -1032,9 +1032,9 @@ describe("Kandel Events Logic Integration test suite", () => {
                 index: 1,
                 offerId: 1
             }
-            await kandelEventsLogic.handleOfferIndex(false, kandelId, event, tx)
+            await kandelEventsLogic.handleSetIndexMapping(false, kandelId, event, tx)
             const offerIndexCount = await prisma.kandelOfferIndex.count();
-            await kandelEventsLogic.handleOfferIndex(true, kandelId, event, tx)
+            await kandelEventsLogic.handleSetIndexMapping(true, kandelId, event, tx)
 
             assert.strictEqual( await prisma.kandelOfferIndex.count() - offerIndexCount, -1);
         } )
@@ -1048,7 +1048,7 @@ describe("Kandel Events Logic Integration test suite", () => {
             }
             const offerIndexCount = await prisma.kandelOfferIndex.count();
 
-            await kandelEventsLogic.handleOfferIndex(false, kandelId, event, tx)
+            await kandelEventsLogic.handleSetIndexMapping(false, kandelId, event, tx)
 
             assert.strictEqual( await prisma.kandelOfferIndex.count() - offerIndexCount, 1);
             const offerIndex = await prisma.kandelOfferIndex.findUnique({where: { offerId_kandelId_ba: {
@@ -1067,9 +1067,9 @@ describe("Kandel Events Logic Integration test suite", () => {
                 index: 1,
                 offerId: 1
             }
-            await kandelEventsLogic.handleOfferIndex(false, kandelId, event, tx)
+            await kandelEventsLogic.handleSetIndexMapping(false, kandelId, event, tx)
             const offerIndexCount = await prisma.kandelOfferIndex.count();
-            await kandelEventsLogic.handleOfferIndex(true, kandelId, event, tx)
+            await kandelEventsLogic.handleSetIndexMapping(true, kandelId, event, tx)
 
             assert.strictEqual( await prisma.kandelOfferIndex.count() - offerIndexCount, -1);
         } )
