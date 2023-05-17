@@ -431,6 +431,7 @@ export class KandelHomePageResolver {
         base: kandel.baseToken,
         quote: kandel.quoteToken,
         return: await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
+        type: kandel.type,
         offers: kandel.strat.offers.map(offer => new KandelOffer({
           gives: offer.currentVersion?.gives ?? "0",
           wants: offer.currentVersion?.wants ?? "0",
@@ -501,6 +502,7 @@ export class KandelHomePageResolver {
       base: kandel.baseToken,
       quote: kandel.quoteToken,
       return: await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
+      type: kandel.type,
       offers: kandel.strat.offers.map(offer => new KandelOffer({
         gives: offer.currentVersion?.gives ?? "0",
         wants: offer.currentVersion?.wants ?? "0",
