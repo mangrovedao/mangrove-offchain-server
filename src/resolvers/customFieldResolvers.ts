@@ -74,8 +74,8 @@ export class KandelManageStrategyPageResolver {
       throw new GraphQLError(`Cannot find kandel with address: ${address} and chain: ${chain}`);
     }
     return kandel.strat.offers.map(offer => new KandelOffer({
-      gives: offer.currentVersion?.gives ?? "0",
-      wants: offer.currentVersion?.wants ?? "0",
+      gives: offer.currentVersion?.givesNumber ?? 0,
+      wants: offer.currentVersion?.wantsNumber ?? 0,
       index: offer.kandelOfferIndexes?.index ?? 0,
       base: kandel.baseToken,
       quote: kandel.quoteToken,
@@ -433,8 +433,8 @@ export class KandelHomePageResolver {
         return: await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
         type: kandel.type,
         offers: kandel.strat.offers.map(offer => new KandelOffer({
-          gives: offer.currentVersion?.gives ?? "0",
-          wants: offer.currentVersion?.wants ?? "0",
+          gives: offer.currentVersion?.givesNumber ?? 0,
+          wants: offer.currentVersion?.wantsNumber ?? 0,
           index: offer.kandelOfferIndexes?.index ?? 0,
           base: kandel.baseToken,
           quote: kandel.quoteToken,
@@ -504,8 +504,8 @@ export class KandelHomePageResolver {
       return: await kandelReturnUtils.getKandelReturn(new KandelId(chainId, kandel.strat.address), ctx.prisma, (token) => fetchTokenPriceIn(token, 'USDC')),
       type: kandel.type,
       offers: kandel.strat.offers.map(offer => new KandelOffer({
-        gives: offer.currentVersion?.gives ?? "0",
-        wants: offer.currentVersion?.wants ?? "0",
+        gives: offer.currentVersion?.givesNumber ?? 0,
+        wants: offer.currentVersion?.wantsNumber ?? 0,
         index: offer.kandelOfferIndexes?.index ?? 0,
         base: kandel.baseToken,
         quote: kandel.quoteToken,

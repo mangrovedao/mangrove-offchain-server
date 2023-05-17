@@ -6,8 +6,8 @@ import { Field, ObjectType } from "type-graphql";
 export class KandelOffer{
 
   constructor(params:{
-    gives: string,
-    wants: string,
+    gives: number,
+    wants: number,
     index: number,
     base: Token,
     quote: Token,
@@ -35,10 +35,10 @@ export class KandelOffer{
 
 
   @Field()
-  gives!: string;
+  gives!: number;
 
   @Field()
-  wants!: string;
+  wants!: number;
 
   @Field()
   base!: Token
