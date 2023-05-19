@@ -6,8 +6,8 @@ import { Field, ObjectType } from "type-graphql";
 export class KandelOffer{
 
   constructor(params:{
-    gives: string,
-    wants: string,
+    gives: number,
+    wants: number,
     index: number,
     base: Token,
     quote: Token,
@@ -35,10 +35,10 @@ export class KandelOffer{
 
 
   @Field()
-  gives!: string;
+  gives!: number;
 
   @Field()
-  wants!: string;
+  wants!: number;
 
   @Field()
   base!: Token
@@ -133,39 +133,43 @@ export class KandelStrategy{
 @ObjectType()
 export class KandelFill {
   constructor( params:{
-    takerGave: string;
-    takerGot: string;
-    order: {
-        tx: {
-            time: Date;
-        };
-        offerListing: {
-            inboundToken: Token;
-            outboundToken: Token;
-        };
-    };
+    baseAmount: number,
+    quoteAmount: number,
+    base: Token,
+    quote: Token,
+    offerType: string,
+    price: number,
+    date: Date
 } ){
-    this.date = params.order.tx.time;
-    this.inboundAmount = params.takerGave;
-    this.outboundAmount = params.takerGot;
-    this.inbound = params.order.offerListing.inboundToken;
-    this.outbound = params.order.offerListing.outboundToken;
+    this.baseAmount = params.baseAmount;
+    this.quoteAmount = params.quoteAmount;
+    this.base = params.base;
+    this.quote = params.quote;
+    this.date = params.date;
+    this.offerType = params.offerType;
+    this.price = params.price;
   }
   
   @Field()
   date!: Date;
 
   @Field()
-  inboundAmount!: string;
+  quoteAmount!: number;
 
   @Field()
-  outboundAmount!: string;
+  baseAmount!: number;
 
   @Field()
-  inbound!: Token
+  base!: Token
 
   @Field()
-  outbound!: Token
+  quote!: Token
+
+  @Field()
+  offerType!: string
+
+  @Field()
+  price!: number
 
   // Cannot give buy/sell
   // Cannot give base/quote (market)
@@ -222,21 +226,15 @@ export class KandelFailedOffer {
 export class KandelDepositWithdraw {
 
   constructor(params:{
-    value: string;
-    tokenBalanceEvent: {
-        tokenBalanceVersion: {
-            tx: {
-                time: Date;
-            };
-        };
-        token: Token;
-    },
-   event: "deposit" | "withdraw"; 
+    valueReceived: number;
+    currency: Token;
+    date: Date;
+    event: "deposit" | "withdraw"; 
 }){
-    this.date = params.tokenBalanceEvent.tokenBalanceVersion.tx.time;
+    this.currency = params.currency;
+    this.valueReceived = params.valueReceived;
+    this.date = params.date;
     this.event = params.event;
-    this.currency = params.tokenBalanceEvent.token;
-    this.valueReceived = params.value;
   }
 
   @Field()
@@ -249,7 +247,7 @@ export class KandelDepositWithdraw {
   currency!: Token; // Is currency and value Recevied the same token?
 
   @Field()
-  valueReceived!: string
+  valueReceived!: number
 
 
   // Cannot give price
@@ -292,19 +290,21 @@ export class KandelParameter {
 @ObjectType()
 export class KandelPopulateRetract {
   constructor(params: {
-    tokenA: Token;
-    tokenAAmount: string;
-    tokenB: Token;
-    tokenBAmount: string;
+    base: Token;
+    baseAmount: number;
+    quote: Token;
+    quoteAmount: number;
     event: "populate" | "retract";
     date: Date | undefined;
+    txHash: string;
 }){
     this.date = params.date;
     this.event = params.event;
-    this.tokenA = params.tokenA;
-    this.tokenAAmount = params.tokenAAmount
-    this.tokenB = params.tokenB;
-    this.tokenBAmount = params.tokenBAmount
+    this.base = params.base;
+    this.baseAmount = params.baseAmount
+    this.quote = params.quote;
+    this.quoteAmount = params.quoteAmount;
+    this.txHash = params.txHash;
   }
 
   @Field()
@@ -314,16 +314,19 @@ export class KandelPopulateRetract {
   event!: "populate" | "retract";
 
   @Field()
-  tokenA!: Token; 
+  base!: Token; 
 
   @Field()
-  tokenAAmount!: string
+  baseAmount!: number
 
   @Field()
-  tokenB!: Token; 
+  quote!: Token; 
 
   @Field()
-  tokenBAmount!: string
+  quoteAmount!: number
+
+  @Field()
+  txHash!: string
 
   // Cannot give gas
 }
