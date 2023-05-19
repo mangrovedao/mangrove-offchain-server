@@ -83,6 +83,7 @@ export class KandelStrategy{
     quote: Token,
     return:string,
     type: string,
+    earnedTotal: number,
     offers: KandelOffer[]
   }) {
     if( params ){
@@ -92,7 +93,8 @@ export class KandelStrategy{
       this.base = params.base
       this.quote = params.quote
       this.return = params.return
-      this.type = params.type
+      this.type = params.type,
+      this.earnedTotal = params.earnedTotal,
       this.offers = params.offers
     }
   }
@@ -117,6 +119,9 @@ export class KandelStrategy{
 
   @Field()
   type?:string
+
+  @Field()
+  earnedTotal?:number
 
   @Field( type => [KandelOffer])
   offers?: KandelOffer[]
