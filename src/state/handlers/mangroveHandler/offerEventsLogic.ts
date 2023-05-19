@@ -37,11 +37,12 @@ export class OfferEventsLogic extends EventsLogic {
            m.deleted = true
            m.isRetracted = true
            m.live = false
+           m.deprovisioned = e.deprovision ?? false
            });
     const offerListingId = new OfferListingId(mangroveId, e.offerList);
     
     const mangroveEvent = await db.mangroveOperation.createMangroveEvent({mangroveId,txId})
-    await db.mangroveOperation.createOfferRetractEvent({offerListingId, offerVersion, mangroveEvent})
+    await db.mangroveOperation.createOfferRetractEvent({offerListingId, offerVersion, mangroveEvent, deprovision: e.deprovision ?? false})
   }
 
   async handleOfferWritten(

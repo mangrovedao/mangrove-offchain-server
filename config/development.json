@@ -12,20 +12,11 @@
     {
       "id": "80001",
       "streams": {
-        "mangrove": [
-"proxima.mangrove.polygon-mumbai.0xad90.domain-events.0_1"
-        ],
-        "strats": [
-           "proxima.mangrove.polygon-mumbai.strategies.0_5"
-        ],
-        "kandel": ["proxima.mangrove.polygon-mumbai.0xad90.kandel.0_1" ],
-        "tokens": [
-"proxima.mangrove.polygon-mumbai.0xad90.tokens.0_1"
-        ]
-      },
-      "mangroveOrderInclude": [
-        "0xf511135bc98d7a5cf694fa6751322de93e2135da"
-      ]
+        "mangrove": [ "proxima.mangrove.polygon-mumbai.0xd180.domain-events.0_1"],
+        "strats": [ "proxima.mangrove.polygon-mumbai.0xd180.0x756f.strategies.0_1" ],
+        "kandel": [ "proxima.mangrove.polygon-mumbai.0xd180.kandel.0_1" ],
+        "tokens": [ "proxima.mangrove.polygon-mumbai.0xd180.tokens.0_1" ]
+      }
     }
   ]
 }

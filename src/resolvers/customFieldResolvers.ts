@@ -90,6 +90,7 @@ export class KandelManageStrategyPageResolver {
       gasprice: offer.currentVersion?.gasprice ?? 0,
       gasbase: offer.currentVersion?.OfferListingVersion?.gasbase ?? 0,
       offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
+      deprovision: offer.currentVersion?.deprovisioned ?? false,
       initialTxHash: offer.offerVersions[0].tx?.txHash ?? "",
     }));
 
@@ -453,6 +454,7 @@ export class KandelHomePageResolver {
           gasreq: offer.currentVersion?.gasreq ?? 0,
           gasprice: offer.currentVersion?.gasprice ?? 0,
           gasbase: offer.currentVersion?.OfferListingVersion?.gasbase ?? 0,
+          deprovision: offer.currentVersion?.deprovisioned ?? false,
           offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
           initialTxHash: offer.offerVersions[0]?.tx.txHash ?? "",
         }))
@@ -529,6 +531,7 @@ export class KandelHomePageResolver {
         gasreq: offer.currentVersion?.gasreq ?? 0,
         gasprice: offer.currentVersion?.gasprice ?? 0,
         gasbase: offer.currentVersion?.OfferListingVersion?.gasbase ?? 0,
+        deprovision: offer.currentVersion?.deprovisioned ?? false,
         offerType: offer.kandelOfferIndexes ? ( offer.kandelOfferIndexes.ba == "ask" ? "asks" : "bids" ) : "",
         initialTxHash: offer.offerVersions[0]?.tx.txHash ?? "",
       }))
