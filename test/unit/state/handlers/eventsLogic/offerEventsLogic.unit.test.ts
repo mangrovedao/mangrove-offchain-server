@@ -31,6 +31,7 @@ describe("Offer Events Logic Unit Test Suite", () => {
                 deprovisioned: true,
                 kandelPopulateEventId: null,
                 kandelRetractEventId: null,
+                offerListingVersionId: "",
             }
             const offer: mangroveSchema.core.Offer = {
                 id: 1,
@@ -61,6 +62,7 @@ describe("Offer Events Logic Unit Test Suite", () => {
                 deprovisioned: false,
                 kandelPopulateEventId: null,
                 kandelRetractEventId: null,
+                offerListingVersionId: "",
             })
         })
     })

@@ -49,7 +49,7 @@
     "@mangrovedao/commonlib.js": "^1.0.0",
     "@prisma/client": "4.13.0",
     "@proximaone/stream-client-js": "^1.2.10",
-    "@proximaone/stream-schema-mangrove": "^0.3.10",
+    "@proximaone/stream-schema-mangrove": "^0.4.0",
     "@types/cors": "^2.8.12",
     "@types/graphql-fields": "^1.3.4",
     "async-retry": "^1.3.3",

@@ -17,8 +17,9 @@ import * as kandel from "@proximaone/stream-schema-mangrove/dist/kandel";
 import * as mangroveSchema from "@proximaone/stream-schema-mangrove";
 import { sleep } from "@mangrovedao/commonlib.js";
 import { Timestamp } from "@proximaone/stream-client-js";
+import { async } from "rxjs";
 
-export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.KandelEvent | kandel.SeederEvent > {
+export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.KandelEvent  > {
   public constructor(
     prisma: PrismaClient,
     stream: string,
@@ -28,7 +29,7 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
   }
 
   protected async handleParsedEvents(
-    events: TypedEvent<kandel.KandelEvent | kandel.SeederEvent >[],
+    events: TypedEvent<kandel.KandelEvent  >[],
     tx: PrismaTransaction
   ): Promise<void> {
     const allDbOperation = allDbOperations(tx);
@@ -71,20 +72,23 @@ export class IKandelLogicEventHandler extends PrismaStreamEventHandler<kandel.Ka
         },
         Retract: async (e) => {
           await kandelEventsLogic.handelRetractOffers(undo, new KandelId(chainId, payload.address), e, transaction);
+        },
+        SetIndexMapping: async (e) => {
+          await kandelEventsLogic.handleSetIndexMapping(undo, new KandelId(chainId, payload.address), e, transaction);
         }
       })(payload);
     }
   }
-//TODO: when proxima comes with stream
+
   protected deserialize( 
     payload: Buffer
-  ): kandel.KandelEvent | kandel.SeederEvent {
+  ): kandel.KandelEvent {
     return mangroveSchema.streams.kandel.serdes.deserialize(payload);
   }
 }
 
 const eventMatcher =
-  createPatternMatcher<kandel.KandelEvent | kandel.SeederEvent >();
+  createPatternMatcher<kandel.KandelEvent  >();
 
 async function waitForTimestamp(allDbOperation: AllDbOperations, timestamp:Timestamp) {
   let isReady = false;

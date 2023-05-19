@@ -325,6 +325,7 @@ model OfferListingVersion {
   nextVersion    OfferListingVersion? @relation("prevVersion")
   currentVersion OfferListing?        @relation("currentVersion")
   offerListing   OfferListing         @relation("offerListingVersion", fields: [offerListingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  OfferVersion   OfferVersion[]
 
   @@unique([offerListingId, versionNumber])
   @@index([txId])
@@ -373,25 +374,28 @@ model OfferVersion {
   isRetracted           Boolean
   kandelPopulateEventId String? @db.VarChar(255)
   kandelRetractEventId  String?
+  offerListingVersionId String  @db.VarChar(255)
 
   tx          Transaction @relation(fields: [txId], references: [id])
   parentOrder Order?      @relation(fields: [parentOrderId], references: [id])
 
-  versionNumber     Int
-  prevVersionId     String?            @unique @db.VarChar(255)
-  prevVersion       OfferVersion?      @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  nextVersion       OfferVersion?      @relation("prevVersion")
-  currentVersion    Offer?             @relation("currentVersion")
-  offer             Offer              @relation("offerVersion", fields: [offerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  takenOffer        TakenOffer?
-  OfferWriteEvent   OfferWriteEvent?
-  OfferRetractEvent OfferRetractEvent?
+  versionNumber       Int
+  prevVersionId       String?             @unique @db.VarChar(255)
+  prevVersion         OfferVersion?       @relation("prevVersion", fields: [prevVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  nextVersion         OfferVersion?       @relation("prevVersion")
+  currentVersion      Offer?              @relation("currentVersion")
+  offer               Offer               @relation("offerVersion", fields: [offerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  takenOffer          TakenOffer?
+  OfferWriteEvent     OfferWriteEvent?
+  OfferRetractEvent   OfferRetractEvent?
+  OfferListingVersion OfferListingVersion @relation(fields: [offerListingVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([txId])
   @@index([offerId])
   @@index([parentOrderId])
   @@index([kandelPopulateEventId])
   @@index([kandelRetractEventId])
+  @@index([offerListingVersionId])
 }
 
 model Order {
@@ -835,8 +839,8 @@ view MangroveOrderFill {
   time            DateTime @db.Timestamp
 
   offerListing OfferListing @relation(fields: [offerListingId], references: [id])
-  order        Order?        @relation(fields: [fillsId], references: [id])
-  takenOffer   TakenOffer?   @relation(fields: [fillsId], references: [id])
+  order        Order?       @relation(fields: [fillsId], references: [id])
+  takenOffer   TakenOffer?  @relation(fields: [fillsId], references: [id])
 
   @@unique([type, fillsId])
   @@index([takerId])
