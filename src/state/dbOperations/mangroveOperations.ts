@@ -170,13 +170,15 @@ export class MangroveOperations extends DbOperations {
   async createOfferRetractEvent(params:{
     offerListingId: OfferListingId,
     offerVersion: {id: string},
-    mangroveEvent: {id: string}
+    mangroveEvent: {id: string},
+    deprovision: boolean,
   }){
     return await this.tx.offerRetractEvent.create({
       data: {
         offerListingId: params.offerListingId.value,
         offerVersionId: params.offerVersion.id,
         mangroveEventId: params.mangroveEvent.id,
+        deprovision: params.deprovision,
       },
     });
   }

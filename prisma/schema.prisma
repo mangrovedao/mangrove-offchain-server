@@ -166,6 +166,7 @@ model OfferRetractEvent {
   offerListingId  String
   offerVersionId  String @unique
   mangroveEventId String @unique
+  deprovision     Boolean
 
   offerListing  OfferListing  @relation(fields: [offerListingId], references: [id])
   offerVersion  OfferVersion  @relation(fields: [offerVersionId], references: [id])

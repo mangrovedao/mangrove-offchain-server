@@ -6,8 +6,7 @@ export type ChainConfig = {
     kandel?: string[],
     tokens?: string[],
   }
-  mangroveOrderInclude?: string[]
-  };
+};
 
 
 

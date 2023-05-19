@@ -298,6 +298,7 @@ describe("Mangrove Operations Integration test suite", () => {
       offerListingId: offerListingId,
       offerVersion: { id: "offerVersionId" },
       mangroveEvent: { id: "mangroveEventId" },
+      deprovision: true
     })
     assert.strictEqual(await prisma.offerRetractEvent.count() - offerRetractCount, 1);
     assert.deepStrictEqual(offerRetractEvent, {
@@ -305,6 +306,7 @@ describe("Mangrove Operations Integration test suite", () => {
       offerListingId: offerListingId.value,
       offerVersionId: "offerVersionId",
       mangroveEventId: "mangroveEventId",
+      deprovision: true
     });
 
   })
